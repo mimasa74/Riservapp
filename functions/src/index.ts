@@ -83,4 +83,4 @@ async function sendPushToAll(
   }
 }
 
-export {};
+export { extractCategorie, sendPushToAll };
