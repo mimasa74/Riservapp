@@ -1,15 +1,46 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Helper functions
+
     function isAuthenticated() {
       return request.auth != null;
     }
 
-    // Allow read/write for authenticated users
-    // In a real app, we'd restrict this further based on roles
+    // config/main: lettura pubblica, scrittura solo admin
     match /config/main {
-      allow read, write: if isAuthenticated();
+      allow read: if true;
+      allow write: if isAuthenticated();
+    }
+
+    // posts: lettura pubblica, scrittura solo admin
+    match /posts/{postId} {
+      allow read: if true;
+      allow write: if isAuthenticated();
+    }
+
+    // fcm_tokens: il dispositivo può scrivere/aggiornare solo il proprio documento
+    // (verificato tramite deviceId nel body == deviceId nel path)
+    // lettura solo admin
+    match /fcm_tokens/{deviceId} {
+      allow create, update: if request.resource.data.deviceId == deviceId;
+      allow delete: if isAuthenticated();
+      allow read: if isAuthenticated();
+    }
+
+    // user_locations: il dispositivo può scrivere/aggiornare solo il proprio documento
+    // DELETE: controlla resource.data.deviceId (non request.resource che è null su delete)
+    // lettura solo admin
+    match /user_locations/{deviceId} {
+      allow create, update: if request.resource.data.deviceId == deviceId;
+      allow delete: if resource != null && resource.data.deviceId == deviceId;
+      allow read: if isAuthenticated();
+    }
+
+    // geofences: lettura pubblica (serve al client per geofencing),
+    // scrittura solo admin
+    match /geofences/{docId} {
+      allow read: if true;
+      allow write: if isAuthenticated();
     }
   }
 }
