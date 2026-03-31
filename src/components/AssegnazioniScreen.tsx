@@ -13,6 +13,7 @@ interface AssegnazioniScreenProps {
   onUpdateText: (field: 'note' | 'alert' | 'penalita', value: string) => void;
   onOpenRuota: () => void;
   onOpenSettings: () => void;
+  onOpenMappa: () => void;
   isAdmin: boolean;
 }
 
@@ -24,6 +25,7 @@ export const AssegnazioniScreen = ({
   onUpdateText,
   onOpenRuota,
   onOpenSettings,
+  onOpenMappa,
   isAdmin,
 }: AssegnazioniScreenProps) => {
 
@@ -45,6 +47,7 @@ export const AssegnazioniScreen = ({
         logoUrl={data.logoUrl}
         year={data.anno ?? '2026'}
         onOpenSettings={onOpenSettings}
+        onOpenMappa={onOpenMappa}
       />
 
       {/* ZoneTabs solo per Camoscio */}
