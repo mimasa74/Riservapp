@@ -5,6 +5,9 @@ import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { AppData, Post } from './types';
 import fallbackData from '../data.json';
 
+import { initFCM } from './hooks/useFCM';
+import { useGeolocation } from './hooks/useGeolocation';
+
 import { AssegnazioniScreen } from './components/AssegnazioniScreen';
 import { BachecaScreen } from './components/BachecaScreen';
 import { HunterNameModal } from './components/HunterNameModal';
@@ -45,6 +48,9 @@ function MainApp() {
   const [onboardingDone, setOnboardingDone] = useState<boolean>(
     () => !!localStorage.getItem('riservapp_onboarding')
   );
+
+  useGeolocation({ deviceId, nome: hunterName });
+
   const [screenIndex, setScreenIndex] = useState(0);
   const [showRuota, setShowRuota] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
@@ -175,8 +181,16 @@ function MainApp() {
   const handleSetName = (nome: string) => {
     localStorage.setItem('riservapp_nome', nome);
     setHunterName(nome);
+    initFCM(deviceId, nome).catch(console.warn);
   };
 
+
+  useEffect(() => {
+    if (!hunterName) return;
+    if (localStorage.getItem('riservapp_fcm') === 'granted') return;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    initFCM(deviceId, hunterName).catch(console.warn);
+  }, [hunterName]);
 
   if (!onboardingDone) {
     return <OnboardingScreen onDone={() => setOnboardingDone(true)} />;
