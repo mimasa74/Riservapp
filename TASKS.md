@@ -47,10 +47,20 @@ Scrivi a Claude Code:
 - [ ] Immagine header privacy: in attesa di `public/onboarding.png`
 
 ## FASE 5 — Notifiche e Mappa
-- [ ] FCM: push quando categoria si chiude
-- [ ] FCM: push per post tipo alert/avviso
-- [ ] Google Maps con poligono riserva
-- [ ] Geofencing cacciatori
+- [x] DeviceId UUID persistente (localStorage: riservapp_device_id)
+- [x] firebase.json + .firebaserc
+- [x] Firebase Messaging init + service worker (public/firebase-messaging-sw.js)
+- [x] src/hooks/useFCM.ts — initFCM() richiede permesso + salva token FCM
+- [x] src/hooks/useGeolocation.ts — geofencing Turf.js, smart frequency
+- [x] Cloud Functions: onPostCreate, onConfigUpdate (quota+sospeso), cleanupOldLocations (TTL GDPR)
+- [x] MappaScreen.tsx — Google Maps con poligono riserva e marker real-time
+- [x] Header: icona mappa per admin
+- [x] Firestore rules aggiornate
+- [ ] **PROSSIMO STEP — Deploy:**
+  1. Compilare in .env.local: VITE_FCM_VAPID_KEY (da Firebase Console → Cloud Messaging → Web Push certificates)
+  2. Compilare in .env.local: VITE_GOOGLE_MAPS_API_KEY (da Google Cloud Console → API & Services)
+  3. `firebase login` nel terminale
+  4. `firebase deploy --only functions,firestore:rules`
 
 ## FIREBASE — configurazione completata
 - [x] Firestore: database default in Torino (europe-west12)
