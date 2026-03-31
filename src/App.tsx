@@ -10,6 +10,7 @@ import { BachecaScreen } from './components/BachecaScreen';
 import { HunterNameModal } from './components/HunterNameModal';
 import { OnboardingScreen } from './components/OnboardingScreen';
 import { RuotaView } from './components/RuotaView';
+import { MappaScreen } from './components/MappaScreen';
 import { SettingsScreen } from './components/SettingsScreen';
 import { SwipeContainer } from './components/SwipeContainer';
 
@@ -47,6 +48,7 @@ function MainApp() {
   const [screenIndex, setScreenIndex] = useState(0);
   const [showRuota, setShowRuota] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const [showMappa, setShowMappa] = useState(false);
   const [selectedSubZone, setSelectedSubZone] = useState('campa');
 
   const currentSpecieId: string =
@@ -197,6 +199,10 @@ function MainApp() {
     );
   }
 
+  if (showMappa) {
+    return <MappaScreen onBack={() => setShowMappa(false)} />;
+  }
+
   if (showRuota) {
     return (
       <div className="min-h-dvh bg-[#EDEEE6] text-[#1A1A14]">
@@ -242,6 +248,7 @@ function MainApp() {
                 onUpdateText={handleUpdateText}
                 onOpenRuota={() => setShowRuota(true)}
                 onOpenSettings={() => setShowSettings(true)}
+                onOpenMappa={() => setShowMappa(true)}
                 isAdmin={isAdmin}
               />
             );
