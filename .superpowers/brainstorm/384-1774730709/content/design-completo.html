@@ -1,0 +1,149 @@
+<h2>RiservApp — Design Completo</h2>
+<p class="subtitle">Tutto quello che abbiamo deciso. Leggi e conferma prima di procedere.</p>
+
+<div class="section">
+  <h3>Stack tecnico</h3>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+    <div style="background:#1e1e1e;color:#d4d4d4;padding:12px;border-radius:8px;font-size:12px;line-height:1.8;font-family:monospace">
+      <span style="color:#4ec9b0">Frontend</span><br>
+      React 19 + TypeScript<br>
+      Tailwind CSS v4<br>
+      Vite 6 (PWA)<br>
+      Framer Motion (swipe)
+    </div>
+    <div style="background:#1e1e1e;color:#d4d4d4;padding:12px;border-radius:8px;font-size:12px;line-height:1.8;font-family:monospace">
+      <span style="color:#4ec9b0">Backend (Firebase)</span><br>
+      Firestore (real-time)<br>
+      Auth (Google, solo Rettore)<br>
+      Storage (foto + ruote)<br>
+      FCM (notifiche push)<br>
+      Cloud Functions (geofence)
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>Firestore — struttura finale</h3>
+<pre style="background:#1e1e1e;color:#d4d4d4;padding:1rem;border-radius:8px;font-size:11px;line-height:1.8;font-family:monospace">
+<span style="color:#569cd6">firestore/</span>
+├── <span style="color:#9cdcfe">species/cervo</span>      { anno, note, alert, updatedAt, categories:[...] }
+├── <span style="color:#9cdcfe">species/capriolo</span>   { anno, note, alert, updatedAt, categories:[...] }
+├── <span style="color:#9cdcfe">species/camoscio</span>   { anno, penalita, note, alert, updatedAt, zone:{campa,tovel} }
+├── <span style="color:#9cdcfe">bacheca/{id}</span>       { tipo, testo, foto_url, pdf_url, data, notifica }
+├── <span style="color:#9cdcfe">ruote/{specieId}</span>   { immagine_url, updatedAt }
+├── <span style="color:#9cdcfe">users_locations/{deviceId}</span>  { nome, latitude, longitude, timestamp }
+└── <span style="color:#9cdcfe">geofences/riserva-tuenno</span>    { vertices:[...32 punti...] }
+</pre>
+</div>
+
+<div class="section">
+  <h3>Logica categorie — stati</h3>
+  <table style="width:100%;border-collapse:collapse;font-size:12px">
+    <tr style="background:#5C6B3A;color:#fff">
+      <th style="padding:8px;text-align:left">Condizione</th>
+      <th style="padding:8px;text-align:left">Badge</th>
+      <th style="padding:8px;text-align:left">Cacciatore vede</th>
+      <th style="padding:8px;text-align:left">Rettore vede</th>
+      <th style="padding:8px;text-align:left">Notifica push</th>
+    </tr>
+    <tr style="border-bottom:1px solid #d0d5c4">
+      <td style="padding:8px"><code>abbattuti == totale</code></td>
+      <td style="padding:8px;color:#8B1A1A;font-weight:700">FINITI</td>
+      <td style="padding:8px">solo badge</td>
+      <td style="padding:8px">badge + quadratini</td>
+      <td style="padding:8px">✅ automatica</td>
+    </tr>
+    <tr style="border-bottom:1px solid #d0d5c4;background:#fafaf8">
+      <td style="padding:8px"><code>stato = "sospeso"</code></td>
+      <td style="padding:8px;color:#8B1A1A;font-weight:700">SOSPESO</td>
+      <td style="padding:8px">solo badge</td>
+      <td style="padding:8px">badge + quadratini</td>
+      <td style="padding:8px">✅ automatica</td>
+    </tr>
+    <tr style="border-bottom:1px solid #d0d5c4">
+      <td style="padding:8px"><code>stato = "chiuso"</code></td>
+      <td style="padding:8px;color:#8B1A1A;font-weight:700">CHIUSO</td>
+      <td style="padding:8px">solo badge</td>
+      <td style="padding:8px">badge + quadratini</td>
+      <td style="padding:8px">✅ automatica</td>
+    </tr>
+    <tr style="background:#fafaf8">
+      <td style="padding:8px"><code>stato = "aperto"</code></td>
+      <td style="padding:8px;color:#6B6B5A">nessuno</td>
+      <td style="padding:8px">quadratini (visivi)</td>
+      <td style="padding:8px">quadratini (tappabili)</td>
+      <td style="padding:8px">—</td>
+    </tr>
+  </table>
+</div>
+
+<div class="section">
+  <h3>Navigazione</h3>
+<pre style="background:#1e1e1e;color:#d4d4d4;padding:1rem;border-radius:8px;font-size:12px;line-height:1.8;font-family:monospace">
+Swipe orizzontale:  <span style="color:#4ec9b0">Bacheca → Capriolo → Cervo → Camoscio</span>
+Dots in cima:       ● ○ ○ ○
+Bottom nav:         4 icone per salto diretto
+
+Overlay (sopra):    Ruota (tutte e 3 le specie)
+                    Impostazioni stagione (solo admin, da header)
+</pre>
+</div>
+
+<div class="section">
+  <h3>Ruota — semplificata</h3>
+  <table style="width:100%;border-collapse:collapse;font-size:12px">
+    <tr style="background:#5C6B3A;color:#fff">
+      <th style="padding:8px">Specie</th>
+      <th style="padding:8px">Contenuto</th>
+      <th style="padding:8px">Frequenza aggiornamento</th>
+    </tr>
+    <tr style="border-bottom:1px solid #d0d5c4">
+      <td style="padding:8px">Cervo</td>
+      <td style="padding:8px">1 foto (ruota palcuti)</td>
+      <td style="padding:8px">~1 volta a settimana</td>
+    </tr>
+    <tr style="border-bottom:1px solid #d0d5c4;background:#fafaf8">
+      <td style="padding:8px">Camoscio</td>
+      <td style="padding:8px">1 foto (ruota)</td>
+      <td style="padding:8px">~ogni 2 mesi</td>
+    </tr>
+    <tr>
+      <td style="padding:8px">Capriolo</td>
+      <td style="padding:8px">1 foto (se serve)</td>
+      <td style="padding:8px">raramente / bacheca</td>
+    </tr>
+  </table>
+</div>
+
+<div class="section">
+  <h3>Primo avvio — cacciatore</h3>
+<pre style="background:#1e1e1e;color:#d4d4d4;padding:1rem;border-radius:8px;font-size:12px;line-height:1.8;font-family:monospace">
+1. Schermata benvenuto → inserisci nome
+2. Richiesta permesso notifiche
+3. Richiesta permesso GPS ("sempre" su Android)
+4. Entra nell'app → nome salvato in localStorage + deviceId generato
+</pre>
+</div>
+
+<div class="section">
+  <h3>Geolocalizzazione (Fase 6)</h3>
+<pre style="background:#1e1e1e;color:#d4d4d4;padding:1rem;border-radius:8px;font-size:12px;line-height:1.8;font-family:monospace">
+• Telefono manda posizione ogni 5 minuti (notifica persistente Android)
+• Cloud Function controlla se dentro poligono 32 vertici
+• Se dentro → appare su mappa Rettore con nome
+• Se fuori → scompare
+• iOS: non supportato (pochi utenti)
+• Privacy: solo Rettore vede la mappa
+</pre>
+</div>
+
+<div class="section">
+  <h3>Codebase — decisione</h3>
+  <div style="background:#f0f4e8;border-radius:8px;padding:1rem">
+    <p style="margin:0;color:#5C6B3A">Partiamo dalla <strong>v1</strong> (codice esistente) e la aggiorniamo per rispettare la grafica del prototipo HTML approvato. Non si butta nulla — si raffina.</p>
+  </div>
+</div>
+
+<div class="section" style="background:#FDF0F0;border:1.5px solid #8B1A1A;border-radius:8px;padding:1rem">
+  <p style="margin:0;color:#8B1A1A;font-weight:700">Confermi questo design? Rispondi nel terminale → scrivo la spec e poi creo il piano di implementazione.</p>
+</div>

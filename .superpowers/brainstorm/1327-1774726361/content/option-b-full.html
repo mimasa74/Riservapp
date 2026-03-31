@@ -1,0 +1,95 @@
+<h2>Opzione B — struttura completa</h2>
+<p class="subtitle">3 documenti specie + 2 collezioni (bacheca, ruote)</p>
+
+<div class="section">
+  <h3>Mappa Firestore</h3>
+<pre style="background:#1e1e1e;color:#d4d4d4;padding:1.2rem;border-radius:10px;font-size:12px;line-height:1.9;font-family:monospace">
+<span style="color:#569cd6">firestore/</span>
+│
+├── <span style="color:#9cdcfe">species/</span>
+│   ├── <span style="color:#4ec9b0">cervo</span>          ← documento
+│   ├── <span style="color:#4ec9b0">capriolo</span>       ← documento
+│   └── <span style="color:#4ec9b0">camoscio</span>       ← documento
+│
+├── <span style="color:#9cdcfe">bacheca/</span>
+│   ├── <span style="color:#ce9178">{postId}</span>       ← un documento per post
+│   └── <span style="color:#ce9178">{postId}</span>
+│
+└── <span style="color:#9cdcfe">ruote/</span>
+    ├── <span style="color:#ce9178">{turnoId}</span>      ← un documento per turno
+    └── <span style="color:#ce9178">{turnoId}</span>
+</pre>
+</div>
+
+<div class="section">
+  <h3>Documento <code>/species/cervo</code></h3>
+<pre style="background:#1e1e1e;color:#d4d4d4;padding:1.2rem;border-radius:10px;font-size:12px;line-height:1.7;font-family:monospace">
+{
+  <span style="color:#9cdcfe">anno</span>:      <span style="color:#b5cea8">2026</span>,
+  <span style="color:#9cdcfe">note</span>:      <span style="color:#ce9178">"I GIORNI DI CACCIA SONO: MER E SAB..."</span>,
+  <span style="color:#9cdcfe">alert</span>:     <span style="color:#ce9178">"SABATO 29 MARZO CACCIA CHIUSA"</span>,
+  <span style="color:#9cdcfe">updatedAt</span>: <span style="color:#4ec9b0">Timestamp</span>,
+
+  <span style="color:#9cdcfe">categories</span>: [
+    { <span style="color:#9cdcfe">id</span>:<span style="color:#ce9178">"ce1"</span>, <span style="color:#9cdcfe">nome</span>:<span style="color:#ce9178">"PALCUTI"</span>,  <span style="color:#9cdcfe">desc</span>:<span style="color:#ce9178">"(anni 2 e più)"</span>, <span style="color:#9cdcfe">badge</span>:<span style="color:#ce9178">"CHIUSI"</span>, <span style="color:#9cdcfe">totale</span>:<span style="color:#b5cea8">6</span>,  <span style="color:#9cdcfe">abbattuti</span>:<span style="color:#b5cea8">6</span>,  <span style="color:#9cdcfe">stato</span>:<span style="color:#ce9178">"chiuso"</span> },
+    { <span style="color:#9cdcfe">id</span>:<span style="color:#ce9178">"ce2"</span>, <span style="color:#9cdcfe">nome</span>:<span style="color:#ce9178">"FUSONI"</span>,   <span style="color:#9cdcfe">desc</span>:<span style="color:#ce9178">"(capi di 1 anno)"</span>, <span style="color:#9cdcfe">badge</span>:<span style="color:#ce9178">"CHIUSI"</span>, <span style="color:#9cdcfe">totale</span>:<span style="color:#b5cea8">4</span>,  <span style="color:#9cdcfe">abbattuti</span>:<span style="color:#b5cea8">1</span>,  <span style="color:#9cdcfe">stato</span>:<span style="color:#ce9178">"aperto"</span> },
+    { <span style="color:#9cdcfe">id</span>:<span style="color:#ce9178">"ce3"</span>, <span style="color:#9cdcfe">nome</span>:<span style="color:#ce9178">"FEMMINE"</span>, <span style="color:#9cdcfe">desc</span>:<span style="color:#ce9178">""</span>,                <span style="color:#9cdcfe">badge</span>:<span style="color:#ce9178">"CHIUSE"</span>, <span style="color:#9cdcfe">totale</span>:<span style="color:#b5cea8">8</span>,  <span style="color:#9cdcfe">abbattuti</span>:<span style="color:#b5cea8">0</span>,  <span style="color:#9cdcfe">stato</span>:<span style="color:#ce9178">"aperto"</span> },
+    { <span style="color:#9cdcfe">id</span>:<span style="color:#ce9178">"ce4"</span>, <span style="color:#9cdcfe">nome</span>:<span style="color:#ce9178">"PICCOLI"</span>, <span style="color:#9cdcfe">desc</span>:<span style="color:#ce9178">""</span>,                <span style="color:#9cdcfe">badge</span>:<span style="color:#ce9178">"CHIUSI"</span>, <span style="color:#9cdcfe">totale</span>:<span style="color:#b5cea8">11</span>, <span style="color:#9cdcfe">abbattuti</span>:<span style="color:#b5cea8">0</span>,  <span style="color:#9cdcfe">stato</span>:<span style="color:#ce9178">"aperto"</span> },
+  ]
+}
+</pre>
+</div>
+
+<div class="section">
+  <h3>Documento <code>/species/camoscio</code> — con zone</h3>
+<pre style="background:#1e1e1e;color:#d4d4d4;padding:1.2rem;border-radius:10px;font-size:12px;line-height:1.7;font-family:monospace">
+{
+  <span style="color:#9cdcfe">anno</span>:      <span style="color:#b5cea8">2026</span>,
+  <span style="color:#9cdcfe">penalita</span>:  <span style="color:#ce9178">"YARLING ASSEGNATI PER PENALITÀ: COVA SAMUELE"</span>,
+  <span style="color:#9cdcfe">note</span>:      <span style="color:#ce9178">"..."</span>,
+  <span style="color:#9cdcfe">alert</span>:     <span style="color:#ce9178">"..."</span>,
+  <span style="color:#9cdcfe">updatedAt</span>: <span style="color:#4ec9b0">Timestamp</span>,
+
+  <span style="color:#9cdcfe">zone</span>: {
+    <span style="color:#9cdcfe">campa</span>: {
+      <span style="color:#9cdcfe">categories</span>: [
+        { <span style="color:#9cdcfe">id</span>:<span style="color:#ce9178">"cp1"</span>, <span style="color:#9cdcfe">nome</span>:<span style="color:#ce9178">"FEMMINE DI TERZA CLASSE"</span>, <span style="color:#9cdcfe">totale</span>:<span style="color:#b5cea8">4</span>, <span style="color:#9cdcfe">abbattuti</span>:<span style="color:#b5cea8">0</span>, ... },
+        <span style="color:#6a9955">// ... altre 5 categorie</span>
+      ]
+    },
+    <span style="color:#9cdcfe">tovel</span>: {
+      <span style="color:#9cdcfe">categories</span>: [
+        { <span style="color:#9cdcfe">id</span>:<span style="color:#ce9178">"tv1"</span>, <span style="color:#9cdcfe">nome</span>:<span style="color:#ce9178">"FEMMINE DI TERZA CLASSE"</span>, <span style="color:#9cdcfe">totale</span>:<span style="color:#b5cea8">4</span>, <span style="color:#9cdcfe">abbattuti</span>:<span style="color:#b5cea8">2</span>, ... },
+        <span style="color:#6a9955">// ... altre 5 categorie</span>
+      ]
+    }
+  }
+}
+</pre>
+</div>
+
+<div class="section">
+  <h3>Operazioni tipiche in React</h3>
+<pre style="background:#1e1e1e;color:#d4d4d4;padding:1.2rem;border-radius:10px;font-size:12px;line-height:1.7;font-family:monospace">
+<span style="color:#6a9955">// Caricare cervo (real-time)</span>
+<span style="color:#dcdcaa">onSnapshot</span>(doc(db, <span style="color:#ce9178">"species"</span>, <span style="color:#ce9178">"cervo"</span>), snap => setData(snap.data()))
+
+<span style="color:#6a9955">// Rettore tocca un quadratino</span>
+<span style="color:#dcdcaa">updateDoc</span>(doc(db, <span style="color:#ce9178">"species"</span>, <span style="color:#ce9178">"cervo"</span>), {
+  categories: newCategories,   <span style="color:#6a9955">// array aggiornato</span>
+  updatedAt: serverTimestamp()
+})
+
+<span style="color:#6a9955">// Reset stagione</span>
+<span style="color:#dcdcaa">updateDoc</span>(doc(db, <span style="color:#ce9178">"species"</span>, <span style="color:#ce9178">"cervo"</span>), {
+  categories: categories.map(c => ({...c, abbattuti: 0, stato: <span style="color:#ce9178">"aperto"</span>})),
+  updatedAt: serverTimestamp()
+})
+</pre>
+</div>
+
+<div class="section" style="background:#f0f4e8;border-radius:8px;padding:1rem">
+  <p style="margin:0;color:#5C6B3A"><strong>Totale documenti in Firestore:</strong> 3 (specie) + N post bacheca + M turni ruote.<br>
+  <strong>Letture per caricare l'app:</strong> 3 onSnapshot permanenti (uno per specie) + query bacheca.<br>
+  <strong>Costo mensile stimato:</strong> praticamente zero — Firestore free tier è 50.000 letture/giorno.</p>
+</div>

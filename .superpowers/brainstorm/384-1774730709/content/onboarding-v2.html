@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RiservApp — Benvenuto</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,600;0,700;0,800;1,400&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#EDEEE6;--bg-hdr:#D6DBCA;--green:#5C6B3A;--card:#fff;--border:#d0d5c4;--text:#1A1A14;--muted:#6B6B5A;--red:#8B1A1A;}
+body{background:#1c1c1e;display:flex;align-items:flex-start;justify-content:center;min-height:100vh;padding:32px 16px 48px;font-family:'EB Garamond',Georgia,serif;}
+.phone{width:390px;background:#000;border-radius:52px;padding:12px;flex-shrink:0;box-shadow:0 0 0 1px #3a3a3a,0 60px 120px rgba(0,0,0,.95),inset 0 1px 0 rgba(255,255,255,.08);position:relative;}
+.island{position:absolute;top:20px;left:50%;transform:translateX(-50%);width:120px;height:35px;background:#000;border-radius:18px;z-index:200;}
+.bs{position:absolute;background:#2a2a2a;border-radius:3px;}
+.bs.vu{left:-4px;top:145px;width:4px;height:32px}.bs.vd{left:-4px;top:190px;width:4px;height:32px}.bs.pw{right:-4px;top:170px;width:4px;height:64px}
+.screen{background:var(--bg);border-radius:44px;overflow:hidden;height:844px;display:flex;flex-direction:column;position:relative;}
+.status{height:54px;display:flex;align-items:flex-end;justify-content:space-between;padding:0 28px 10px;background:var(--bg);flex-shrink:0;}
+.status .t{font-size:15px;font-weight:700;color:var(--text);letter-spacing:-.3px;font-family:-apple-system,sans-serif;}
+.status .ic{display:flex;align-items:center;gap:6px;color:var(--text);}
+
+.step{display:none;flex:1;flex-direction:column;align-items:center;padding:32px 28px 40px;}
+.step.on{display:flex;}
+
+/* progress */
+.progress{display:flex;gap:6px;justify-content:center;margin-bottom:36px;}
+.pdot{width:8px;height:8px;border-radius:50%;background:var(--border);transition:all .25s;}
+.pdot.on{width:24px;border-radius:4px;background:var(--green);}
+
+/* logo */
+.logo-wrap{width:110px;height:110px;border-radius:50%;overflow:hidden;border:2.5px solid var(--border);margin-bottom:24px;box-shadow:0 4px 16px rgba(0,0,0,.1);}
+.logo-wrap img{width:100%;height:100%;object-fit:cover;}
+
+/* testi */
+.ttitle{font-size:26px;font-weight:800;color:var(--text);text-transform:uppercase;letter-spacing:-.02em;text-align:center;line-height:1.1;}
+.tsub{font-size:13px;color:var(--green);font-weight:600;text-transform:uppercase;letter-spacing:.08em;text-align:center;margin-top:5px;font-family:-apple-system,sans-serif;}
+.tdesc{font-size:15px;color:var(--muted);text-align:center;margin-top:20px;line-height:1.6;font-style:italic;}
+
+/* nome */
+.slabel{font-size:20px;font-weight:700;color:var(--text);text-align:center;margin-bottom:6px;}
+.ssub{font-size:14px;color:var(--muted);text-align:center;margin-bottom:28px;line-height:1.5;}
+.name-input{width:100%;padding:16px 18px;border:2px solid var(--border);border-radius:14px;font-family:'EB Garamond',serif;font-size:20px;font-weight:600;color:var(--text);background:#fff;outline:none;text-align:center;}
+.name-input::placeholder{color:#ccc;font-weight:400;}
+.name-input:focus{border-color:var(--green);}
+.name-input.err{border-color:var(--red);}
+
+/* permessi */
+.perm-list{width:100%;display:flex;flex-direction:column;gap:10px;margin-bottom:auto;}
+.perm-row{background:#fff;border:1px solid var(--border);border-radius:12px;padding:13px 15px;display:flex;align-items:center;gap:12px;}
+.perm-ico{width:38px;height:38px;background:var(--bg-hdr);border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.perm-txt{}
+.perm-name{font-size:14px;font-weight:700;color:var(--text);text-transform:uppercase;letter-spacing:.04em;}
+.perm-note{font-size:12px;color:var(--muted);margin-top:2px;line-height:1.4;}
+
+/* bottoni */
+.btn{width:100%;padding:16px;border:none;border-radius:24px;font-family:'EB Garamond',serif;font-size:17px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;cursor:pointer;}
+.btn.primary{background:var(--green);color:var(--bg);margin-top:auto;}
+.btn.primary:active{opacity:.85;}
+.btn.skip{background:none;font-size:13px;color:var(--muted);font-family:-apple-system,sans-serif;margin-top:8px;padding:10px;}
+</style>
+</head>
+<body>
+<div class="phone">
+  <div class="bs vu"></div><div class="bs vd"></div><div class="bs pw"></div>
+  <div class="island"></div>
+  <div class="screen">
+    <div class="status">
+      <span class="t">9:41</span>
+      <div class="ic">
+        <svg width="15" height="11" viewBox="0 0 16 12" fill="currentColor"><rect x="0" y="7" width="2.5" height="5" rx=".8" opacity=".3"/><rect x="4" y="4.5" width="2.5" height="7.5" rx=".8" opacity=".5"/><rect x="8" y="2" width="2.5" height="10" rx=".8" opacity=".8"/><rect x="12" y="0" width="2.5" height="12" rx=".8"/></svg>
+        <svg width="26" height="13" viewBox="0 0 27 13" fill="currentColor"><rect x=".5" y=".5" width="21" height="12" rx="3.5" stroke="currentColor" stroke-width="1" fill="none" opacity=".35"/><rect x="2" y="2" width="18" height="9" rx="2"/><path d="M23 4.5v4a2 2 0 0 0 0-4z" opacity=".45"/></svg>
+      </div>
+    </div>
+
+    <!-- STEP 1: BENVENUTO -->
+    <div class="step on" id="s1">
+      <div class="logo-wrap">
+        <img src="logo_tuenno.png" alt="" onerror="this.style.background='#D6DBCA'">
+      </div>
+      <div class="ttitle">RiservApp</div>
+      <div class="tsub">Riserva di Caccia di Tuenno</div>
+      <div class="tdesc">[testo di benvenuto — scrivi tu]</div>
+      <button class="btn primary" style="margin-top:auto" onclick="go(2)">Entra →</button>
+    </div>
+
+    <!-- STEP 2: NOME -->
+    <div class="step" id="s2">
+      <div class="progress">
+        <div class="pdot on"></div>
+        <div class="pdot"></div>
+      </div>
+      <div class="slabel">[Come ti chiami?]</div>
+      <div class="ssub">[testo — scrivi tu]</div>
+      <input class="name-input" id="nameInput" type="text" placeholder="Nome Cognome" autocomplete="name" autocapitalize="words">
+      <button class="btn primary" style="margin-top:32px" onclick="goNome()">Continua →</button>
+    </div>
+
+    <!-- STEP 3: PERMESSI -->
+    <div class="step" id="s3">
+      <div class="progress">
+        <div class="pdot"></div>
+        <div class="pdot on"></div>
+      </div>
+      <div class="slabel" style="margin-bottom:8px">[Titolo permessi]</div>
+      <div class="ssub">[testo introduttivo — scrivi tu]</div>
+
+      <div class="perm-list">
+        <div class="perm-row">
+          <div class="perm-ico">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#5C6B3A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+          </div>
+          <div class="perm-txt">
+            <div class="perm-name">Notifiche</div>
+            <div class="perm-note">[testo — scrivi tu]</div>
+          </div>
+        </div>
+        <div class="perm-row">
+          <div class="perm-ico">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#5C6B3A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>
+          </div>
+          <div class="perm-txt">
+            <div class="perm-name">Posizione</div>
+            <div class="perm-note">[testo — scrivi tu]</div>
+          </div>
+        </div>
+      </div>
+
+      <button class="btn primary" onclick="fine()">Accetta e continua</button>
+      <button class="btn skip" onclick="fine()">Non ora</button>
+    </div>
+
+  </div>
+</div>
+
+<script>
+function go(n){
+  document.querySelectorAll('.step').forEach(s=>s.classList.remove('on'));
+  document.getElementById('s'+n).classList.add('on');
+}
+function goNome(){
+  const inp=document.getElementById('nameInput');
+  if(!inp.value.trim()){inp.classList.add('err');inp.focus();return;}
+  inp.classList.remove('err');
+  go(3);
+}
+function fine(){
+  alert('Onboarding completato!');
+}
+</script>
+</body>
+</html>

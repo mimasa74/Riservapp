@@ -1,0 +1,77 @@
+<h2>Opzione B vs Opzione C — confronto</h2>
+<p class="subtitle">Come cambia la struttura Firestore e le conseguenze pratiche</p>
+
+<div class="split">
+
+<div class="mockup">
+  <div class="mockup-header">B — Documento per specie</div>
+  <div class="mockup-body">
+<pre style="font-size:11px;line-height:1.6;font-family:monospace;color:#d4d4d4">
+/species/cervo          ← 1 documento
+
+  categories: [
+    { id:"ce1", abbattuti:6, ... },
+    { id:"ce2", abbattuti:1, ... },
+    { id:"ce3", abbattuti:0, ... },
+    { id:"ce4", abbattuti:0, ... },
+  ]
+</pre>
+
+<hr style="border-color:#333;margin:10px 0">
+<p style="font-size:12px;color:#aaa;margin:4px 0"><strong style="color:#4ec9b0">✓ Lettura:</strong> 1 sola query per caricare tutto</p>
+<p style="font-size:12px;color:#aaa;margin:4px 0"><strong style="color:#4ec9b0">✓ Real-time:</strong> onSnapshot su 1 doc → aggiornamenti istantanei</p>
+<p style="font-size:12px;color:#aaa;margin:4px 0"><strong style="color:#4ec9b0">✓ Costo:</strong> 1 lettura per caricare la specie</p>
+<p style="font-size:12px;color:#aaa;margin:4px 0"><strong style="color:#ce9178">✗ Scrittura:</strong> aggiornare 1 quadratino = riscrivere l'intero array categories</p>
+<p style="font-size:12px;color:#aaa;margin:4px 0"><strong style="color:#ce9178">✗ Conflitti:</strong> se due admin toccano due categorie diverse nello stesso istante → una modifica vince, l'altra si perde</p>
+  </div>
+</div>
+
+<div class="mockup">
+  <div class="mockup-header">C — Documento per categoria (subcollection)</div>
+  <div class="mockup-body">
+<pre style="font-size:11px;line-height:1.6;font-family:monospace;color:#d4d4d4">
+/species/cervo          ← documento padre
+  /categories/ce1       ← subdoc
+    { abbattuti:6, ... }
+  /categories/ce2
+    { abbattuti:1, ... }
+  /categories/ce3
+    { abbattuti:0, ... }
+  /categories/ce4
+    { abbattuti:0, ... }
+</pre>
+
+<hr style="border-color:#333;margin:10px 0">
+<p style="font-size:12px;color:#aaa;margin:4px 0"><strong style="color:#4ec9b0">✓ Scrittura atomica:</strong> aggiornare 1 quadratino = scrivere solo 1 documento piccolo</p>
+<p style="font-size:12px;color:#aaa;margin:4px 0"><strong style="color:#4ec9b0">✓ Zero conflitti:</strong> ogni categoria è indipendente</p>
+<p style="font-size:12px;color:#aaa;margin:4px 0"><strong style="color:#4ec9b0">✓ Real-time:</strong> onSnapshot per categoria → aggiornamento chirurgico</p>
+<p style="font-size:12px;color:#aaa;margin:4px 0"><strong style="color:#ce9178">✗ Lettura:</strong> query su subcollection per caricare tutte le categorie</p>
+<p style="font-size:12px;color:#aaa;margin:4px 0"><strong style="color:#ce9178">✗ Costo:</strong> 4 letture (cervo) o 6 (camoscio per zona) invece di 1</p>
+  </div>
+</div>
+
+</div>
+
+<div class="section" style="margin-top:1.5rem">
+  <h3>Il fattore decisivo: quanti admin ci sono?</h3>
+  <div class="options">
+    <div class="option" data-choice="b" onclick="toggleSelect(this)">
+      <div class="letter">B</div>
+      <div class="content">
+        <h3>1 solo Rettore</h3>
+        <p>Non ci sono mai due persone che modificano contemporaneamente → il rischio conflitti è teorico. L'opzione B è più semplice da implementare e da mantenere. <strong>Raccomandato.</strong></p>
+      </div>
+    </div>
+    <div class="option" data-choice="c" onclick="toggleSelect(this)">
+      <div class="letter">C</div>
+      <div class="content">
+        <h3>Più admin in futuro?</h3>
+        <p>Se prevedi di avere più persone che modificano dati contemporaneamente (es. vice-rettore), l'opzione C elimina il problema alla radice. Leggermente più complessa da implementare.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section" style="background:#f0f4e8;border-radius:8px;padding:1rem">
+  <p style="margin:0;color:#5C6B3A"><strong>In pratica:</strong> con 1 solo Rettore e al massimo 45 capi abbattuti in tutta la stagione, la differenza di costo e complessità tra B e C è irrilevante. La scelta è principalmente di preferenza architetturale.</p>
+</div>

@@ -1,0 +1,60 @@
+{
+  "cervo": {
+    "id": "cervo",
+    "nome": "Cervo",
+    "nomeInglese": "Deer",
+    "logoUrl": "/icons/cervo.png",
+    "categorie": [
+      { "id": "ce1", "nome": "MASCHI PALCUTI", "badgeChiusura": "CHIUSI", "totale": 6, "abbattuti": 6, "stato": "chiuso" },
+      { "id": "ce2", "nome": "MASCHI DI UN ANNO (FUSONI)", "badgeChiusura": "CHIUSI", "totale": 4, "abbattuti": 0, "stato": "aperto" },
+      { "id": "ce3", "nome": "FEMMINE", "badgeChiusura": "CHIUSE", "totale": 6, "abbattuti": 0, "stato": "aperto" },
+      { "id": "ce4", "nome": "PICCOLI", "badgeChiusura": "CHIUSI", "totale": 8, "abbattuti": 0, "stato": "sospeso" }
+    ],
+    "note": "I GIORNI DI CACCIA SONO: MERCOLEDÌ E SABATO FINO A FINE AGOSTO 2024.\nDAL 01 SETTEMBRE I GIORNI DI CACCIA SONO MERCOLEDÌ, SABATO E DOMENICA",
+    "alert": "SABATO 7 SETTEMBRE 2024 CACCIA CHIUSA",
+    "ruota": { "testo": "", "foto": [] }
+  },
+  "capriolo": {
+    "id": "capriolo",
+    "nome": "Capriolo",
+    "nomeInglese": "Roe Deer",
+    "logoUrl": "/icons/capriolo.png",
+    "categorie": [
+      { "id": "ca1", "nome": "MASCHI DI PRIMA CLASSE", "badgeChiusura": "CHIUSI", "totale": 6, "abbattuti": 0, "stato": "aperto" },
+      { "id": "ca2", "nome": "MASCHI DI SECONDA CLASSE", "badgeChiusura": "CHIUSI", "totale": 6, "abbattuti": 0, "stato": "aperto" },
+      { "id": "ca3", "nome": "FEMMINE ADULTE", "badgeChiusura": "CHIUSE", "totale": 6, "abbattuti": 0, "stato": "aperto" },
+      { "id": "ca4", "nome": "FEMMINE PICCOLE", "badgeChiusura": "CHIUSE", "totale": 6, "abbattuti": 0, "stato": "aperto" }
+    ],
+    "note": "I GIORNI DI CACCIA SONO: MERCOLEDÌ E SABATO.",
+    "alert": "ATTENZIONE AI CONFINI DI ZONA",
+    "ruota": []
+  },
+  "camoscio": {
+    "id": "camoscio",
+    "nome": "Camoscio",
+    "nomeInglese": "Chamois",
+    "logoUrl": "/icons/camoscio.png",
+    "subZone": [
+      { "id": "campa", "nome": "Zona Campa - Spora" },
+      { "id": "tovel", "nome": "Zona Tovel - Mondifrà" }
+    ],
+    "categorie": [
+      { "id": "cam1_f3",   "nome": "FEMMINE DI TERZA CLASSE",  "descrizione": "(capi di 1 anno)",   "badgeChiusura": "CHIUSE", "totale": 4, "abbattuti": 0, "stato": "aperto" },
+      { "id": "cam1_f2",   "nome": "FEMMINE DI SECONDA",       "descrizione": "(dai 2 ai 10 anni)", "badgeChiusura": "CHIUSE", "totale": 0, "abbattuti": 0, "stato": "sospeso" },
+      { "id": "cam1_f1",   "nome": "FEMMINE DI PRIMA CLASSE",  "descrizione": "(11 anni e più)",    "badgeChiusura": "CHIUSE", "totale": 4, "abbattuti": 0, "stato": "aperto" },
+      { "id": "cam1_m3",   "nome": "MASCHI DI TERZA CLASSE",   "descrizione": "(capi di 1 anno)",   "badgeChiusura": "CHIUSI", "totale": 4, "abbattuti": 0, "stato": "aperto" },
+      { "id": "cam1_m2",   "nome": "MASCHI DI SECONDA CLASSE", "descrizione": "(dai 2 ai 5 anni)",  "badgeChiusura": "CHIUSI", "totale": 0, "abbattuti": 0, "stato": "sospeso" },
+      { "id": "cam1_m1",   "nome": "MASCHI DI PRIMA CLASSE",   "descrizione": "(6 anni e più)",     "badgeChiusura": "CHIUSI", "totale": 4, "abbattuti": 0, "stato": "aperto" },
+      { "id": "cam2_f3",   "nome": "FEMMINE DI TERZA CLASSE",  "descrizione": "(capi di 1 anno)",   "badgeChiusura": "CHIUSE", "totale": 4, "abbattuti": 0, "stato": "aperto" },
+      { "id": "cam2_f2",   "nome": "FEMMINE DI SECONDA",       "descrizione": "(dai 2 ai 10 anni)", "badgeChiusura": "CHIUSE", "totale": 0, "abbattuti": 0, "stato": "sospeso" },
+      { "id": "cam2_f1",   "nome": "FEMMINE DI PRIMA CLASSE",  "descrizione": "(11 anni e più)",    "badgeChiusura": "CHIUSE", "totale": 4, "abbattuti": 0, "stato": "aperto" },
+      { "id": "cam2_m3",   "nome": "MASCHI DI TERZA CLASSE",   "descrizione": "(capi di 1 anno)",   "badgeChiusura": "CHIUSI", "totale": 4, "abbattuti": 0, "stato": "aperto" },
+      { "id": "cam2_m2",   "nome": "MASCHI DI SECONDA CLASSE", "descrizione": "(dai 2 ai 5 anni)",  "badgeChiusura": "CHIUSI", "totale": 0, "abbattuti": 0, "stato": "sospeso" },
+      { "id": "cam2_m1",   "nome": "MASCHI DI PRIMA CLASSE",   "descrizione": "(6 anni e più)",     "badgeChiusura": "CHIUSI", "totale": 4, "abbattuti": 0, "stato": "aperto" }
+    ],
+    "note": "I GIORNI DI CACCIA SONO: MERCOLEDÌ E SABATO FINO A FINE AGOSTO 2024.\nDAL 01 SETTEMBRE I GIORNI DI CACCIA SONO MERCOLEDÌ, SABATO E DOMENICA",
+    "alert": "SABATO 7 SETTEMBRE 2024 CACCIA CHIUSA",
+    "penalita": "YARLING ASSEGNATI PER PENALITÀ: COVA SAMUELE,",
+    "ruota": []
+  }
+}

@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RiservApp — Modalità Rettore</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,600;0,700;0,800;1,400&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#EDEEE6;--bg-hdr:#D6DBCA;--green:#5C6B3A;--card:#fff;--border:#d0d5c4;--text:#1A1A14;--muted:#6B6B5A;--red:#8B1A1A;--redbg:#FDF0F0;}
+body{background:#1c1c1e;display:flex;align-items:flex-start;justify-content:center;min-height:100vh;padding:32px 16px 48px;font-family:'EB Garamond',Georgia,serif;}
+.phone{width:390px;background:#000;border-radius:52px;padding:12px;flex-shrink:0;box-shadow:0 0 0 1px #3a3a3a,0 60px 120px rgba(0,0,0,.95),inset 0 1px 0 rgba(255,255,255,.08);position:relative;}
+.island{position:absolute;top:20px;left:50%;transform:translateX(-50%);width:120px;height:35px;background:#000;border-radius:18px;z-index:200;}
+.bs{position:absolute;background:#2a2a2a;border-radius:3px;}
+.bs.vu{left:-4px;top:145px;width:4px;height:32px}.bs.vd{left:-4px;top:190px;width:4px;height:32px}.bs.pw{right:-4px;top:170px;width:4px;height:64px}
+.screen{background:var(--bg);border-radius:44px;overflow:hidden;height:844px;display:flex;flex-direction:column;position:relative;}
+.status{height:54px;display:flex;align-items:flex-end;justify-content:space-between;padding:0 28px 10px;background:var(--bg);flex-shrink:0;}
+.status .t{font-size:15px;font-weight:700;color:var(--text);letter-spacing:-.3px;font-family:-apple-system,sans-serif;}
+.status .ic{display:flex;align-items:center;gap:6px;color:var(--text);}
+.dots{display:flex;justify-content:center;gap:7px;padding:5px 0;flex-shrink:0;background:var(--bg);}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--border);cursor:pointer;transition:all .2s;}
+.dot.on{width:20px;border-radius:4px;background:var(--green);}
+/* VIEWS */
+.view{display:none;flex:1;overflow-y:auto;overflow-x:hidden;padding:10px 16px 16px;flex-direction:column;}
+.view::-webkit-scrollbar{display:none;}
+.view.on{display:flex;}
+/* BOTTOM NAV */
+.bnav{background:#fdfdfc;border-top:1px solid var(--border);height:68px;display:flex;align-items:center;justify-content:space-around;flex-shrink:0;padding-bottom:8px;}
+.nb{display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 10px;border:none;background:none;cursor:pointer;border-radius:12px;transition:background .15s;}
+.nb:active{transform:scale(.9);}
+.nb.on{background:var(--bg-hdr);}
+.nb svg{stroke:var(--border);transition:stroke .15s;}
+.nb.on svg{stroke:var(--green);}
+.nb span{font-family:-apple-system,sans-serif;font-size:10px;color:var(--muted);}
+.nb.on span{color:var(--green);font-weight:700;}
+/* SPECIES HEADER */
+.sphdr{background:#ECEDE1;border-radius:18px;padding:14px 16px;display:flex;align-items:center;gap:14px;margin-bottom:14px;position:relative;flex-shrink:0;}
+.logo{width:72px;height:72px;border:2.5px solid var(--green);border-radius:50%;overflow:hidden;background:#fff;display:flex;align-items:center;justify-content:center;flex-shrink:0;cursor:pointer;position:relative;touch-action:none;}
+.logo img{width:100%;height:100%;object-fit:cover;}
+.adot{position:absolute;bottom:4px;right:4px;width:11px;height:11px;background:var(--green);border-radius:50%;border:2px solid #fff;}
+.htxt{flex:1;}
+.hsub{font-size:12px;font-weight:600;color:var(--green);text-transform:uppercase;letter-spacing:.08em;font-family:-apple-system,sans-serif;}
+.htitle{font-size:24px;font-weight:800;color:var(--text);text-transform:uppercase;line-height:1.1;letter-spacing:-.02em;}
+.hadmin{font-size:10px;font-weight:700;color:var(--green);text-transform:uppercase;letter-spacing:.1em;font-family:-apple-system,sans-serif;margin-top:2px;}
+.gbtn{position:absolute;top:12px;right:12px;width:32px;height:32px;border-radius:50%;background:rgba(92,107,58,.15);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+.gbtn:active{background:rgba(92,107,58,.3);}
+/* ZONE TABS */
+.ztabs{display:flex;gap:8px;margin-bottom:12px;flex-shrink:0;}
+.ztab{flex:1;padding:9px 10px;border-radius:20px;font-size:13px;font-weight:700;border:1.5px solid var(--border);cursor:pointer;transition:all .2s;font-family:'EB Garamond',serif;background:transparent;color:var(--green);}
+.ztab.on{background:var(--green);color:var(--bg);border-color:var(--green);}
+/* CATEGORY CARD */
+.ccat{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:10px;flex-shrink:0;}
+.chead{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:6px;}
+.cname{font-size:16px;font-weight:700;color:var(--text);text-transform:uppercase;letter-spacing:.02em;line-height:1.4;flex:1;}
+.cdesc{font-size:12px;color:var(--muted);margin-top:2px;}
+.bch{font-size:14px;font-weight:700;color:var(--red);text-transform:uppercase;letter-spacing:.05em;flex-shrink:0;}
+.cfoot{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:4px;}
+
+/* BOXES */
+.boxes{display:flex;flex-wrap:wrap;gap:5px;}
+.box{width:24px;height:24px;border:1.5px solid var(--green);border-radius:3px;background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .12s;flex-shrink:0;}
+.box:active{transform:scale(.82);}
+.box.x{background:#fff;border-color:var(--red);}
+.box.x .xi{display:block;}.xi{display:none;}
+/* NOTES */
+.ncard{background:var(--card);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:10px;flex-shrink:0;}
+.nsec{padding:12px 14px;}.nsec.pen{background:#F5F6EF;}
+.ndiv{height:1px;background:var(--border);}
+textarea.ei,input.ei{width:100%;border:1px solid var(--border);border-radius:8px;padding:7px 10px;font-family:'EB Garamond',serif;font-size:13px;color:var(--text);text-transform:uppercase;background:#f8f8f4;outline:none;resize:none;line-height:1.5;}
+textarea.ei:focus,input.ei:focus{border-color:var(--green);}
+input.ei.al{color:var(--red);font-weight:700;text-align:center;}
+.ts{text-align:center;font-size:11px;color:var(--muted);font-style:italic;padding:4px 0 8px;flex-shrink:0;}
+.rbtn{width:100%;padding:14px;background:var(--green);color:var(--bg);border:none;border-radius:24px;font-family:'EB Garamond',serif;font-size:15px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;margin-top:4px;flex-shrink:0;}
+.rbtn:active{opacity:.85;}
+/* BACHECA */
+.bhdr{background:var(--bg-hdr);border-radius:18px;padding:16px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+.btitle{font-size:22px;font-weight:800;color:var(--text);text-transform:uppercase;}
+.bsub{font-size:12px;color:var(--green);font-weight:600;text-transform:uppercase;letter-spacing:.06em;font-family:-apple-system,sans-serif;}
+.addp{width:40px;height:40px;background:var(--green);border:none;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.addp:active{transform:scale(.9);}
+.pcard{background:var(--card);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:10px;position:relative;flex-shrink:0;}
+.pcard.av{border-color:var(--green);border-width:1.5px;}.pcard.al{border-color:var(--red);border-width:1.5px;background:var(--redbg);}
+.pbar{height:3px;}.pbar.no{background:var(--border);}.pbar.av{background:var(--green);}.pbar.al{background:var(--red);}
+.pbody{padding:11px 13px;}
+.pmeta{display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;}
+.ptipo{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;font-family:-apple-system,sans-serif;}
+.ptipo.no{color:var(--muted)}.ptipo.av{color:var(--green)}.ptipo.al{color:var(--red)}
+.pdate{font-size:11px;color:var(--muted);font-family:-apple-system,sans-serif;}
+.ptxt{font-size:14px;color:var(--text);line-height:1.5;}.ptxt.al{font-weight:700;color:var(--red);}
+.ppdf{display:flex;align-items:center;gap:6px;margin-top:7px;padding:7px 9px;background:#f0f1eb;border-radius:8px;font-size:12px;color:var(--green);font-weight:600;font-family:-apple-system,sans-serif;}
+.delbtn{position:absolute;top:9px;right:9px;width:26px;height:26px;background:rgba(139,26,26,.1);border:none;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+.delbtn:active{background:rgba(139,26,26,.3);}
+/* OVERLAYS */
+.ov{display:none;position:absolute;top:0;left:0;right:0;bottom:0;background:var(--bg);z-index:100;overflow-y:auto;padding:10px 16px 24px;}
+.ov::-webkit-scrollbar{display:none;}.ov.on{display:block;}
+.ovnav{display:flex;align-items:center;gap:12px;margin-bottom:16px;}
+.bkbtn{width:38px;height:38px;background:var(--bg-hdr);border:none;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.ovtitle{font-size:16px;font-weight:700;color:var(--text);text-transform:uppercase;letter-spacing:.03em;}
+/* RUOTA */
+.rcard{background:var(--card);border:1px solid var(--border);border-radius:14px;overflow:hidden;}
+.rchead{background:var(--green);padding:13px 16px;display:flex;justify-content:space-between;align-items:center;}
+.rctitle{font-size:14px;font-weight:700;color:#fff;text-transform:uppercase;letter-spacing:.05em;font-family:-apple-system,sans-serif;}
+.addbtn{width:30px;height:30px;background:rgba(255,255,255,.2);border:none;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+.addbtn:active{background:rgba(255,255,255,.4);}
+.trow{display:flex;justify-content:space-between;align-items:center;padding:13px 16px;border-bottom:1px solid #f2f2f0;}
+.trow:last-child{border-bottom:none;}
+.tnome{font-size:15px;font-weight:700;color:var(--text);text-transform:uppercase;}
+.tdata{font-size:13px;color:var(--muted);margin-top:2px;}
+.tdel{width:30px;height:30px;background:none;border:none;cursor:pointer;color:#ccc;display:flex;align-items:center;justify-content:center;}
+.tdel:active{color:var(--red);}
+/* IMPOSTAZIONI */
+.isec{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;font-family:-apple-system,sans-serif;margin:14px 0 7px;}
+.icard{background:var(--card);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:4px;}
+.irow{display:flex;justify-content:space-between;align-items:center;padding:11px 14px;border-bottom:1px solid #f2f2f0;gap:10px;}
+.irow:last-child{border-bottom:none;}
+.ilabel{font-size:13px;font-weight:600;color:var(--text);text-transform:uppercase;flex:1;}
+.ilabel small{font-size:11px;color:var(--muted);font-weight:400;display:block;text-transform:none;margin-top:1px;}
+.inum{width:52px;padding:5px 7px;border:1px solid var(--border);border-radius:8px;font-size:15px;font-weight:700;text-align:center;color:var(--text);outline:none;font-family:'EB Garamond',serif;}
+.inum:focus{border-color:var(--green);}
+.stog{display:flex;gap:3px;}
+.sbtn{padding:4px 9px;border-radius:20px;border:1.5px solid var(--border);font-size:11px;font-weight:700;cursor:pointer;font-family:-apple-system,sans-serif;text-transform:uppercase;color:var(--muted);background:#fff;}
+.sbtn.ap.on{background:#e8f0da;border-color:var(--green);color:var(--green);}
+.sbtn.cl.on{background:var(--redbg);border-color:var(--red);color:var(--red);}
+.nsbtn{width:100%;padding:13px;background:var(--redbg);border:1.5px solid var(--red);border-radius:12px;font-family:'EB Garamond',serif;font-size:15px;font-weight:700;color:var(--red);text-transform:uppercase;letter-spacing:.04em;cursor:pointer;margin-top:18px;}
+.nsbtn:active{background:#f5dddd;}
+.dw{font-size:12px;color:var(--muted);text-align:center;margin-top:6px;font-style:italic;}
+/* MODAL POST */
+.moverlay{display:none;position:absolute;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.5);z-index:200;align-items:flex-end;}
+.moverlay.on{display:flex;}
+.msheet{background:#fff;border-radius:24px 24px 0 0;padding:18px 16px 28px;width:100%;}
+.mhandle{width:36px;height:4px;background:#ddd;border-radius:2px;margin:0 auto 14px;}
+.mtitle{font-size:16px;font-weight:700;text-transform:uppercase;margin-bottom:12px;color:var(--text);}
+.tsel{display:flex;gap:7px;margin-bottom:12px;}
+.tbtn{flex:1;padding:8px 4px;border-radius:8px;border:1.5px solid var(--border);font-size:12px;font-weight:700;cursor:pointer;text-align:center;font-family:-apple-system,sans-serif;text-transform:uppercase;color:var(--muted);background:#fff;}
+.tbtn.on.no{border-color:var(--muted);background:#f5f5f5;color:var(--text);}
+.tbtn.on.av{border-color:var(--green);background:#e8f0da;color:var(--green);}
+.tbtn.on.al{border-color:var(--red);background:var(--redbg);color:var(--red);}
+.mta{width:100%;min-height:80px;padding:9px 11px;border:1px solid var(--border);border-radius:10px;font-family:'EB Garamond',serif;font-size:14px;outline:none;resize:none;line-height:1.5;margin-bottom:9px;}
+.mta:focus{border-color:var(--green);}
+.matt{display:flex;gap:7px;margin-bottom:12px;}
+.atbtn{flex:1;padding:8px;border:1.5px dashed var(--border);border-radius:10px;background:none;font-size:12px;font-weight:600;color:var(--muted);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;font-family:-apple-system,sans-serif;}
+.pubbn{width:100%;padding:13px;background:var(--green);color:#fff;border:none;border-radius:24px;font-family:'EB Garamond',serif;font-size:15px;font-weight:700;text-transform:uppercase;cursor:pointer;}
+/* CONFIRM */
+.cfov{display:none;position:absolute;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.6);z-index:300;align-items:center;justify-content:center;padding:20px;}
+.cfov.on{display:flex;}
+.cfbox{background:#fff;border-radius:20px;padding:22px 18px;width:100%;text-align:center;}
+.cficon{font-size:38px;margin-bottom:10px;}
+.cftitle{font-size:18px;font-weight:700;color:var(--text);margin-bottom:7px;text-transform:uppercase;}
+.cftext{font-size:13px;color:var(--muted);line-height:1.5;margin-bottom:18px;}
+.cfbtns{display:flex;gap:9px;}
+.cfno{flex:1;padding:12px;border:1.5px solid var(--border);border-radius:12px;background:none;font-size:14px;font-weight:600;cursor:pointer;font-family:'EB Garamond',serif;color:var(--text);}
+.cfok{flex:1;padding:12px;border:none;border-radius:12px;background:var(--red);color:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:'EB Garamond',serif;text-transform:uppercase;}
+/* TOAST */
+.toast{position:absolute;top:62px;left:50%;transform:translateX(-50%);background:var(--green);color:#fff;padding:7px 16px;border-radius:20px;font-size:12px;font-weight:700;font-family:-apple-system,sans-serif;text-transform:uppercase;letter-spacing:.06em;z-index:400;white-space:nowrap;opacity:0;pointer-events:none;transition:opacity .3s;}
+.toast.on{opacity:1;}
+</style>
+</head>
+<body>
+<div class="phone">
+  <div class="bs vu"></div><div class="bs vd"></div><div class="bs pw"></div>
+  <div class="island"></div>
+  <div class="screen" id="screen">
+    <div class="status">
+      <span class="t">9:41</span>
+      <div class="ic">
+        <svg width="15" height="11" viewBox="0 0 16 12" fill="currentColor"><rect x="0" y="7" width="2.5" height="5" rx=".8" opacity=".3"/><rect x="4" y="4.5" width="2.5" height="7.5" rx=".8" opacity=".5"/><rect x="8" y="2" width="2.5" height="10" rx=".8" opacity=".8"/><rect x="12" y="0" width="2.5" height="12" rx=".8"/></svg>
+        <svg width="15" height="11" viewBox="0 0 16 11" fill="currentColor"><path d="M8 7.5a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3z"/><path d="M3 5.2C4.4 3.8 6.1 3 8 3s3.6.8 5 2.2l1.4-1.4C12.7 2.1 10.5 1 8 1S3.3 2.1 1.6 3.8L3 5.2z" opacity=".6"/></svg>
+        <svg width="26" height="13" viewBox="0 0 27 13" fill="currentColor"><rect x=".5" y=".5" width="21" height="12" rx="3.5" stroke="currentColor" stroke-width="1" fill="none" opacity=".35"/><rect x="2" y="2" width="18" height="9" rx="2"/><path d="M23 4.5v4a2 2 0 0 0 0-4z" opacity=".45"/></svg>
+      </div>
+    </div>
+    <div class="toast" id="toast">✓ Modalità Rettore</div>
+    <div class="dots" id="dots"></div>
+
+    <!-- BACHECA -->
+    <div class="view on" id="vb">
+      <div class="bhdr"><div><div class="bsub">Riserva di Caccia di Tuenno</div><div class="btitle">Bacheca</div></div><button class="addp" onclick="openModal()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg></button></div>
+      <div id="feed">
+        <div class="pcard al"><div class="pbar al"></div><div class="pbody"><div class="pmeta"><span class="ptipo al">⚠ Alert urgente</span><span class="pdate">27/03 ore 08:15</span></div><p class="ptxt al">SABATO 29 MARZO 2026 — CACCIA CHIUSA PER FESTIVITÀ COMUNALE</p></div><button class="delbtn" onclick="delPost(this)"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#8B1A1A" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button></div>
+        <div class="pcard av"><div class="pbar av"></div><div class="pbody"><div class="pmeta"><span class="ptipo av">↑ Avviso</span><span class="pdate">24/03 ore 17:30</span></div><p class="ptxt">Riunione soci confermata per giovedì 3 aprile ore 20:30 presso la sede. Presenza obbligatoria.</p><div class="ppdf"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>Convocazione_assemblea_2026.pdf</div></div><button class="delbtn" onclick="delPost(this)"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#8B1A1A" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button></div>
+        <div class="pcard no"><div class="pbar no"></div><div class="pbody"><div class="pmeta"><span class="ptipo no">Comunicazione</span><span class="pdate">20/03 ore 11:00</span></div><p class="ptxt">Si ricorda a tutti i soci di verificare la scadenza del porto d'armi prima dell'apertura della stagione.</p></div><button class="delbtn" onclick="delPost(this)"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#8B1A1A" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button></div>
+      </div>
+    </div>
+
+    <!-- CAPRIOLO -->
+    <div class="view" id="vc">
+      <div class="sphdr">
+        <div class="logo" onpointerdown="lp(event)" onpointerup="clp()" onpointerleave="clp()"><img src="/mnt/user-data/uploads/capriolo.png" alt="" onerror="this.outerHTML='<span style=font-size:32px>🦌</span>'"><div class="adot"></div></div>
+        <div class="htxt"><div class="hsub">Assegnazioni 2026</div><div class="htitle">Capriolo</div><div class="hadmin">● Modalità Rettore</div></div>
+        <button class="gbtn" onclick="openImp('capriolo')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#5C6B3A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
+      </div>
+      <div id="cats-capriolo"></div>
+      <div class="ncard"><div class="nsec"><textarea class="ei" rows="3">I GIORNI DI CACCIA SONO: MERCOLEDÌ E SABATO FINO A FINE AGOSTO 2026.&#10;DAL 01 SETTEMBRE I GIORNI DI CACCIA SONO MERCOLEDÌ, SABATO E DOMENICA.</textarea></div><div class="ndiv"></div><div class="nsec"><input class="ei al" value="SABATO 29 MARZO 2026 CACCIA CHIUSA"></div></div>
+      <div class="ts">Ultimo aggiornamento: 27/03/2026 ore 14:32</div>
+      <button class="rbtn" onclick="openRuota('capriolo')">Ruote e Squadre <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></button>
+    </div>
+
+    <!-- CERVO -->
+    <div class="view" id="vce">
+      <div class="sphdr">
+        <div class="logo" onpointerdown="lp(event)" onpointerup="clp()" onpointerleave="clp()"><img src="/mnt/user-data/uploads/cervo.png" alt="" onerror="this.outerHTML='<span style=font-size:32px>🦌</span>'"><div class="adot"></div></div>
+        <div class="htxt"><div class="hsub">Assegnazioni 2026</div><div class="htitle">Cervo</div><div class="hadmin">● Modalità Rettore</div></div>
+        <button class="gbtn" onclick="openImp('cervo')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#5C6B3A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
+      </div>
+      <div id="cats-cervo"></div>
+      <div class="ncard"><div class="nsec"><textarea class="ei" rows="3">I GIORNI DI CACCIA SONO: MERCOLEDÌ E SABATO FINO A FINE AGOSTO 2026.&#10;DAL 01 SETTEMBRE I GIORNI DI CACCIA SONO MERCOLEDÌ, SABATO E DOMENICA.</textarea></div><div class="ndiv"></div><div class="nsec"><input class="ei al" value="SABATO 29 MARZO 2026 CACCIA CHIUSA"></div></div>
+      <div class="ts">Ultimo aggiornamento: 27/03/2026 ore 14:32</div>
+      <button class="rbtn" onclick="openRuota('cervo')">Ruote e Squadre <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></button>
+    </div>
+
+    <!-- CAMOSCIO -->
+    <div class="view" id="vcam">
+      <div class="sphdr">
+        <div class="logo" onpointerdown="lp(event)" onpointerup="clp()" onpointerleave="clp()"><img src="/mnt/user-data/uploads/camoscio.png" alt="" onerror="this.outerHTML='<span style=font-size:32px>🐐</span>'"><div class="adot"></div></div>
+        <div class="htxt"><div class="hsub">Assegnazioni 2026 Estiva</div><div class="htitle">Camoscio</div><div class="hadmin">● Modalità Rettore</div></div>
+        <button class="gbtn" onclick="openImp('camoscio')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#5C6B3A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
+      </div>
+      <div class="ztabs"><button class="ztab on" id="zt-campa" onclick="sz('campa')">Zona Campa - Spora</button><button class="ztab" id="zt-tovel" onclick="sz('tovel')">Zona Tovel - Mondifrà</button></div>
+      <div id="cats-campa"></div><div id="cats-tovel" style="display:none"></div>
+      <div class="ncard"><div class="nsec pen"><textarea class="ei" rows="2">YARLING ASSEGNATI PER PENALITÀ: COVA SAMUELE</textarea></div><div class="ndiv"></div><div class="nsec"><textarea class="ei" rows="3">I GIORNI DI CACCIA SONO: MERCOLEDÌ E SABATO FINO A FINE AGOSTO 2026.&#10;DAL 01 SETTEMBRE I GIORNI DI CACCIA SONO MERCOLEDÌ, SABATO E DOMENICA.</textarea></div><div class="ndiv"></div><div class="nsec"><input class="ei al" value="SABATO 29 MARZO 2026 CACCIA CHIUSA"></div></div>
+      <div class="ts">Ultimo aggiornamento: 27/03/2026 ore 10:15</div>
+      <button class="rbtn" onclick="openRuota('camoscio')">Ruote e Squadre <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></button>
+    </div>
+
+    <!-- BOTTOM NAV -->
+    <div class="bnav">
+      <button class="nb on" id="nb0" onclick="goTo(0)"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><span>Bacheca</span></button>
+      <button class="nb" id="nb1" onclick="goTo(1)"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="10" rx="8" ry="5"/><path d="M4 10c0 4.4 3.6 8 8 8s8-3.6 8-8"/><line x1="12" y1="15" x2="12" y2="22"/></svg><span>Capriolo</span></button>
+      <button class="nb" id="nb2" onclick="goTo(2)"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l2 5h5l-4 3 2 5-5-3-5 3 2-5-4-3h5z"/></svg><span>Cervo</span></button>
+      <button class="nb" id="nb3" onclick="goTo(3)"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l4-8 5 5 3-4 5 7H3z"/></svg><span>Camoscio</span></button>
+    </div>
+
+    <!-- OVERLAY RUOTA -->
+    <div class="ov" id="ovRuota">
+      <div class="ovnav"><button class="bkbtn" onclick="closeRuota()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1A1A14" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></button><div class="ovtitle" id="rtitle">Ruote e Squadre</div></div>
+      <div class="rcard"><div class="rchead"><span class="rctitle" id="rctitle">Lista Caccia</span><button class="addbtn" onclick="addTurno()"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg></button></div><div id="rlist"></div></div>
+    </div>
+
+    <!-- OVERLAY IMPOSTAZIONI -->
+    <div class="ov" id="ovImp">
+      <div class="ovnav"><button class="bkbtn" onclick="closeImp()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1A1A14" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></button><div class="ovtitle" id="ititle">Impostazioni</div></div>
+      <div class="isec">Anno stagione</div>
+      <div class="icard"><div style="display:flex;justify-content:space-between;align-items:center;padding:12px 14px"><span style="font-size:14px;font-weight:700;color:var(--text)">Anno corrente</span><input style="width:78px;padding:6px 10px;border:1.5px solid var(--green);border-radius:8px;font-size:18px;font-weight:700;text-align:center;color:var(--green);outline:none;font-family:'EB Garamond',serif" type="number" value="2026"></div></div>
+      <div class="isec">Configurazione categorie</div>
+      <div class="icard" id="icats"></div>
+      <div class="isec" style="color:var(--red)">Nuova stagione</div>
+      <button class="nsbtn" onclick="openCf()">🔄 Avvia nuova stagione</button>
+      <p class="dw">Azzera tutti gli abbattimenti. Irreversibile.</p>
+    </div>
+
+    <!-- MODAL NUOVO POST -->
+    <div class="moverlay" id="movl" onclick="cmo(event)">
+      <div class="msheet">
+        <div class="mhandle"></div><div class="mtitle">Nuovo post</div>
+        <div class="tsel"><button class="tbtn on no" id="tb-no" onclick="st('no')">Normale</button><button class="tbtn av" id="tb-av" onclick="st('av')">Avviso</button><button class="tbtn al" id="tb-al" onclick="st('al')">⚠ Alert</button></div>
+        <textarea class="mta" id="mtext" placeholder="Scrivi il messaggio..."></textarea>
+        <div class="matt"><button class="atbtn"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg> Foto</button><button class="atbtn"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg> PDF</button></div>
+        <button class="pubbn" onclick="pub()">Pubblica</button>
+      </div>
+    </div>
+
+    <!-- CONFIRM RESET -->
+    <div class="cfov" id="cfov">
+      <div class="cfbox"><div class="cficon">⚠️</div><div class="cftitle">Nuova stagione?</div><p class="cftext">Tutti gli abbattimenti verranno azzerati. L'operazione è irreversibile.</p><div class="cfbtns"><button class="cfno" onclick="closeCf()">Annulla</button><button class="cfok" onclick="doReset()">Azzera tutto</button></div></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const D={
+  capriolo:[
+    {id:'ca1',n:'MASCHI DI PRIMA CLASSE',d:'(anni 2 e più)',t:9,a:2,s:'aperto',b:'CHIUSI'},
+    {id:'ca2',n:'MASCHI DI SECONDA CLASSE',d:'(capi di 1 anno)',t:13,a:0,s:'aperto',b:'CHIUSI'},
+    {id:'ca3',n:'FEMMINE ADULTE',d:'',t:8,a:0,s:'aperto',b:'CHIUSE'},
+    {id:'ca4',n:'FEMMINE PICCOLE',d:'',t:8,a:8,s:'chiuso',b:'CHIUSE'},
+  ],
+  cervo:[
+    {id:'ce1',n:'PALCUTI',d:'(anni 2 e più)',t:6,a:6,s:'chiuso',b:'CHIUSI'},
+    {id:'ce2',n:'FUSONI',d:'(capi di 1 anno)',t:4,a:1,s:'aperto',b:'CHIUSI'},
+    {id:'ce3',n:'FEMMINE',d:'',t:8,a:0,s:'aperto',b:'CHIUSE'},
+    {id:'ce4',n:'PICCOLI',d:'',t:11,a:0,s:'aperto',b:'CHIUSI'},
+  ],
+  campa:[
+    {id:'cp1',n:'FEMMINE DI TERZA CLASSE',d:'(capi di 1 anno)',t:4,a:0,s:'aperto',b:'CHIUSE'},
+    {id:'cp2',n:'FEMMINE DI SECONDA',d:'(dai 2 ai 10 anni)',t:0,a:0,s:'chiuso',b:'CHIUSE'},
+    {id:'cp3',n:'FEMMINE DI PRIMA CLASSE',d:'(11 anni e più)',t:4,a:0,s:'aperto',b:'CHIUSE'},
+    {id:'cp4',n:'MASCHI DI TERZA CLASSE',d:'(capi di 1 anno)',t:4,a:1,s:'aperto',b:'CHIUSI'},
+    {id:'cp5',n:'MASCHI DI SECONDA CLASSE',d:'(dai 2 ai 5 anni)',t:0,a:0,s:'chiuso',b:'CHIUSI'},
+    {id:'cp6',n:'MASCHI DI PRIMA CLASSE',d:'(6 anni e più)',t:4,a:0,s:'aperto',b:'CHIUSI'},
+  ],
+  tovel:[
+    {id:'tv1',n:'FEMMINE DI TERZA CLASSE',d:'(capi di 1 anno)',t:4,a:0,s:'aperto',b:'CHIUSE'},
+    {id:'tv2',n:'FEMMINE DI SECONDA',d:'(dai 2 ai 10 anni)',t:0,a:0,s:'chiuso',b:'CHIUSE'},
+    {id:'tv3',n:'FEMMINE DI PRIMA CLASSE',d:'(11 anni e più)',t:4,a:2,s:'aperto',b:'CHIUSE'},
+    {id:'tv4',n:'MASCHI DI TERZA CLASSE',d:'(capi di 1 anno)',t:4,a:0,s:'aperto',b:'CHIUSI'},
+    {id:'tv5',n:'MASCHI DI SECONDA CLASSE',d:'(dai 2 ai 5 anni)',t:0,a:0,s:'chiuso',b:'CHIUSI'},
+    {id:'tv6',n:'MASCHI DI PRIMA CLASSE',d:'(6 anni e più)',t:4,a:0,s:'aperto',b:'CHIUSI'},
+  ],
+  ruote:{
+    capriolo:[{id:'r1',n:'Rossi Mario',d:'12/04/2026'},{id:'r2',n:'Bianchi Luigi',d:'19/04/2026'},{id:'r3',n:'Cova Samuele',d:'26/04/2026'}],
+    cervo:[{id:'r1',n:'Deflorian Enrico',d:'05/09/2026'},{id:'r2',n:'Faes Giorgio',d:'12/09/2026'}],
+    camoscio:[]
+  }
+};
+
+const VIEWS=['vb','vc','vce','vcam'];
+let cur=0;
+
+function buildDots(){
+  document.getElementById('dots').innerHTML=VIEWS.map((_,i)=>`<div class="dot${i===0?' on':''}" onclick="goTo(${i})"></div>`).join('');
+}
+
+function goTo(i){
+  VIEWS.forEach((v,j)=>{
+    const el=document.getElementById(v);
+    el.classList.toggle('on',j===i);
+    document.getElementById('nb'+j).classList.toggle('on',j===i);
+  });
+  document.querySelectorAll('.dot').forEach((d,j)=>d.classList.toggle('on',j===i));
+  cur=i;
+}
+
+function mkBox(cat,i){
+  const f=i<cat.a;
+  return `<div class="box${f?' x':''}" onclick="tog('${cat.id}',${i})">${f?`<svg class="xi" width="11" height="11" viewBox="0 0 10 10" fill="none"><line x1="1" y1="1" x2="9" y2="9" stroke="#1A1A14" stroke-width="1.8" stroke-linecap="round"/><line x1="9" y1="1" x2="1" y2="9" stroke="#1A1A14" stroke-width="1.8" stroke-linecap="round"/></svg>`:''}</div>`;
+}
+
+function mkCat(cat){
+  const chi=cat.s==='chiuso',hasB=cat.t>0;
+  const nameWithN = hasB ? `${cat.n}: <span style="font-weight:900;letter-spacing:-.02em">N.&nbsp;${cat.t}</span>` : cat.n;
+  return `<div class="ccat" id="cc-${cat.id}"><div class="chead"><div style="flex:1"><div class="cname">${nameWithN}</div>${cat.d?`<div class="cdesc">${cat.d}</div>`:''}</div>${chi?`<span class="bch">${cat.b}</span>`:''}</div>${hasB?`<div class="cfoot"><div class="boxes">${Array.from({length:cat.t},(_,i)=>mkBox(cat,i)).join('')}</div></div>`:`<div style="font-size:12px;color:var(--muted);font-style:italic;margin-top:2px">Nessun capo assegnato</div>`}</div>`;
+}
+
+function rend(id,arr){document.getElementById(id).innerHTML=arr.map(mkCat).join('');}
+function rendAll(){rend('cats-capriolo',D.capriolo);rend('cats-cervo',D.cervo);rend('cats-campa',D.campa);rend('cats-tovel',D.tovel);}
+
+function findCat(id){
+  for(const k of['capriolo','cervo','campa','tovel']){const f=D[k].find(c=>c.id===id);if(f)return{cat:f,k};}
+  return null;
+}
+
+function tog(id,i){
+  const r=findCat(id);if(!r)return;
+  const c=r.cat;
+  c.a=i<c.a?i:Math.min(i+1,c.t);
+  c.s=(c.a===c.t&&c.t>0)?'chiuso':'aperto';
+  const el=document.getElementById('cc-'+id);
+  if(el){const t=document.createElement('div');t.innerHTML=mkCat(c);el.replaceWith(t.firstChild);}
+}
+
+function sz(z){
+  document.getElementById('zt-campa').classList.toggle('on',z==='campa');
+  document.getElementById('zt-tovel').classList.toggle('on',z==='tovel');
+  document.getElementById('cats-campa').style.display=z==='campa'?'block':'none';
+  document.getElementById('cats-tovel').style.display=z==='tovel'?'block':'none';
+}
+
+let curRS='';
+function openRuota(s){
+  curRS=s;
+  const nm={capriolo:'Capriolo',cervo:'Cervo',camoscio:'Camoscio'};
+  document.getElementById('rtitle').textContent=`Ruote e Squadre — ${nm[s]}`;
+  document.getElementById('rctitle').textContent=`Lista Caccia — ${nm[s]}`;
+  renderR();document.getElementById('ovRuota').classList.add('on');
+}
+function closeRuota(){document.getElementById('ovRuota').classList.remove('on');}
+function renderR(){
+  const t=D.ruote[curRS]||[];
+  document.getElementById('rlist').innerHTML=t.length?t.map(r=>`<div class="trow"><div><div class="tnome">${r.n}</div><div class="tdata">${r.d}</div></div><button class="tdel" onclick="delT('${r.id}')"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button></div>`).join(''):`<div style="padding:28px;text-align:center;color:var(--muted);font-style:italic">Nessun turno assegnato</div>`;
+}
+function addTurno(){const n=prompt('Nome cacciatore:');if(!n)return;const d=prompt('Data (GG/MM/AAAA):');if(!d)return;D.ruote[curRS].push({id:Date.now()+'',n,d});renderR();}
+function delT(id){D.ruote[curRS]=D.ruote[curRS].filter(r=>r.id!==id);renderR();}
+
+let curIS='';
+function openImp(s){
+  curIS=s;
+  const nm={capriolo:'Capriolo',cervo:'Cervo',camoscio:'Camoscio'};
+  document.getElementById('ititle').textContent=`Impostazioni — ${nm[s]}`;
+  const cats=s==='camoscio'?[...D.campa,...D.tovel]:D[s];
+  document.getElementById('icats').innerHTML=cats.map(c=>`<div class="irow"><div class="ilabel">${c.n}${c.d?`<small>${c.d}</small>`:''}</div><div style="display:flex;align-items:center;gap:8px"><input class="inum" type="number" min="0" max="99" value="${c.t}" onchange="upd('${c.id}',this.value,'${s}')"><div class="stog"><button class="sbtn ap${c.s==='aperto'?' on':''}" onclick="togS('${c.id}','aperto','${s}',this)">A</button><button class="sbtn cl${c.s==='chiuso'?' on':''}" onclick="togS('${c.id}','chiuso','${s}',this)">C</button></div></div></div>`).join('');
+  document.getElementById('ovImp').classList.add('on');
+}
+function closeImp(){document.getElementById('ovImp').classList.remove('on');rendAll();}
+function upd(id,v,s){const cats=s==='camoscio'?[...D.campa,...D.tovel]:D[s];const c=cats.find(x=>x.id===id);if(c){c.t=parseInt(v)||0;c.a=Math.min(c.a,c.t);}}
+function togS(id,stato,s,btn){const cats=s==='camoscio'?[...D.campa,...D.tovel]:D[s];const c=cats.find(x=>x.id===id);if(!c)return;c.s=stato;btn.closest('.stog').querySelectorAll('.sbtn').forEach(b=>b.classList.remove('on'));btn.classList.add('on');}
+
+let selT='no';
+function openModal(){document.getElementById('movl').classList.add('on');}
+function cmo(e){if(e.target===document.getElementById('movl'))document.getElementById('movl').classList.remove('on');}
+function st(t){selT=t;['no','av','al'].forEach(x=>{document.getElementById('tb-'+x).className=`tbtn ${x}${x===t?' on':''}`;});}
+function pub(){
+  const txt=document.getElementById('mtext').value.trim();if(!txt)return;
+  const lbl={no:'Comunicazione',av:'↑ Avviso',al:'⚠ Alert urgente'};
+  const now=new Date();
+  const ds=`${now.getDate().toString().padStart(2,'0')}/${(now.getMonth()+1).toString().padStart(2,'0')} ore ${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}`;
+  const div=document.createElement('div');
+  div.className=`pcard ${selT}`;
+  div.innerHTML=`<div class="pbar ${selT}"></div><div class="pbody"><div class="pmeta"><span class="ptipo ${selT}">${lbl[selT]}</span><span class="pdate">${ds}</span></div><p class="ptxt${selT==='al'?' al':''}">${txt}</p></div><button class="delbtn" onclick="delPost(this)"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#8B1A1A" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>`;
+  document.getElementById('feed').insertBefore(div,document.getElementById('feed').firstChild);
+  document.getElementById('mtext').value='';
+  document.getElementById('movl').classList.remove('on');
+  st('no');
+}
+function delPost(btn){if(confirm('Eliminare questo post?'))btn.closest('.pcard').remove();}
+
+function openCf(){document.getElementById('cfov').classList.add('on');}
+function closeCf(){document.getElementById('cfov').classList.remove('on');}
+function doReset(){['capriolo','cervo','campa','tovel'].forEach(k=>D[k].forEach(c=>c.a=0));closeCf();closeImp();showT('✓ Stagione azzerata — abbattuti = 0');}
+
+let lt=null;
+function lp(e){e.stopPropagation();lt=setTimeout(()=>showT('✓ Già in Modalità Rettore'),3000);}
+function clp(){if(lt){clearTimeout(lt);lt=null;}}
+
+function showT(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('on');setTimeout(()=>t.classList.remove('on'),2500);}
+
+let sx=0;
+document.getElementById('screen').addEventListener('touchstart',e=>{sx=e.touches[0].clientX;},{passive:true});
+document.getElementById('screen').addEventListener('touchend',e=>{const dx=e.changedTouches[0].clientX-sx;if(Math.abs(dx)>60){if(dx<0&&cur<3)goTo(cur+1);if(dx>0&&cur>0)goTo(cur-1);}},{passive:true});
+
+buildDots();
+rendAll();
+</script>
+</body>
+</html>
