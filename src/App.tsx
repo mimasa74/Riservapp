@@ -23,7 +23,16 @@ function formatTimestamp(): string {
   return `${pad(now.getDate())}/${pad(now.getMonth() + 1)} ore ${pad(now.getHours())}:${pad(now.getMinutes())}`;
 }
 
+function getOrCreateDeviceId(): string {
+  const existing = localStorage.getItem('riservapp_device_id')
+  if (existing) return existing
+  const id = crypto.randomUUID()
+  localStorage.setItem('riservapp_device_id', id)
+  return id
+}
+
 function MainApp() {
+  const deviceId = getOrCreateDeviceId()
   const { isAdmin } = useAuth();
   const [data, setData] = useState<AppData>((fallbackData as unknown) as AppData);
   const [hunterName, setHunterName] = useState<string>(
