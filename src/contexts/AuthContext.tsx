@@ -24,12 +24,18 @@ const AuthContext = createContext<AuthContextType>({
 
 export const useAuth = () => useContext(AuthContext);
 
+const ADMIN_EMAILS = ['michele.bruni@gmail.com'];
+
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+      if (currentUser && !ADMIN_EMAILS.includes(currentUser.email ?? '')) {
+        await signOut(auth);
+        return;
+      }
       setUser(currentUser);
       setIsAdmin(!!currentUser);
     });

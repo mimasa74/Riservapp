@@ -49,10 +49,11 @@ export function useGeolocation({ deviceId, nome }: GeoState): void {
     if (localStorage.getItem('riservapp_geo') !== 'true') return;
     if (!('geolocation' in navigator)) return;
 
-    // Carica il poligono da Firestore
+    // Carica il poligono da Firestore (formato: [{lat, lng}] → [[lng, lat]] per Turf)
     getDoc(doc(db, 'geofences', 'riserva-tuenno')).then(snap => {
       if (snap.exists()) {
-        polygonCoordsRef.current = snap.data().coordinates as number[][];
+        const raw = snap.data().coordinates as { lat: number; lng: number }[];
+        polygonCoordsRef.current = raw.map(({ lat, lng }) => [lng, lat]);
       }
     });
 
@@ -75,7 +76,6 @@ export function useGeolocation({ deviceId, nome }: GeoState): void {
 
     if (!inside) {
       if (isInsideRef.current) {
-        // Appena uscito dalla riserva
         await deleteDoc(doc(db, 'user_locations', deviceId));
         isInsideRef.current = false;
         lastPositionRef.current = null;
@@ -84,7 +84,7 @@ export function useGeolocation({ deviceId, nome }: GeoState): void {
       return;
     }
 
-    // È dentro la riserva — calcola se aggiornare
+    // Calcola se aggiornare
     const now = Date.now();
     const last = lastPositionRef.current;
     const timeSince = now - lastUpdateTimeRef.current;

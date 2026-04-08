@@ -31,11 +31,16 @@ export const AssegnazioniScreen = ({
 
   const haZone = !!data.subZone;
 
-  const displayedCategories = data.categorie.filter(cat => {
-    if (!haZone) return true;
-    const prefix = selectedSubZone === 'campa' ? 'cam1_' : 'cam2_';
-    return cat.id.startsWith(prefix);
-  });
+  const CAMOSCIO_ORDER: Record<string, number> = { m1: 0, m2: 1, m3: 2, f1: 3, f2: 4, f3: 5 };
+  const camoscioSortKey = (id: string) => CAMOSCIO_ORDER[id.replace(/^cam[12]_/, '')] ?? 99;
+
+  const displayedCategories = data.categorie
+    .filter(cat => {
+      if (!haZone) return true;
+      const prefix = selectedSubZone === 'campa' ? 'cam1_' : 'cam2_';
+      return cat.id.startsWith(prefix);
+    })
+    .sort((a, b) => haZone ? camoscioSortKey(a.id) - camoscioSortKey(b.id) : 0);
 
   return (
     <div className="w-full flex flex-col pb-6">
@@ -106,7 +111,7 @@ export const AssegnazioniScreen = ({
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
             }}
           >
-            {data.id === 'capriolo' ? 'Assegnazioni' : 'Ruota'}
+            {data.id === 'capriolo' ? 'Squadre' : 'Ruota'}
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                  strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <polyline points="9 18 15 12 9 6" />

@@ -1,0 +1,22 @@
+{
+  "name": "RiservApp - Riserva Val di Tovel",
+  "short_name": "Riserva Tuen",
+  "description": "App della Riserva Cacciatori di Tuenno",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#EDEEE6",
+  "theme_color": "#5C6B3A",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/logo_tuenno_ui.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/logo_tuenno_ui.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

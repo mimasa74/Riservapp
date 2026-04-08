@@ -15,7 +15,7 @@ interface MappaScreenProps {
 }
 
 const MAP_CONTAINER_STYLE = { width: '100%', height: '100%' };
-const TUENNO_CENTER = { lat: 46.41, lng: 11.07 };
+const TUENNO_CENTER = { lat: 46.2954157719716, lng: 10.970932988883895 };
 
 export const MappaScreen = ({ onBack }: MappaScreenProps) => {
   const { isLoaded, loadError } = useLoadScript({
@@ -26,12 +26,10 @@ export const MappaScreen = ({ onBack }: MappaScreenProps) => {
   const [polygonPath, setPolygonPath] = useState<{ lat: number; lng: number }[]>([]);
 
   useEffect(() => {
-    // Carica poligono riserva da Firestore
+    // Carica poligono riserva da Firestore (formato: [{lat, lng}])
     getDoc(doc(db, 'geofences', 'riserva-tuenno')).then(snap => {
       if (snap.exists()) {
-        const coords = snap.data().coordinates as number[][];
-        // GeoJSON: [lng, lat] → Google Maps: {lat, lng}
-        setPolygonPath(coords.map(([lng, lat]) => ({ lat, lng })));
+        setPolygonPath(snap.data().coordinates as { lat: number; lng: number }[]);
       }
     });
 
@@ -98,7 +96,7 @@ export const MappaScreen = ({ onBack }: MappaScreenProps) => {
             center={TUENNO_CENTER}
             zoom={13}
             options={{
-              mapTypeId: 'terrain',
+              mapTypeId: 'satellite',
               disableDefaultUI: false,
               zoomControl: true,
               streetViewControl: false,

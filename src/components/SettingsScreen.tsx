@@ -1,25 +1,52 @@
 import React, { useState } from 'react';
-import { AppData, CategoriaStato } from '../types';
+import { AppData, CategoriaStato, Members, Slots } from '../types';
+
+function normalizeName(s: string): string {
+  return s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .split(/\s+/).filter(Boolean).sort().join('');
+}
 
 interface SettingsScreenProps {
   data: AppData;
+  members: Members;
+  slots: Slots;
   onClose: () => void;
   onSave: (updates: AppData) => void;
   onNewSeason: () => void;
+  onAddMember: (nome: string) => void;
+  onRemoveMember: (nome: string) => void;
+  onReleaseSlot: (normalizedName: string) => void;
+  onAddDirettivo: (nome: string) => void;
+  onRemoveDirettivo: (nome: string) => void;
 }
 
 const SPECIE_ORDER = ['capriolo', 'cervo', 'camoscio'];
 
-const STATO_OPTIONS: { value: CategoriaStato; label: string; color: string }[] = [
-  { value: 'aperto', label: 'Aperto', color: '#5C6B3A' },
-  { value: 'sospeso', label: 'Sospeso', color: '#B8730A' },
-  { value: 'chiuso', label: 'Chiuso', color: '#8B1A1A' },
-];
+function getStatoOptions(badgeChiusura: string) {
+  const female = badgeChiusura === 'CHIUSE';
+  return [
+    { value: 'aperto' as CategoriaStato, label: female ? 'Aperte' : 'Aperti', color: '#5C6B3A' },
+    { value: 'sospeso' as CategoriaStato, label: female ? 'Sospese' : 'Sospesi', color: '#B8730A' },
+    { value: 'chiuso' as CategoriaStato, label: female ? 'Chiuse' : 'Chiusi', color: '#8B1A1A' },
+  ];
+}
 
-export const SettingsScreen = ({ data, onClose, onSave, onNewSeason }: SettingsScreenProps) => {
+const CAMOSCIO_ORDER: Record<string, number> = { m1: 0, m2: 1, m3: 2, f1: 3, f2: 4, f3: 5 };
+function camoscioSortKey(id: string): number {
+  const suffix = id.replace(/^cam[12]_/, '');
+  return CAMOSCIO_ORDER[suffix] ?? 99;
+}
+
+export const SettingsScreen = ({
+  data, members, slots, onClose, onSave, onNewSeason,
+  onAddMember, onRemoveMember, onReleaseSlot,
+  onAddDirettivo, onRemoveDirettivo,
+}: SettingsScreenProps) => {
   const [localData, setLocalData] = useState<AppData>(JSON.parse(JSON.stringify(data)));
   const [activeSpecie, setActiveSpecie] = useState(SPECIE_ORDER[0]);
   const [confirmNewSeason, setConfirmNewSeason] = useState(false);
+  const [newMember, setNewMember] = useState('');
+  const [newDirettivo, setNewDirettivo] = useState('');
 
   const specie = localData[activeSpecie];
   if (!specie) return null;
@@ -119,68 +146,261 @@ export const SettingsScreen = ({ data, onClose, onSave, onNewSeason }: SettingsS
         </div>
 
         {/* Categorie */}
+        {(() => {
+          const isCamoscio = activeSpecie === 'camoscio';
+          const zone = isCamoscio
+            ? [
+                { prefix: 'cam1_', label: specie.subZone?.[0]?.nome ?? 'Zona 1' },
+                { prefix: 'cam2_', label: specie.subZone?.[1]?.nome ?? 'Zona 2' },
+              ]
+            : [{ prefix: '', label: '' }];
+
+          return zone.map(({ prefix, label }) => {
+            const cats = specie.categorie
+              .filter(c => isCamoscio ? c.id.startsWith(prefix) : true)
+              .sort((a, b) => isCamoscio ? camoscioSortKey(a.id) - camoscioSortKey(b.id) : 0);
+
+            return (
+              <div key={prefix} style={{ background: '#fff', borderRadius: 10, border: '1px solid #d0d5c4', overflow: 'hidden' }}>
+                <div style={{ padding: '12px 16px', borderBottom: '1px solid #f0f0ec', background: '#F5F6F0' }}>
+                  <p style={{ fontSize: 12, fontWeight: 700, color: '#5C6B3A', textTransform: 'uppercase', letterSpacing: '0.08em', fontFamily: '-apple-system, sans-serif' }}>
+                    {isCamoscio ? label : 'Categorie'}
+                  </p>
+                </div>
+                {cats.map((cat, i) => (
+                  <div
+                    key={cat.id}
+                    style={{
+                      padding: '14px 16px',
+                      borderBottom: i < cats.length - 1 ? '1px solid #f0f0ec' : 'none',
+                    }}
+                  >
+                    <p style={{ fontSize: 14, fontWeight: 700, color: '#1A1A14', textTransform: 'uppercase', marginBottom: 10 }}>
+                      {cat.nome}
+                    </p>
+                    {/* Totale capi */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+                      <span style={{ fontSize: 12, color: '#6B6B5A', fontFamily: '-apple-system, sans-serif' }}>Totale capi</span>
+                      <button
+                        onClick={() => updateTotale(cat.id, cat.totale - 1)}
+                        style={{
+                          width: 32, height: 32, borderRadius: '50%', border: '1.5px solid #d0d5c4',
+                          background: 'transparent', cursor: 'pointer', fontSize: 18, color: '#1A1A14',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        }}
+                      >−</button>
+                      <span style={{ fontSize: 18, fontWeight: 700, color: '#1A1A14', minWidth: 28, textAlign: 'center' }}>
+                        {cat.totale}
+                      </span>
+                      <button
+                        onClick={() => updateTotale(cat.id, cat.totale + 1)}
+                        style={{
+                          width: 32, height: 32, borderRadius: '50%', border: '1.5px solid #d0d5c4',
+                          background: 'transparent', cursor: 'pointer', fontSize: 18, color: '#1A1A14',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        }}
+                      >+</button>
+                    </div>
+                    {/* Stato — riga separata con desinenze corrette */}
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      {getStatoOptions(cat.badgeChiusura).map(opt => (
+                        <button
+                          key={opt.value}
+                          onClick={() => updateStato(cat.id, opt.value)}
+                          style={{
+                            flex: 1, padding: '8px 4px', borderRadius: 20, fontSize: 13, fontWeight: 700,
+                            fontFamily: '-apple-system, sans-serif', textTransform: 'uppercase',
+                            cursor: 'pointer', letterSpacing: '0.03em',
+                            border: cat.stato === opt.value ? `2px solid ${opt.color}` : '1.5px solid #d0d5c4',
+                            background: cat.stato === opt.value ? opt.color : 'transparent',
+                            color: cat.stato === opt.value ? '#fff' : '#6B6B5A',
+                          }}
+                        >
+                          {opt.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            );
+          });
+        })()}
+
+        {/* Soci */}
         <div style={{ background: '#fff', borderRadius: 10, border: '1px solid #d0d5c4', overflow: 'hidden' }}>
           <div style={{ padding: '12px 16px', borderBottom: '1px solid #f0f0ec' }}>
             <p style={{ fontSize: 12, fontWeight: 700, color: '#5C6B3A', textTransform: 'uppercase', letterSpacing: '0.08em', fontFamily: '-apple-system, sans-serif' }}>
-              Categorie
+              Soci ({members.nomi.length})
             </p>
           </div>
-          {specie.categorie.map((cat, i) => (
-            <div
-              key={cat.id}
+
+          {/* Campo aggiungi */}
+          <div style={{
+            padding: '12px 16px',
+            borderBottom: members.nomi.length > 0 ? '1px solid #f0f0ec' : 'none',
+            display: 'flex', gap: 8,
+          }}>
+            <input
+              type="text"
+              value={newMember}
+              onChange={e => setNewMember(e.target.value)}
+              onKeyDown={e => {
+                if (e.key === 'Enter' && newMember.trim()) {
+                  onAddMember(newMember.trim());
+                  setNewMember('');
+                }
+              }}
+              placeholder="Nome e Cognome"
               style={{
-                padding: '14px 16px',
-                borderBottom: i < specie.categorie.length - 1 ? '1px solid #f0f0ec' : 'none',
+                flex: 1, padding: '9px 12px', borderRadius: 6,
+                border: '1.5px solid #d0d5c4', fontFamily: 'inherit',
+                fontSize: 15, color: '#1A1A14', outline: 'none', background: '#FAFAF8',
+              }}
+            />
+            <button
+              onClick={() => { if (newMember.trim()) { onAddMember(newMember.trim()); setNewMember(''); } }}
+              disabled={!newMember.trim()}
+              style={{
+                padding: '9px 16px', borderRadius: 6, border: 'none',
+                background: newMember.trim() ? '#5C6B3A' : '#d0d5c4',
+                color: '#EDEEE6', fontFamily: 'inherit', fontSize: 18, fontWeight: 700,
+                cursor: newMember.trim() ? 'pointer' : 'default',
               }}
             >
-              <p style={{ fontSize: 14, fontWeight: 700, color: '#1A1A14', textTransform: 'uppercase', marginBottom: 10 }}>
-                {cat.nome}
-              </p>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                {/* Totale capi */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <span style={{ fontSize: 12, color: '#6B6B5A', fontFamily: '-apple-system, sans-serif' }}>Totale</span>
-                  <button
-                    onClick={() => updateTotale(cat.id, cat.totale - 1)}
-                    style={{
-                      width: 28, height: 28, borderRadius: '50%', border: '1.5px solid #d0d5c4',
-                      background: 'transparent', cursor: 'pointer', fontSize: 16, color: '#1A1A14',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    }}
-                  >−</button>
-                  <span style={{ fontSize: 16, fontWeight: 700, color: '#1A1A14', minWidth: 24, textAlign: 'center' }}>
-                    {cat.totale}
-                  </span>
-                  <button
-                    onClick={() => updateTotale(cat.id, cat.totale + 1)}
-                    style={{
-                      width: 28, height: 28, borderRadius: '50%', border: '1.5px solid #d0d5c4',
-                      background: 'transparent', cursor: 'pointer', fontSize: 16, color: '#1A1A14',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    }}
-                  >+</button>
-                </div>
+              +
+            </button>
+          </div>
 
-                {/* Stato */}
-                <div style={{ display: 'flex', gap: 6, flex: 1, justifyContent: 'flex-end' }}>
-                  {STATO_OPTIONS.map(opt => (
-                    <button
-                      key={opt.value}
-                      onClick={() => updateStato(cat.id, opt.value)}
-                      style={{
-                        padding: '5px 10px', borderRadius: 20, fontSize: 11, fontWeight: 700,
-                        fontFamily: '-apple-system, sans-serif', textTransform: 'uppercase',
-                        cursor: 'pointer', letterSpacing: '0.05em',
-                        border: cat.stato === opt.value ? `2px solid ${opt.color}` : '1.5px solid #d0d5c4',
-                        background: cat.stato === opt.value ? opt.color : 'transparent',
-                        color: cat.stato === opt.value ? '#fff' : '#6B6B5A',
-                      }}
-                    >
-                      {opt.label}
-                    </button>
-                  ))}
-                </div>
+          {/* Lista soci */}
+          {members.nomi.length === 0 && (
+            <div style={{ padding: '14px 16px' }}>
+              <p style={{ fontSize: 14, color: '#9B9B8A', fontStyle: 'italic', fontFamily: '-apple-system, sans-serif' }}>
+                Nessun socio aggiunto
+              </p>
+            </div>
+          )}
+          {members.nomi.map((nome, i) => {
+            const norm = normalizeName(nome);
+            const occupied = slots[norm] != null;
+            return (
+              <div
+                key={nome}
+                style={{
+                  padding: '10px 16px',
+                  borderBottom: i < members.nomi.length - 1 ? '1px solid #f0f0ec' : 'none',
+                  display: 'flex', alignItems: 'center', gap: 8,
+                }}
+              >
+                {/* Pallino stato */}
+                <div style={{
+                  width: 8, height: 8, borderRadius: '50%', flexShrink: 0,
+                  background: occupied ? '#5C6B3A' : '#d0d5c4',
+                }} />
+                <span style={{ fontSize: 15, color: '#1A1A14', fontFamily: '-apple-system, sans-serif', flex: 1 }}>{nome}</span>
+                {occupied && (
+                  <button
+                    onClick={() => onReleaseSlot(norm)}
+                    style={{
+                      fontSize: 10, fontWeight: 700, color: '#8B1A1A',
+                      background: 'transparent', border: '1px solid #8B1A1A',
+                      borderRadius: 10, padding: '3px 8px', cursor: 'pointer',
+                      fontFamily: '-apple-system, sans-serif', textTransform: 'uppercase',
+                      letterSpacing: '0.04em', flexShrink: 0,
+                    }}
+                  >
+                    Libera
+                  </button>
+                )}
+                <button
+                  onClick={() => onRemoveMember(nome)}
+                  style={{
+                    width: 26, height: 26, borderRadius: '50%',
+                    border: '1px solid #d0d5c4', background: 'transparent',
+                    cursor: 'pointer', display: 'flex', alignItems: 'center',
+                    justifyContent: 'center', color: '#8B1A1A', fontSize: 18, lineHeight: 1,
+                    flexShrink: 0,
+                  }}
+                >
+                  ×
+                </button>
               </div>
+            );
+          })}
+        </div>
+
+        {/* Direttivo */}
+        <div style={{ background: '#fff', borderRadius: 10, border: '1px solid #d0d5c4', overflow: 'hidden' }}>
+          <div style={{ padding: '12px 16px', borderBottom: '1px solid #f0f0ec' }}>
+            <p style={{ fontSize: 12, fontWeight: 700, color: '#5C6B3A', textTransform: 'uppercase', letterSpacing: '0.08em', fontFamily: '-apple-system, sans-serif' }}>
+              Direttivo ({members.direttivo.length})
+            </p>
+          </div>
+
+          <div style={{
+            padding: '12px 16px',
+            borderBottom: members.direttivo.length > 0 ? '1px solid #f0f0ec' : 'none',
+            display: 'flex', gap: 8,
+          }}>
+            <input
+              type="text"
+              value={newDirettivo}
+              onChange={e => setNewDirettivo(e.target.value)}
+              onKeyDown={e => {
+                if (e.key === 'Enter' && newDirettivo.trim()) {
+                  onAddDirettivo(newDirettivo.trim());
+                  setNewDirettivo('');
+                }
+              }}
+              placeholder="Nome e Cognome"
+              style={{
+                flex: 1, padding: '9px 12px', borderRadius: 6,
+                border: '1.5px solid #d0d5c4', fontFamily: 'inherit',
+                fontSize: 15, color: '#1A1A14', outline: 'none', background: '#FAFAF8',
+              }}
+            />
+            <button
+              onClick={() => { if (newDirettivo.trim()) { onAddDirettivo(newDirettivo.trim()); setNewDirettivo(''); } }}
+              disabled={!newDirettivo.trim()}
+              style={{
+                padding: '9px 16px', borderRadius: 6, border: 'none',
+                background: newDirettivo.trim() ? '#5C6B3A' : '#d0d5c4',
+                color: '#EDEEE6', fontFamily: 'inherit', fontSize: 18, fontWeight: 700,
+                cursor: newDirettivo.trim() ? 'pointer' : 'default',
+              }}
+            >
+              +
+            </button>
+          </div>
+
+          {members.direttivo.length === 0 && (
+            <div style={{ padding: '14px 16px' }}>
+              <p style={{ fontSize: 14, color: '#9B9B8A', fontStyle: 'italic', fontFamily: '-apple-system, sans-serif' }}>
+                Nessun membro direttivo
+              </p>
+            </div>
+          )}
+          {members.direttivo.map((nome, i) => (
+            <div
+              key={nome}
+              style={{
+                padding: '12px 16px',
+                borderBottom: i < members.direttivo.length - 1 ? '1px solid #f0f0ec' : 'none',
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              }}
+            >
+              <span style={{ fontSize: 15, color: '#1A1A14', fontFamily: '-apple-system, sans-serif' }}>{nome}</span>
+              <button
+                onClick={() => onRemoveDirettivo(nome)}
+                style={{
+                  width: 28, height: 28, borderRadius: '50%',
+                  border: '1px solid #d0d5c4', background: 'transparent',
+                  cursor: 'pointer', display: 'flex', alignItems: 'center',
+                  justifyContent: 'center', color: '#8B1A1A', fontSize: 18, lineHeight: 1,
+                }}
+              >
+                ×
+              </button>
             </div>
           ))}
         </div>

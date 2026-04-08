@@ -4,6 +4,7 @@ import { Post } from '../types';
 interface PostCardProps {
   post: Post;
   isAdmin: boolean;
+  canDelete: boolean;
   onDelete: (id: string) => void;
 }
 
@@ -31,7 +32,7 @@ const BADGE_STYLE: Record<Post['tipo'], React.CSSProperties> = {
   alert:   { background: '#8B1A1A', color: '#fff' },
 };
 
-export const PostCard = ({ post, isAdmin, onDelete }: PostCardProps) => {
+export const PostCard = ({ post, isAdmin, canDelete, onDelete }: PostCardProps) => {
   const [showLetti, setShowLetti] = useState(false);
   const letti: string[] = post.letti ?? [];
 
@@ -49,10 +50,10 @@ export const PostCard = ({ post, isAdmin, onDelete }: PostCardProps) => {
           {TIPO_LABEL[post.tipo]}
         </span>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <span style={{ fontSize: 12, color: '#6B6B5A', fontFamily: '-apple-system, sans-serif' }}>
+          <span style={{ fontSize: 20, color: '#6B6B5A', fontFamily: '-apple-system, sans-serif' }}>
             {formatData(post.data)}
           </span>
-          {isAdmin && (
+          {canDelete && (
             <button
               onClick={() => onDelete(post.id)}
               style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: '#8B1A1A', display: 'flex', alignItems: 'center' }}
@@ -69,7 +70,7 @@ export const PostCard = ({ post, isAdmin, onDelete }: PostCardProps) => {
       </div>
 
       {/* Testo */}
-      <p style={{ fontSize: 15, color: '#1A1A14', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>
+      <p style={{ fontSize: 30, color: '#1A1A14', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>
         {post.testo}
       </p>
 

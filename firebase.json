@@ -8,5 +8,16 @@
       "codebase": "default",
       "ignore": ["node_modules", ".git", "firebase-debug.log"]
     }
-  ]
+  ],
+  "hosting": {
+    "site": "riservatuenno",
+    "public": "dist",
+    "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
+    "rewrites": [
+      {
+        "source": "**",
+        "destination": "/index.html"
+      }
+    ]
+  }
 }

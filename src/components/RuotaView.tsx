@@ -83,7 +83,7 @@ export const RuotaView = ({ data, onClose, onUpdateRuota }: RuotaViewProps) => {
                 style={{
                   width: '100%', padding: '10px 12px', borderRadius: 6,
                   border: '1.5px solid #d0d5c4', fontFamily: 'inherit',
-                  fontSize: 15, color: '#1A1A14', resize: 'none', outline: 'none',
+                  fontSize: 30, color: '#1A1A14', resize: 'none', outline: 'none',
                   background: '#fff',
                 }}
               />
@@ -117,7 +117,7 @@ export const RuotaView = ({ data, onClose, onUpdateRuota }: RuotaViewProps) => {
               onClick={() => isAdmin && setEditingTesto(true)}
             >
               {testo ? (
-                <p style={{ fontSize: 15, color: '#1A1A14', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>{testo}</p>
+                <p style={{ fontSize: 25, color: '#1A1A14', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>{testo}</p>
               ) : (
                 <p style={{ fontSize: 14, color: '#6B6B5A', fontStyle: 'italic' }}>Tocca per aggiungere testo...</p>
               )}

@@ -32,6 +32,18 @@ export interface SpecieData {
 
 export type AppData = Record<string, SpecieData>;
 
+export interface Members {
+  nomi: string[];
+  direttivo: string[];
+}
+
+export interface OspiteData {
+  device_id: string | null;
+}
+
+// mappa normalizedName → deviceId (null = slot libero)
+export type Slots = Record<string, string | null>;
+
 export interface Post {
   id: string;
   tipo: 'normale' | 'avviso' | 'alert';
@@ -39,4 +51,6 @@ export interface Post {
   foto_url?: string | null;
   pdf_url?: string | null;
   data: number; // timestamp ms
+  letti?: string[]; // nomi dei soci che hanno letto
+  autore?: string; // nome del membro che ha pubblicato (direttivo o admin)
 }

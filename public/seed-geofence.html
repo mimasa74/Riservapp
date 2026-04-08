@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <title>Seed Geofence — RiservApp</title>
+  <style>
+    body { font-family: sans-serif; max-width: 500px; margin: 60px auto; padding: 20px; background: #EDEEE6; }
+    button { background: #5C6B3A; color: white; border: none; padding: 14px 28px; font-size: 16px; border-radius: 8px; cursor: pointer; margin-top: 16px; }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+    #status { margin-top: 20px; padding: 14px; border-radius: 8px; display: none; font-size: 15px; }
+    .ok { background: #d4edda; color: #155724; display: block !important; }
+    .err { background: #f8d7da; color: #721c24; display: block !important; }
+  </style>
+</head>
+<body>
+  <h2>Scrivi geofence Riserva Tuenno</h2>
+  <p>Clicca il pulsante per scrivere il poligono della riserva su Firestore.<br>
+  Devi essere loggato come Rettore (Google).</p>
+  <button id="btn" onclick="seedGeofence()">Scrivi geofence</button>
+  <div id="status"></div>
+
+  <script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js';
+    import { getAuth, signInWithPopup, GoogleAuthProvider } from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js';
+    import { getFirestore, doc, setDoc } from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js';
+
+    const app = initializeApp({
+      apiKey: "AIzaSyDuygauGnMqxL8Rf6QvyVgnRTwDbZ20VbI",
+      authDomain: "riservapp-6054c.firebaseapp.com",
+      projectId: "riservapp-6054c",
+      storageBucket: "riservapp-6054c.firebasestorage.app",
+      messagingSenderId: "62159000134",
+      appId: "1:62159000134:web:2e87a9ace109c58c45f047"
+    });
+
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    // Formato: array di oggetti {lat, lng} — Firestore non supporta array annidati
+    const COORDINATES = [[11.0097021,46.322916],[11.0083979,46.3232402],[11.0070639,46.3232093],[11.0054915,46.3229057],[11.004709,46.3228902],[11.0038519,46.3232351],[11.0040904,46.3227153],[11.0042096,46.3215624],[11.0046642,46.3200235],[11.0044332,46.3190816],[11.004232,46.3183353],[11.0037124,46.3152897],[11.0034292,46.3142705],[11.0020394,46.3099993],[11.0014168,46.3074907],[10.9995232,46.2969207],[10.9982522,46.2932643],[10.9943612,46.2907908],[10.9907815,46.2884785],[10.9819619,46.2807701],[10.9794717,46.2774355],[10.9738168,46.2713214],[10.9710412,46.2655473],[10.9697442,46.2631084],[10.968966,46.2603286],[10.9674615,46.2579253],[10.9652984,46.2536447],[10.9620245,46.248374],[10.9609731,46.2450583],[10.9595431,46.2442003],[10.9576716,46.2431968],[10.9549799,46.2429932],[10.9519308,46.2429641],[10.9446162,46.2448527],[10.9414867,46.2474105],[10.9377882,46.2465798],[10.9339316,46.24717],[10.9250172,46.2449402],[10.9192324,46.2438908],[10.9139533,46.2451369],[10.9088638,46.2457709],[10.898527,46.2459239],[10.8921093,46.2466017],[10.8882843,46.2474105],[10.8847439,46.2487221],[10.884641,46.2537331],[10.8873292,46.2718931],[10.8882518,46.2822329],[10.9113672,46.2967823],[10.9230743,46.2986514],[10.9292212,46.3014439],[10.9360586,46.3032705],[10.9476114,46.3093549],[10.9551729,46.3104135],[10.9587936,46.312961],[10.9614545,46.3133681],[10.9594504,46.3162761],[10.9611008,46.3194979],[10.9659678,46.3251735],[10.9709527,46.327511],[10.9772848,46.3277319],[10.9777395,46.3299414],[10.9829432,46.3319414],[10.9913834,46.3326937],[11.0041544,46.3359895],[11.0115514,46.3401361],[11.0129739,46.3405507],[11.0191065,46.3389794],[11.0157296,46.3313472],[11.0143733,46.3243619],[11.015319,46.3221794],[11.0190891,46.3209764],[11.0218264,46.3205553],[11.0236306,46.3202545],[11.0236431,46.3216724],[11.0230209,46.3240784],[11.024203,46.3242674],[11.0241905,46.3249033],[11.0243523,46.3253329],[11.0255049,46.3245193],[11.0264629,46.3244076],[11.0274459,46.3241584],[11.0303699,46.322122],[11.0313778,46.3203346],[11.0304321,46.3190886],[11.0295708,46.3151263],[11.0243823,46.3152294],[11.0194177,46.3168795],[11.0158342,46.3191567],[11.0123005,46.3213308],[11.0112056,46.3220011],[11.0104341,46.3224479],[11.0097021,46.322916]]
+      .map(([lng, lat]) => ({ lat, lng }));
+
+    window.seedGeofence = async function() {
+      const btn = document.getElementById('btn');
+      const status = document.getElementById('status');
+      btn.disabled = true;
+      status.className = '';
+      status.style.display = 'none';
+      status.textContent = '';
+
+      try {
+        await signInWithPopup(auth, new GoogleAuthProvider());
+        await setDoc(doc(db, 'geofences', 'riserva-tuenno'), {
+          coordinates: COORDINATES
+        });
+        status.textContent = '✓ Geofence scritto su Firestore! Puoi chiudere questa pagina.';
+        status.className = 'ok';
+      } catch (e) {
+        status.textContent = 'Errore: ' + e.message;
+        status.className = 'err';
+        btn.disabled = false;
+      }
+    };
+  </script>
+</body>
+</html>

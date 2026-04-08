@@ -18,8 +18,24 @@ messaging.onBackgroundMessage((payload) => {
   const isAlert = payload.data?.priority === 'high';
   self.registration.showNotification(title, {
     body,
-    icon: '/icon-192.png',
+    icon: '/logo_tuenno_ui.png',
     vibrate: isAlert ? [200, 100, 200, 100, 200] : [100],
     requireInteraction: isAlert,
+    data: { url: 'https://riservatuenno.web.app' },
   });
+});
+
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  const url = event.notification.data?.url || 'https://riservatuenno.web.app';
+  event.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
+      for (const client of clientList) {
+        if (client.url.startsWith('https://riservatuenno.web.app') && 'focus' in client) {
+          return client.focus();
+        }
+      }
+      return clients.openWindow(url);
+    })
+  );
 });

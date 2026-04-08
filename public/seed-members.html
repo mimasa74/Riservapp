@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <title>Seed Soci — RiservApp</title>
+  <style>
+    body { font-family: sans-serif; max-width: 500px; margin: 60px auto; padding: 20px; background: #EDEEE6; }
+    button { background: #5C6B3A; color: white; border: none; padding: 14px 28px; font-size: 16px; border-radius: 8px; cursor: pointer; margin-top: 16px; }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+    #status { margin-top: 20px; padding: 14px; border-radius: 8px; display: none; font-size: 15px; }
+    .ok { background: #d4edda; color: #155724; display: block !important; }
+    .err { background: #f8d7da; color: #721c24; display: block !important; }
+    ul { font-size: 14px; color: #3A3A2E; column-count: 2; }
+  </style>
+</head>
+<body>
+  <h2>Carica lista soci — RiservApp</h2>
+  <p>Clicca il pulsante per scrivere i 45 soci su Firestore.<br>
+  Devi essere loggato come Rettore (Google).</p>
+
+  <p><strong>Soci che verranno caricati</strong> (★ = direttivo):</p>
+  <ul id="lista"></ul>
+
+  <button id="btn" onclick="seedMembers()">Carica soci</button>
+  <div id="status"></div>
+
+  <script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js';
+    import { getAuth, signInWithPopup, GoogleAuthProvider } from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js';
+    import { getFirestore, doc, setDoc } from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js';
+
+    const app = initializeApp({
+      apiKey: "AIzaSyDuygauGnMqxL8Rf6QvyVgnRTwDbZ20VbI",
+      authDomain: "riservapp-6054c.firebaseapp.com", // dominio originale, sempre autorizzato
+      projectId: "riservapp-6054c",
+      storageBucket: "riservapp-6054c.firebasestorage.app",
+      messagingSenderId: "62159000134",
+      appId: "1:62159000134:web:2e87a9ace109c58c45f047"
+    });
+
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    const DIRETTIVO = [
+      "Bruni Michele",
+      "Bergamo Nicola",
+      "Martini Mattia",
+      "Dallago Bruno",
+      "Quaresima Rudi",
+    ];
+
+    const NOMI = [
+      "Bruni Michele",
+      "Bergamo Nicola",
+      "Busetti Armando",
+      "Moratti Massimiliano",
+      "Larcher Gino",
+      "De Aliprandini Luciano",
+      "De Concini Andrea",
+      "De Concini Giorgio",
+      "Cristoforetti Marco",
+      "Valentini Guglielmo",
+      "Valentini Enea",
+      "Samuele Sandri",
+      "Martini Mattia",
+      "Smalzi Alex",
+      "Quaresima Rudi",
+      "Slanzi Matteo",
+      "Slanzi Primo",
+      "Dallago Michele",
+      "Dallago Francesco",
+      "Dallago Nicola",
+      "Alex Vogl",
+      "Dallago Bruno",
+      "Dallago Serafino",
+      "Torresani Claudia",
+      "Martinelli Walther",
+      "Marinelli Marco",
+      "Diego Marchiò",
+      "Ciro Ciardi",
+      "Solferino Germani",
+      "Federico Fracassini",
+      "Leonardi Maurizio",
+      "Leonardi Giorgio",
+      "Cova Samuele",
+      "Pizzolli Stefano",
+      "Pizzolli Gino",
+      "Pizzolli Francesco",
+      "Maistrelli Simone",
+      "Valentini Antonio",
+      "Valentini Simone",
+      "Valentini Francesco",
+      "Marco Pasquin",
+      "Pinamonti Leo",
+      "Stefano Paolucci",
+      "Ospite1",
+      "Ospite2",
+    ];
+
+    // Mostra anteprima lista soci (direttivo evidenziato)
+    const ul = document.getElementById('lista');
+    NOMI.forEach(n => {
+      const li = document.createElement('li');
+      if (DIRETTIVO.includes(n)) {
+        li.innerHTML = `<strong style="color:#5C6B3A">${n} ★ direttivo</strong>`;
+      } else {
+        li.textContent = n;
+      }
+      ul.appendChild(li);
+    });
+
+    window.seedMembers = async function() {
+      const btn = document.getElementById('btn');
+      const status = document.getElementById('status');
+      btn.disabled = true;
+      status.className = '';
+      status.style.display = 'none';
+
+      try {
+        const provider = new GoogleAuthProvider();
+        await signInWithPopup(auth, provider);
+        await setDoc(doc(db, 'config', 'members'), { nomi: NOMI, direttivo: DIRETTIVO });
+        status.textContent = `✓ ${NOMI.length} soci e ${DIRETTIVO.length} direttivo caricati con successo!`;
+        status.className = 'ok';
+      } catch (e) {
+        status.textContent = 'Errore: ' + e.message;
+        status.className = 'err';
+        btn.disabled = false;
+      }
+    };
+  </script>
+</body>
+</html>

@@ -22,7 +22,7 @@ export const AssignmentBoxes = ({ totale, abbattuti, catId, onToggle, isAdmin }:
               isAbbattuto
                 ? 'bg-[#EDEEE6] border-[1.5px] border-[#5C6B3A]'
                 : 'bg-transparent border-[1.5px] border-[#5C6B3A]',
-              isAdmin ? 'cursor-pointer active:scale-90 transition-transform' : 'cursor-default',
+              isAdmin ? 'cursor-pointer' : 'cursor-default',
             ].join(' ')}
           >
             {isAbbattuto && (

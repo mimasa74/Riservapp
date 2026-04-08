@@ -6,16 +6,28 @@ service cloud.firestore {
       return request.auth != null;
     }
 
+    function isAdmin() {
+      return request.auth != null && request.auth.token.email == 'michele.bruni@gmail.com';
+    }
+
     // config/main: lettura pubblica, scrittura solo admin
     match /config/main {
       allow read: if true;
-      allow write: if isAuthenticated();
+      allow write: if isAdmin();
     }
 
-    // posts: lettura pubblica, scrittura solo admin
+    // posts: lettura pubblica
+    // creazione: admin o membro del direttivo (verificato contro config/members)
+    // eliminazione: pubblica — senza auth Google per il direttivo non è possibile verificare
+    // l'identità lato server. Il cestino è visibile solo ad admin e direttivo nell'UI.
+    // Accettabile per app interna con 45 utenti.
+    // aggiornamento campo 'letti': permesso a tutti
     match /posts/{postId} {
       allow read: if true;
-      allow write: if isAuthenticated();
+      allow create: if isAdmin() ||
+        get(/databases/$(database)/documents/config/members).data.direttivo.hasAny([request.resource.data.autore]);
+      allow delete: if true;
+      allow update: if isAdmin() || request.resource.data.diff(resource.data).affectedKeys().hasOnly(['letti']);
     }
 
     // fcm_tokens: il dispositivo può scrivere/aggiornare solo il proprio documento
@@ -40,7 +52,26 @@ service cloud.firestore {
     // scrittura solo admin
     match /geofences/{docId} {
       allow read: if true;
-      allow write: if isAuthenticated();
+      allow write: if isAdmin();
+    }
+
+    // config/members: lista soci — lettura pubblica, scrittura solo admin
+    match /config/members {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // config/ospite: deprecato, sostituito da config/slots
+    match /config/ospite {
+      allow read: if true;
+      allow write: if true;
+    }
+
+    // config/slots: mappa normalizedName → deviceId — lettura e scrittura pubblica
+    // ogni slot è occupato da un solo dispositivo
+    match /config/slots {
+      allow read: if true;
+      allow write: if true;
     }
   }
 }

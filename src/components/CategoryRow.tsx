@@ -84,7 +84,7 @@ export const CategoryRow = ({ cat, onToggle, isAdmin }: CategoryRowProps) => {
             </p>
           )}
           <span style={{ display: 'inline-block', fontWeight: 700, fontSize: 15, color: '#B8730A', textTransform: 'uppercase', letterSpacing: '0.04em', marginTop: 8 }}>
-            Sospeso
+            {cat.badgeChiusura === 'CHIUSE' ? 'SOSPESE' : 'SOSPESI'}
           </span>
         </>
       )}

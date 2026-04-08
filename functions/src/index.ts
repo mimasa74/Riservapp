@@ -40,6 +40,7 @@ async function sendPushToAll(
   const snap = await getFirestore().collection('fcm_tokens').get();
   const docs = snap.docs;
   const tokens = docs.map(d => (d.data() as FcmToken).token).filter(Boolean);
+  console.log(`sendPushToAll: trovati ${docs.length} docs, ${tokens.length} token validi. Titolo: "${title}"`);
   if (!tokens.length) return;
 
   const response = await getMessaging().sendEachForMulticast({
@@ -78,6 +79,8 @@ async function sendPushToAll(
     }
   });
 
+  console.log(`sendPushToAll: inviati ${tokens.length - invalid.length} ok, ${invalid.length} falliti`);
+
   if (invalid.length > 0) {
     const batch = getFirestore().batch();
     invalid.forEach(i => batch.delete(docs[i].ref));
@@ -87,7 +90,7 @@ async function sendPushToAll(
 
 // ─── Trigger: nuovo post in bacheca ──────────────────────────────────────────
 
-export const onPostCreate = onDocumentCreated('posts/{postId}', async (event) => {
+export const onPostCreate = onDocumentCreated({ document: 'posts/{postId}', region: 'europe-west12' }, async (event) => {
   const post = event.data?.data();
   if (!post) return;
 
@@ -106,7 +109,7 @@ export const onPostCreate = onDocumentCreated('posts/{postId}', async (event) =>
 
 // ─── Trigger: aggiornamento config/main (quota + sospeso) ────────────────────
 
-export const onConfigUpdate = onDocumentUpdated('config/main', async (event) => {
+export const onConfigUpdate = onDocumentUpdated({ document: 'config/main', region: 'europe-west12' }, async (event) => {
   const before = event.data?.before.data() as Record<string, Record<string, unknown>> | undefined;
   const after = event.data?.after.data() as Record<string, Record<string, unknown>> | undefined;
   if (!before || !after) return;

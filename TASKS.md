@@ -39,7 +39,6 @@ Scrivi a Claude Code:
 - [x] Icona ingranaggio nell'header (solo admin)
 - [x] SettingsScreen: tab per specie, anno, totale capi, stato categorie
 - [x] Pulsante "Nuova stagione" → azzera abbattuti con conferma
-- [ ] NOTE: Michele preferisce aggiornare dati a inizio stagione con Claude Code direttamente
 
 ## ONBOARDING
 - [x] Codice pronto (OnboardingScreen.tsx)
@@ -56,11 +55,7 @@ Scrivi a Claude Code:
 - [x] MappaScreen.tsx — Google Maps con poligono riserva e marker real-time
 - [x] Header: icona mappa per admin
 - [x] Firestore rules aggiornate
-- [ ] **PROSSIMO STEP — Deploy:**
-  1. Compilare in .env.local: VITE_FCM_VAPID_KEY (da Firebase Console → Cloud Messaging → Web Push certificates)
-  2. Compilare in .env.local: VITE_GOOGLE_MAPS_API_KEY (da Google Cloud Console → API & Services)
-  3. `firebase login` nel terminale
-  4. `firebase deploy --only functions,firestore:rules`
+- [x] **Deploy completato** (2026-04-01): functions + firestore:rules su europe-west12
 
 ## FIREBASE — configurazione completata
 - [x] Firestore: database default in Torino (europe-west12)
@@ -73,3 +68,5 @@ Scrivi a Claude Code:
 ## Log sessioni
 <!-- 2026-03-27: Refactor con 4 agenti, 11 file creati, build ok -->
 <!-- 2026-03-30: Bacheca foto upload, login fix, Ruote&Squadre ridisegnate, Impostazioni stagione, fix quadratini -->
+<!-- 2026-04-03: Grafica header, mappa satellite, long press fix, icone PWA -->
+<!-- 2026-04-03: Fix geofence — poligono non era mai scritto su Firestore. Scritto con seed-geofence.html (formato {lat,lng}). Codice lettura aggiornato. Da verificare domani con socio in riserva. -->
