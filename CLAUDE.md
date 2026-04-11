@@ -1,52 +1,62 @@
 # CLAUDE.md — RiservApp
-# Leggi questo file per primo. Poi leggi docs/01_DATA.md, docs/02_LOGIC.md, docs/03_UI.md
+# Leggi questo file prima di tutto, poi TASKS.md per lo stato avanzamento.
 
 ---
 
 ## Cos'è questa app
-Bacheca digitale per la Riserva di Caccia di Tuenno (40-45 soci).
-Sostituisce il gruppo WhatsApp con uno strumento strutturato.
+PWA mobile-first per la Riserva Cacciatori di Tuenno (45 soci + ospiti).
+Sostituisce il gruppo WhatsApp per gestire assegnazioni caccia, bacheca comunicazioni, ruote di caccia.
+
+**URL produzione:** https://riservatuenno.web.app
+**Dev server:** `npx tsx server.ts` su http://localhost:3000
+**Admin:** michele.bruni@gmail.com
 
 ## Stack
-- React 19 + TypeScript
-- Tailwind CSS v4
-- Firebase Firestore (real-time)
-- Firebase Auth (Google Sign-In — solo admin)
-- Firebase Cloud Messaging (notifiche push)
-- Vite 6
+- React 19 + TypeScript + Vite 6
+- Tailwind CSS v4 (`@import "tailwindcss"` in index.css)
+- Firebase Firestore (real-time) + Auth (Google Sign-In admin) + Storage + FCM
+- @react-google-maps/api + @turf/boolean-point-in-polygon
+- EB Garamond font (Google Fonts)
 
-## Documenti da leggere in ordine
-1. `docs/01_DATA.md` — struttura dati e categorie reali
-2. `docs/02_LOGIC.md` — regole di business
-3. `docs/03_UI.md` — interfaccia utente
-4. `docs/preview_v2.html` — mockup interattivo approvato dal cliente
+## Ruoli
+- **Cacciatore** — legge tutto, nome validato contro lista soci, nessun login
+- **Direttivo** — come cacciatore + pubblica/cancella post bacheca (riconosciuto dal nome)
+- **Rettore** (admin) — tutto — long press 3s logo → Google Sign-In
 
-## Asset
-- `assets/icons/` — loghi specie (cervo, capriolo, camoscio)
-- `assets/mockups/` — screenshot di riferimento grafico
+Il cacciatore NON deve mai sapere che esiste una modalità admin.
 
-## Regola fondamentale
-UNA SOLA APP, DUE MODALITÀ:
-- Cacciatore: apre e vede tutto, sola lettura, nessun login visibile
-- Rettore: long press 3 secondi sul logo → Google Sign-In
+## Struttura schermate
+4 schermate via BottomNav: `Bacheca | Capriolo | Cervo | Camoscio`
+- Ingranaggio e mappa SOLO in bacheca, SOLO per admin
 
-Il cacciatore non deve MAI sapere che esiste una modalità admin.
+## Colori
+- bg: `#EDEEE6`, header bg: `#ECEDE1`
+- verde: `#5C6B3A`, bordo: `#d0d5c4`
+- pericolo: `#8B1A1A`, sospeso: `#B8730A`
 
-## Stato avanzamento
-- [x] Struttura componenti separati in src/components/
-- [x] Long press login admin sul logo
-- [x] AssignmentBoxes, CategoryRow, NotesCard, ZoneTabs
-- [ ] Layout verticale categorie (un blocco per categoria)
-- [ ] Grafica fedele a docs/preview_v2.html
-- [ ] Scroll verticale funzionante
-- [ ] Bacheca feed
-- [ ] Ruote e Squadre
-- [ ] Impostazioni stagione
+## UI — regole fondamentali
+- Inline styles con px espliciti, NON Tailwind per layout critici
+- Font grandi: messaggi 30px, note 20px, ruota 25px — utenti anziani
+- Logo PNG già circolare — nessun bordo CSS aggiuntivo
 
-## Primo messaggio da inviare
-"Leggi CLAUDE.md e tutti i file in docs/.
-Implementa il layout verticale delle categorie
-fedele a docs/preview_v2.html.
-Ogni categoria è un blocco separato con bordo.
-Usa le categorie reali da docs/01_DATA.md.
-Confronta con assets/mockups/."
+## Firestore collections
+- `config/main` — dati specie
+- `config/members` — `{ nomi: string[], direttivo: string[] }`
+- `config/slots` — `{ [normalizedName]: deviceId | null }`
+- `posts` — messaggi bacheca
+- `fcm_tokens/{deviceId}` — token push
+- `user_locations/{deviceId}` — posizioni (TTL 35min)
+- `geofences/riserva-tuenno` — poligono 96 vertici
+
+## localStorage keys
+- `riservapp_nome`, `riservapp_device_id`, `riservapp_onboarding`
+- `riservapp_geo`, `riservapp_fcm`, `riservapp_letti_${nome}`
+
+## Normalizzazione nomi
+```ts
+s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+  .split(/\s+/).filter(Boolean).sort().join('')
+// "Bruni Michele" === "Michele Bruni" === "brunimichele"
+```
+
+## Stato avanzamento → vedi TASKS.md
