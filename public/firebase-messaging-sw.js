@@ -30,10 +30,8 @@ self.addEventListener('notificationclick', (event) => {
   const url = event.notification.data?.url || 'https://riservatuenno.web.app';
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
-      for (const client of clientList) {
-        if (client.url.startsWith('https://riservatuenno.web.app') && 'focus' in client) {
-          return client.focus();
-        }
+      if (clientList.length > 0 && 'focus' in clientList[0]) {
+        return clientList[0].focus();
       }
       return clients.openWindow(url);
     })
