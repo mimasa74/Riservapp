@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 
-type Phase = 'video' | 'privacy';
+type Phase = 'tap' | 'video' | 'privacy';
 
 interface OnboardingScreenProps {
   onDone: (geoAccepted: boolean) => void;
@@ -90,7 +90,7 @@ Per procedere con l'utilizzo delle funzionalità di geolocalizzazione all'intern
 "Ho letto e compreso l'informativa sul trattamento dei miei dati personali, compresi i dati di geolocalizzazione all'interno della Riserva Cacciatori Tuenno. Acconsento al trattamento della mia posizione tramite sistemi di geolocalizzazione con attivazione mediante geofence, esclusivamente per le finalità di sicurezza e gestione delle battute di caccia descritte, con cancellazione automatica dei dati di posizione entro circa 1 minuto dalla raccolta."`;
 
 export const OnboardingScreen = ({ onDone }: OnboardingScreenProps) => {
-  const [phase, setPhase] = useState<Phase>('video');
+  const [phase, setPhase] = useState<Phase>('tap');
   const videoRef = useRef<HTMLVideoElement>(null);
 
   const handleChoice = (accepted: boolean) => {
@@ -98,6 +98,35 @@ export const OnboardingScreen = ({ onDone }: OnboardingScreenProps) => {
     localStorage.setItem('riservapp_geo', accepted ? 'true' : 'false');
     onDone(accepted);
   };
+
+  // ── PHASE 0: Tap to start ──────────────────────────────────────────
+  if (phase === 'tap') {
+    return (
+      <div
+        onClick={() => setPhase('video')}
+        style={{
+          position: 'fixed', inset: 0, zIndex: 9999,
+          background: '#000', display: 'flex', flexDirection: 'column',
+          alignItems: 'center', justifyContent: 'center',
+          cursor: 'pointer', userSelect: 'none',
+        }}
+      >
+        <img
+          src="/logo_tuenno_ui.png"
+          alt=""
+          style={{ width: 110, height: 110, marginBottom: 32, opacity: 0.9 }}
+          draggable={false}
+        />
+        <p style={{
+          color: 'rgba(255,255,255,0.85)', fontSize: 15,
+          letterSpacing: '0.08em', textTransform: 'uppercase',
+          fontFamily: 'inherit', margin: 0,
+        }}>
+          Tocca per iniziare
+        </p>
+      </div>
+    );
+  }
 
   // ── PHASE 1: Video ─────────────────────────────────────────────────
   if (phase === 'video') {
@@ -107,7 +136,6 @@ export const OnboardingScreen = ({ onDone }: OnboardingScreenProps) => {
           ref={videoRef}
           src="/onboarding.mp4"
           autoPlay
-          muted
           playsInline
           onEnded={() => setPhase('privacy')}
           style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}

@@ -136,6 +136,21 @@ function MainApp() {
     });
   }, []);
 
+  // Controlla se questo dispositivo deve rifare l'onboarding
+  useEffect(() => {
+    const docRef = doc(db, 'config', 'onboarding_reset');
+    return onSnapshot(docRef, snapshot => {
+      if (!snapshot.exists()) return;
+      const deviceIds: string[] = snapshot.data().deviceIds ?? [];
+      if (deviceIds.includes(deviceId)) {
+        localStorage.removeItem('riservapp_onboarding');
+        setOnboardingDone(false);
+        // Rimuove il proprio deviceId dalla lista
+        updateDoc(docRef, { deviceIds: arrayRemove(deviceId) }).catch(console.error);
+      }
+    });
+  }, []);
+
   // Quando l'admin si logga, setta solo il nome — NON occupa lo slot
   // (l'admin usa Google Auth, non ha bisogno del sistema slot)
   useEffect(() => {
@@ -301,6 +316,15 @@ function MainApp() {
     } catch (e) { console.error(e); }
   };
 
+  const handleResetOnboarding = async (normalizedName: string) => {
+    const targetDeviceId = slots?.[normalizedName];
+    if (!targetDeviceId) return;
+    try {
+      const docRef = doc(db, 'config', 'onboarding_reset');
+      await setDoc(docRef, { deviceIds: arrayUnion(targetDeviceId) }, { merge: true });
+    } catch (e) { console.error(e); }
+  };
+
   const handleAddDirettivo = async (nome: string) => {
     try {
       await updateDoc(doc(db, 'config', 'members'), { direttivo: arrayUnion(nome) });
@@ -345,6 +369,7 @@ function MainApp() {
           onAddMember={handleAddMember}
           onRemoveMember={handleRemoveMember}
           onReleaseSlot={handleReleaseSlot}
+          onResetOnboarding={handleResetOnboarding}
           onAddDirettivo={handleAddDirettivo}
           onRemoveDirettivo={handleRemoveDirettivo}
         />

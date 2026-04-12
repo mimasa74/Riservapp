@@ -73,5 +73,12 @@ service cloud.firestore {
       allow read: if true;
       allow write: if true;
     }
+
+    // config/onboarding_reset: lista di deviceId che devono rifare l'onboarding
+    // scrittura admin (aggiunge) o pubblica (il dispositivo si rimuove dalla lista)
+    match /config/onboarding_reset {
+      allow read: if true;
+      allow write: if true;
+    }
   }
 }

@@ -16,6 +16,7 @@ interface SettingsScreenProps {
   onAddMember: (nome: string) => void;
   onRemoveMember: (nome: string) => void;
   onReleaseSlot: (normalizedName: string) => void;
+  onResetOnboarding: (normalizedName: string) => void;
   onAddDirettivo: (nome: string) => void;
   onRemoveDirettivo: (nome: string) => void;
 }
@@ -39,7 +40,7 @@ function camoscioSortKey(id: string): number {
 
 export const SettingsScreen = ({
   data, members, slots, onClose, onSave, onNewSeason,
-  onAddMember, onRemoveMember, onReleaseSlot,
+  onAddMember, onRemoveMember, onReleaseSlot, onResetOnboarding,
   onAddDirettivo, onRemoveDirettivo,
 }: SettingsScreenProps) => {
   const [localData, setLocalData] = useState<AppData>(JSON.parse(JSON.stringify(data)));
@@ -299,18 +300,32 @@ export const SettingsScreen = ({
                 }} />
                 <span style={{ fontSize: 15, color: '#1A1A14', fontFamily: '-apple-system, sans-serif', flex: 1 }}>{nome}</span>
                 {occupied && (
-                  <button
-                    onClick={() => onReleaseSlot(norm)}
-                    style={{
-                      fontSize: 10, fontWeight: 700, color: '#8B1A1A',
-                      background: 'transparent', border: '1px solid #8B1A1A',
-                      borderRadius: 10, padding: '3px 8px', cursor: 'pointer',
-                      fontFamily: '-apple-system, sans-serif', textTransform: 'uppercase',
-                      letterSpacing: '0.04em', flexShrink: 0,
-                    }}
-                  >
-                    Libera
-                  </button>
+                  <>
+                    <button
+                      onClick={() => onResetOnboarding(norm)}
+                      style={{
+                        fontSize: 10, fontWeight: 700, color: '#5C6B3A',
+                        background: 'transparent', border: '1px solid #5C6B3A',
+                        borderRadius: 10, padding: '3px 8px', cursor: 'pointer',
+                        fontFamily: '-apple-system, sans-serif', textTransform: 'uppercase',
+                        letterSpacing: '0.04em', flexShrink: 0,
+                      }}
+                    >
+                      ↺ Onb.
+                    </button>
+                    <button
+                      onClick={() => onReleaseSlot(norm)}
+                      style={{
+                        fontSize: 10, fontWeight: 700, color: '#8B1A1A',
+                        background: 'transparent', border: '1px solid #8B1A1A',
+                        borderRadius: 10, padding: '3px 8px', cursor: 'pointer',
+                        fontFamily: '-apple-system, sans-serif', textTransform: 'uppercase',
+                        letterSpacing: '0.04em', flexShrink: 0,
+                      }}
+                    >
+                      Libera
+                    </button>
+                  </>
                 )}
                 <button
                   onClick={() => onRemoveMember(nome)}
