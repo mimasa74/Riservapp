@@ -170,12 +170,13 @@ function MainApp() {
     const slotOwner = slots[norm] ?? null;
     const isAllowed = inList && (slotOwner === deviceId || slotOwner === null);
 
-    if (!isAllowed) {
+    if (!isAllowed || slotOwner === null) {
+      // slot non valido o slot rilasciato dall'admin → ricomincia da capo
       localStorage.removeItem('riservapp_nome');
+      localStorage.removeItem('riservapp_onboarding');
+      localStorage.removeItem('riservapp_geo');
       setHunterName('');
-    } else if (slotOwner === null) {
-      // utente già autenticato (localStorage) ma slot non ancora rivendicato → occupa
-      updateDoc(doc(db, 'config', 'slots'), { [norm]: deviceId }).catch(console.error);
+      setOnboardingDone(false);
     }
   }, [members, slots]);
 
@@ -281,7 +282,7 @@ function MainApp() {
   const handleSetName = (nome: string) => {
     localStorage.setItem('riservapp_nome', nome);
     setHunterName(nome);
-    initFCM(deviceId, nome).catch(console.warn);
+    // initFCM viene chiamato dal useEffect([hunterName]) — non chiamare qui per evitare doppio getToken()
   };
 
 
@@ -318,11 +319,18 @@ function MainApp() {
 
   const handleResetOnboarding = async (normalizedName: string) => {
     const targetDeviceId = slots?.[normalizedName];
-    if (!targetDeviceId) return;
+    if (!targetDeviceId) {
+      alert('Nessun dispositivo associato a questo socio.');
+      return;
+    }
     try {
       const docRef = doc(db, 'config', 'onboarding_reset');
       await setDoc(docRef, { deviceIds: arrayUnion(targetDeviceId) }, { merge: true });
-    } catch (e) { console.error(e); }
+      alert('Reset inviato. Il socio rifarà l\'onboarding alla prossima apertura.');
+    } catch (e) {
+      console.error(e);
+      alert('Errore durante il reset.');
+    }
   };
 
   const handleAddDirettivo = async (nome: string) => {
