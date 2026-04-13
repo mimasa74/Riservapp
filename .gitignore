@@ -6,3 +6,14 @@ coverage/
 *.log
 .env*
 !.env.example
+
+# Firebase cache
+.firebase/
+
+# Functions compiled output
+functions/lib/
+
+# Tool/AI directories
+.gstack/
+.superpowers/
+.claude/
