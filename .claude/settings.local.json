@@ -5,7 +5,15 @@
       "Bash(git config:*)",
       "Bash(git remote:*)",
       "Bash(git branch:*)",
-      "Read(//c/Users/mathi/.claude/**)"
+      "Read(//c/Users/mathi/.claude/**)",
+      "mcp__plugin_claude-mem_mcp-search__smart_outline",
+      "Bash(npx tsc *)",
+      "Bash(npm run *)",
+      "Bash(firebase deploy *)",
+      "Bash(npx vite *)",
+      "Bash(npx firebase *)",
+      "Bash(ls *)",
+      "Bash(grep STORAGE .env*)"
     ]
   }
 }

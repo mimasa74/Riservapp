@@ -112,9 +112,9 @@ export const OnboardingScreen = ({ onDone }: OnboardingScreenProps) => {
         }}
       >
         <img
-          src="/logo_tuenno_ui.png"
+          src="/logo_tuenno.png"
           alt=""
-          style={{ width: 110, height: 110, marginBottom: 32, opacity: 0.9 }}
+          style={{ width: 180, height: 180, marginBottom: 32, opacity: 0.9 }}
           draggable={false}
         />
         <p style={{

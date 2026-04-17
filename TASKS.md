@@ -69,8 +69,7 @@ Scrivi a Claude Code:
 ## ONBOARDING
 - [x] Codice pronto (OnboardingScreen.tsx)
 - [x] Schermata privacy GDPR con bottoni Accetto / Non accetto
-- [ ] **Video onboarding: in attesa di `public/onboarding.mp4` da Nanobana**
-  - Specifiche: MP4 H.264, 15-20s, max 15MB, 4 foto Ken Burns
+- [x] Video onboarding: public/onboarding.mp4 presente e deployato
 
 ## LOGO E PWA (2026-04-11)
 - [x] Nuovo logo senza scritta (logo_tuenno_ui.png)
@@ -78,11 +77,10 @@ Scrivi a Claude Code:
 - [x] firebase-messaging-sw.js: notificationclick funziona su localhost e produzione
 
 ## DA FARE
-- [ ] **Deploy Firebase** — `firebase deploy` (hosting + rules + functions)
-  - Pubblica: logo nuovo, fix notificationclick, manifest aggiornato
-- [ ] **Test notifiche su telefono reale** — verificare click su push apre l'app
 - [ ] **Verifica geofence** con socio fisicamente in riserva
-- [ ] **Video onboarding** (public/onboarding.mp4)
+- [x] Deploy Firebase — hosting + rules + functions deployato
+- [x] Test notifiche push su telefono reale — funzionanti
+- [x] Video onboarding (public/onboarding.mp4) — deployato
 
 ---
 
@@ -97,3 +95,5 @@ Scrivi a Claude Code:
 <!-- 2026-04-06: Notifiche FCM funzionanti, "hanno letto" su Firestore, fix direttivo, fix slot admin -->
 <!-- 2026-04-08: Cestino direttivo, notificationclick handler, type safety Post, Firestore rules deploy -->
 <!-- 2026-04-11: Nuovo logo senza scritta, short_name Caccia Tuen, fix notificationclick URL -->
+<!-- 2026-04-12: Fix FCM push (vite-plugin-pwa conflict), foreground notifications, SW self-destroying -->
+<!-- 2026-04-13: Rimossi file morti (SwipeContainer, AssignmentView, AssignmentGrid), TASKS.md allineato allo stato reale -->

@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { storage } from '../firebase';
 import { Post } from '../types';
 import { PostCard } from './PostCard';
@@ -19,16 +19,26 @@ interface BachecaScreenProps {
   onMarkRead: (postIds: string[]) => void;
   onOpenSettings: () => void;
   onOpenMappa: () => void;
+  regolamentoUrl?: string | null;
+  onUpdateRegolamento?: (url: string) => void;
 }
 
-export const BachecaScreen = ({ posts, hunterName, isModerator, onAddPost, onDeletePost, onMarkRead, onOpenSettings, onOpenMappa }: BachecaScreenProps) => {
+export const BachecaScreen = ({ posts, hunterName, isModerator, onAddPost, onDeletePost, onMarkRead, onOpenSettings, onOpenMappa, regolamentoUrl, onUpdateRegolamento }: BachecaScreenProps) => {
   const { isAdmin, login, logout } = useAuth();
   const [showForm, setShowForm] = useState(false);
   const [showAdminModal, setShowAdminModal] = useState(false);
   const [selectedPhoto, setSelectedPhoto] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [uploadingPdf, setUploadingPdf] = useState(false);
   const photoInputRef = useRef<HTMLInputElement>(null);
+  const pdfInputRef = useRef<HTMLInputElement>(null);
+
+  // Pre-fetch PDF regolamento per scaldare cache SW (funziona offline dopo)
+  React.useEffect(() => {
+    const pdfUrl = regolamentoUrl || '/decreto%2086_TUENNO20.pdf';
+    fetch(pdfUrl).catch(() => {});
+  }, [regolamentoUrl]);
 
   // Auto-segna come letti tutti i post dove il nome non è ancora in post.letti
   React.useEffect(() => {
@@ -66,15 +76,34 @@ export const BachecaScreen = ({ posts, hunterName, isModerator, onAddPost, onDel
     if (photoInputRef.current) photoInputRef.current.value = '';
   };
 
+  const handleUploadPdf = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !onUpdateRegolamento) return;
+    setUploadingPdf(true);
+    try {
+      const fileRef = storageRef(storage, 'regolamento/regolamento.pdf');
+      await uploadBytes(fileRef, file);
+      const url = await getDownloadURL(fileRef);
+      await onUpdateRegolamento(url);
+      alert('Regolamento aggiornato.');
+    } catch (err) {
+      console.error(err);
+      alert('Errore durante il caricamento. Riprova.');
+    } finally {
+      setUploadingPdf(false);
+      if (pdfInputRef.current) pdfInputRef.current.value = '';
+    }
+  };
+
   const handleSubmit = async () => {
     if (!formTesto.trim() && !selectedPhoto) return;
     setUploading(true);
     try {
       let foto_url: string | null = null;
       if (selectedPhoto) {
-        const storageRef = ref(storage, `posts/${Date.now()}_${selectedPhoto.name}`);
-        await uploadBytes(storageRef, selectedPhoto);
-        foto_url = await getDownloadURL(storageRef);
+        const fileRef = storageRef(storage, `posts/${Date.now()}_${selectedPhoto.name}`);
+        await uploadBytes(fileRef, selectedPhoto);
+        foto_url = await getDownloadURL(fileRef);
       }
       onAddPost(formTipo, formTesto.trim(), foto_url);
       setFormTesto('');
@@ -337,38 +366,74 @@ export const BachecaScreen = ({ posts, hunterName, isModerator, onAddPost, onDel
       <div style={{ padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: 10 }}>
 
         {/* Regolamento interno — sempre visibile */}
-        <a
-          href="/decreto%2086_TUENNO20.pdf"
-          target="_blank"
-          rel="noopener noreferrer"
-          style={{
-            display: 'flex', alignItems: 'center', gap: 14,
-            padding: '14px 16px', borderRadius: 10,
-            background: '#fff', border: '1.5px solid #d0d5c4',
-            textDecoration: 'none', color: '#1A1A14',
-          }}
-        >
-          <div style={{
-            width: 40, height: 40, borderRadius: 8,
-            background: '#5C6B3A', display: 'flex', alignItems: 'center', justifyContent: 'center',
-            flexShrink: 0,
-          }}>
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#EDEEE6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-              <polyline points="14 2 14 8 20 8"/>
-              <line x1="16" y1="13" x2="8" y2="13"/>
-              <line x1="16" y1="17" x2="8" y2="17"/>
-              <polyline points="10 9 9 9 8 9"/>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <a
+            href={regolamentoUrl || '/decreto%2086_TUENNO20.pdf'}
+            rel="noopener noreferrer"
+            style={{
+              flex: 1, display: 'flex', alignItems: 'center', gap: 14,
+              padding: '14px 16px', borderRadius: 10,
+              background: '#fff', border: '1.5px solid #d0d5c4',
+              textDecoration: 'none', color: '#1A1A14',
+            }}
+          >
+            <div style={{
+              width: 40, height: 40, borderRadius: 8,
+              background: '#5C6B3A', display: 'flex', alignItems: 'center', justifyContent: 'center',
+              flexShrink: 0,
+            }}>
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#EDEEE6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                <polyline points="14 2 14 8 20 8"/>
+                <line x1="16" y1="13" x2="8" y2="13"/>
+                <line x1="16" y1="17" x2="8" y2="17"/>
+                <polyline points="10 9 9 9 8 9"/>
+              </svg>
+            </div>
+            <div style={{ flex: 1 }}>
+              <p style={{ fontSize: 15, fontWeight: 700, margin: 0, lineHeight: 1.3 }}>Regolamento Interno</p>
+              <p style={{ fontSize: 12, color: '#6B6B5A', margin: '2px 0 0', fontFamily: '-apple-system, sans-serif' }}>Decreto 86 — Tuenno</p>
+            </div>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#aaa" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="9 18 15 12 9 6"/>
             </svg>
-          </div>
-          <div style={{ flex: 1 }}>
-            <p style={{ fontSize: 15, fontWeight: 700, margin: 0, lineHeight: 1.3 }}>Regolamento Interno</p>
-            <p style={{ fontSize: 12, color: '#6B6B5A', margin: '2px 0 0', fontFamily: '-apple-system, sans-serif' }}>Decreto 86 — Tuenno</p>
-          </div>
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#aaa" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <polyline points="9 18 15 12 9 6"/>
-          </svg>
-        </a>
+          </a>
+          {isAdmin && (
+            <>
+              <input
+                ref={pdfInputRef}
+                type="file"
+                accept="application/pdf"
+                style={{ display: 'none' }}
+                onChange={handleUploadPdf}
+              />
+              <button
+                onClick={() => pdfInputRef.current?.click()}
+                disabled={uploadingPdf}
+                title="Sostituisci regolamento"
+                style={{
+                  flexShrink: 0, width: 44, height: 44, borderRadius: 10,
+                  border: '1.5px solid #d0d5c4', background: '#fff',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  cursor: uploadingPdf ? 'default' : 'pointer',
+                  color: uploadingPdf ? '#aaa' : '#5C6B3A',
+                }}
+              >
+                {uploadingPdf ? (
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
+                  </svg>
+                ) : (
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                    <polyline points="17 8 12 3 7 8"/>
+                    <line x1="12" y1="3" x2="12" y2="15"/>
+                  </svg>
+                )}
+              </button>
+            </>
+          )}
+        </div>
 
         {/* Pulsante + (admin o direttivo, quando form chiuso) */}
         {(isAdmin || isModerator) && !showForm && (

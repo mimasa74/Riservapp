@@ -44,6 +44,7 @@ function MainApp() {
   const deviceId = getOrCreateDeviceId()
   const { isAdmin } = useAuth();
   const [data, setData] = useState<AppData>((fallbackData as unknown) as AppData);
+  const [regolamentoUrl, setRegolamentoUrl] = useState<string | null>(null);
   const [hunterName, setHunterName] = useState<string>(
     () => localStorage.getItem('riservapp_nome') || ''
   );
@@ -57,7 +58,20 @@ function MainApp() {
   const [membersFromServer, setMembersFromServer] = useState(false);
   const [ospite, setOspite] = useState<OspiteData | null>(null);
   const [slots, setSlots] = useState<Slots | null>(null);
+  const [slotsFromServer, setSlotsFromServer] = useState(false);
+  const [isOffline, setIsOffline] = useState(!navigator.onLine);
   const membersValidated = React.useRef(false);
+
+  useEffect(() => {
+    const goOffline = () => setIsOffline(true);
+    const goOnline = () => setIsOffline(false);
+    window.addEventListener('offline', goOffline);
+    window.addEventListener('online', goOnline);
+    return () => {
+      window.removeEventListener('offline', goOffline);
+      window.removeEventListener('online', goOnline);
+    };
+  }, []);
 
   const isModerator = !isAdmin && (members?.direttivo ?? []).some(
     n => normalizeName(n) === normalizeName(hunterName)
@@ -80,7 +94,10 @@ function MainApp() {
     const docRef = doc(db, 'config', 'main');
     const unsubscribe = onSnapshot(docRef, snapshot => {
       if (snapshot.exists()) {
-        setData(snapshot.data() as AppData);
+        const raw = snapshot.data();
+        setRegolamentoUrl(raw.regolamento_url ?? null);
+        const { regolamento_url, ...specieData } = raw;
+        setData(specieData as AppData);
       } else {
         // Documento non esiste — inizializza con i dati di default
         if (isAdminRef.current) setDoc(docRef, fallbackData as unknown as Record<string, unknown>).catch(console.error);
@@ -126,12 +143,14 @@ function MainApp() {
 
   useEffect(() => {
     const docRef = doc(db, 'config', 'slots');
-    return onSnapshot(docRef, snapshot => {
+    return onSnapshot(docRef, { includeMetadataChanges: true }, snapshot => {
       if (snapshot.exists()) {
         setSlots(snapshot.data() as Slots);
+        if (!snapshot.metadata.fromCache) setSlotsFromServer(true);
       } else {
         if (isAdminRef.current) setDoc(docRef, {}).catch(console.error);
         setSlots({});
+        setSlotsFromServer(true);
       }
     });
   }, []);
@@ -161,7 +180,8 @@ function MainApp() {
   }, [isAdmin]);
 
   useEffect(() => {
-    if (!members || !slots || membersValidated.current || isAdmin) return;
+    if (!members || !slots || !membersFromServer || !slotsFromServer || isOffline) return;
+    if (membersValidated.current || isAdmin) return;
     membersValidated.current = true;
     if (!hunterName) return;
 
@@ -178,7 +198,7 @@ function MainApp() {
       setHunterName('');
       setOnboardingDone(false);
     }
-  }, [members, slots]);
+  }, [members, slots, membersFromServer, slotsFromServer]);
 
   const handleScreenChange = (index: number) => {
     setShowRuota(false);
@@ -279,6 +299,10 @@ function MainApp() {
     }
   };
 
+  const handleUpdateRegolamento = async (url: string) => {
+    await updateDoc(doc(db, 'config', 'main'), { regolamento_url: url });
+  };
+
   const handleSetName = (nome: string) => {
     localStorage.setItem('riservapp_nome', nome);
     setHunterName(nome);
@@ -349,7 +373,7 @@ function MainApp() {
     return <OnboardingScreen onDone={() => setOnboardingDone(true)} />;
   }
 
-  if (!isAdmin && (members === null || slots === null || !membersFromServer)) {
+  if (!isAdmin && (members === null || slots === null || (!membersFromServer && !isOffline))) {
     return <div style={{ background: '#EDEEE6', height: '100dvh' }} />;
   }
 
@@ -418,6 +442,8 @@ function MainApp() {
             onMarkRead={handleMarkRead}
             onOpenSettings={() => setShowSettings(true)}
             onOpenMappa={() => setShowMappa(true)}
+            regolamentoUrl={regolamentoUrl}
+            onUpdateRegolamento={handleUpdateRegolamento}
           />
         ) : (
           (() => {

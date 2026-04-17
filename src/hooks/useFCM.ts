@@ -1,10 +1,10 @@
-import { getToken, isSupported, onMessage } from 'firebase/messaging';
+import { getToken, isSupported, onMessage, Messaging } from 'firebase/messaging';
 import { doc, setDoc } from 'firebase/firestore';
-import { messaging, db } from '../firebase';
+import { getMessagingInstance, db } from '../firebase';
 
 // Mostra notifica in foreground (quando l'app è aperta)
 // Usa SW showNotification perché new Notification() non è supportato su Android Chrome
-function setupForegroundHandler(): void {
+function setupForegroundHandler(messaging: Messaging): void {
   onMessage(messaging, (payload) => {
     const title = payload.notification?.title || 'Riserva Tuenno';
     const body = payload.notification?.body || '';
@@ -40,6 +40,7 @@ export async function initFCM(deviceId: string, nome: string): Promise<void> {
 
   // Registra (o rinnova) il token FCM — eseguito sempre per mantenere il token valido
   try {
+    const messaging = await getMessagingInstance();
     const reg = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
 
     // Aspetta che il SW sia attivo prima di chiamare getToken
@@ -71,7 +72,7 @@ export async function initFCM(deviceId: string, nome: string): Promise<void> {
     });
 
     if (!foregroundHandlerSetup) {
-      setupForegroundHandler();
+      setupForegroundHandler(messaging);
       foregroundHandlerSetup = true;
     }
   } catch (err) {
