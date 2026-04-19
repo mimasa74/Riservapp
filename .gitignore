@@ -17,3 +17,6 @@ functions/lib/
 .gstack/
 .superpowers/
 .claude/
+
+# Git worktrees
+.worktrees/

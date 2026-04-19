@@ -10,75 +10,74 @@ service cloud.firestore {
       return request.auth != null && request.auth.token.email == 'michele.bruni@gmail.com';
     }
 
-    // config/main: lettura pubblica, scrittura solo admin
+    // config/main: lettura per utenti autenticati (anche anonimi), scrittura solo admin
     match /config/main {
-      allow read: if true;
+      allow read: if isAuthenticated();
       allow write: if isAdmin();
     }
 
-    // posts: lettura pubblica
+    // posts: lettura per autenticati (blocca scraping via API).
     // creazione: admin o membro del direttivo (verificato contro config/members)
-    // eliminazione: pubblica — senza auth Google per il direttivo non è possibile verificare
-    // l'identità lato server. Il cestino è visibile solo ad admin e direttivo nell'UI.
-    // Accettabile per app interna con 45 utenti.
-    // aggiornamento campo 'letti': permesso a tutti
+    // eliminazione: solo admin. L'utente anonimo non può provare la propria identità
+    //   quindi il direttivo che cancella dalla UI lo fa dopo long-press + login Google.
+    // aggiornamento campo 'letti': permesso a tutti gli autenticati
     match /posts/{postId} {
-      allow read: if true;
+      allow read: if isAuthenticated();
       allow create: if isAdmin() ||
         get(/databases/$(database)/documents/config/members).data.direttivo.hasAny([request.resource.data.autore]);
-      allow delete: if true;
-      allow update: if isAdmin() || request.resource.data.diff(resource.data).affectedKeys().hasOnly(['letti']);
+      allow delete: if isAdmin();
+      allow update: if isAdmin() || (isAuthenticated() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['letti']));
     }
 
     // fcm_tokens: il dispositivo può scrivere/aggiornare solo il proprio documento
     // (verificato tramite deviceId nel body == deviceId nel path)
-    // lettura solo admin
+    // lettura e delete solo admin (anon auth NON deve vedere token altrui)
     match /fcm_tokens/{deviceId} {
       allow create, update: if request.resource.data.deviceId == deviceId;
-      allow delete: if isAuthenticated();
-      allow read: if isAuthenticated();
+      allow delete: if isAdmin();
+      allow read: if isAdmin();
     }
 
     // user_locations: il dispositivo può scrivere/aggiornare solo il proprio documento
-    // DELETE: controlla resource.data.deviceId (non request.resource che è null su delete)
-    // lettura solo admin
+    // DELETE: dispositivo può eliminare solo il proprio (deviceId match)
+    // lettura solo admin (anon auth NON deve vedere posizioni altrui)
     match /user_locations/{deviceId} {
       allow create, update: if request.resource.data.deviceId == deviceId;
       allow delete: if resource != null && resource.data.deviceId == deviceId;
-      allow read: if isAuthenticated();
+      allow read: if isAdmin();
     }
 
-    // geofences: lettura pubblica (serve al client per geofencing),
+    // geofences: lettura per autenticati (serve al client per geofencing),
     // scrittura solo admin
     match /geofences/{docId} {
-      allow read: if true;
+      allow read: if isAuthenticated();
       allow write: if isAdmin();
     }
 
-    // config/members: lista soci — lettura pubblica, scrittura solo admin
+    // config/members: lista soci — lettura per autenticati, scrittura solo admin
     match /config/members {
-      allow read: if true;
+      allow read: if isAuthenticated();
       allow write: if isAdmin();
     }
 
     // config/ospite: deprecato, sostituito da config/slots
     match /config/ospite {
-      allow read: if true;
-      allow write: if true;
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated();
     }
 
-    // config/slots: mappa normalizedName → deviceId — lettura e scrittura pubblica
-    // ogni slot è occupato da un solo dispositivo
+    // config/slots: mappa normalizedName → deviceId — lettura e scrittura per autenticati.
+    // Ogni slot è occupato da un solo dispositivo.
     match /config/slots {
-      allow read: if true;
-      allow write: if true;
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated();
     }
 
     // config/onboarding_reset: lista di deviceId che devono rifare l'onboarding
-    // scrittura admin (aggiunge) o pubblica (il dispositivo si rimuove dalla lista)
+    // scrittura admin (aggiunge) o autenticata (il dispositivo si rimuove dalla lista)
     match /config/onboarding_reset {
-      allow read: if true;
-      allow write: if true;
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated();
     }
   }
 }

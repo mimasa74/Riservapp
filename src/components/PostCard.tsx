@@ -32,7 +32,7 @@ const BADGE_STYLE: Record<Post['tipo'], React.CSSProperties> = {
   alert:   { background: '#8B1A1A', color: '#fff' },
 };
 
-export const PostCard = ({ post, isAdmin, canDelete, onDelete }: PostCardProps) => {
+const PostCardInner = ({ post, isAdmin, canDelete, onDelete }: PostCardProps) => {
   const [showLetti, setShowLetti] = useState(false);
   const letti: string[] = post.letti ?? [];
 
@@ -76,7 +76,7 @@ export const PostCard = ({ post, isAdmin, canDelete, onDelete }: PostCardProps) 
 
       {/* Foto */}
       {post.foto_url && (
-        <img src={post.foto_url} alt="foto"
+        <img src={post.foto_url} alt="foto" loading="lazy"
           style={{ marginTop: 12, width: '100%', borderRadius: 6, display: 'block' }} />
       )}
 
@@ -134,3 +134,18 @@ export const PostCard = ({ post, isAdmin, canDelete, onDelete }: PostCardProps) 
     </div>
   );
 };
+
+// onSnapshot rigenera gli oggetti Post a ogni tick: senza comparatore esplicito
+// React.memo fallirebbe sempre. Confronto i campi che PostCard rende davvero.
+export const PostCard = React.memo(PostCardInner, (prev, next) =>
+  prev.post.id === next.post.id &&
+  prev.post.tipo === next.post.tipo &&
+  prev.post.testo === next.post.testo &&
+  prev.post.foto_url === next.post.foto_url &&
+  prev.post.pdf_url === next.post.pdf_url &&
+  prev.post.data === next.post.data &&
+  (prev.post.letti?.length ?? 0) === (next.post.letti?.length ?? 0) &&
+  prev.canDelete === next.canDelete &&
+  prev.isAdmin === next.isAdmin &&
+  prev.onDelete === next.onDelete
+);

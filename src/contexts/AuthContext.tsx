@@ -31,13 +31,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
+    // Anon users restano loggati (servono per le rules isAuthenticated()).
+    // Google users non-admin vengono disconnessi: il direttivo usa solo michele.bruni@.
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
-      if (currentUser && !ADMIN_EMAILS.includes(currentUser.email ?? '')) {
+      if (currentUser && !currentUser.isAnonymous && !ADMIN_EMAILS.includes(currentUser.email ?? '')) {
         await signOut(auth);
         return;
       }
       setUser(currentUser);
-      setIsAdmin(!!currentUser);
+      setIsAdmin(!!currentUser && ADMIN_EMAILS.includes(currentUser.email ?? ''));
     });
     return () => unsubscribe();
   }, []);

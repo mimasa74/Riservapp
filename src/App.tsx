@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { db } from './firebase';
 import { doc, onSnapshot, updateDoc, setDoc, collection, query, orderBy, addDoc, deleteDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
@@ -102,7 +102,7 @@ function MainApp() {
         // Documento non esiste — inizializza con i dati di default
         if (isAdminRef.current) setDoc(docRef, fallbackData as unknown as Record<string, unknown>).catch(console.error);
       }
-    });
+    }, (err) => console.error('[snapshot:config/main]', err.code, err.message));
     return () => unsubscribe();
   }, []);
 
@@ -110,7 +110,7 @@ function MainApp() {
     const q = query(collection(db, 'posts'), orderBy('data', 'desc'));
     const unsubscribe = onSnapshot(q, snapshot => {
       setPosts(snapshot.docs.map(d => ({ id: d.id, ...d.data() } as Post)));
-    });
+    }, (err) => console.error('[snapshot:posts]', err.code, err.message));
     return () => unsubscribe();
   }, []);
 
@@ -126,7 +126,7 @@ function MainApp() {
         setMembers({ nomi: [], direttivo: [] });
         setMembersFromServer(true);
       }
-    });
+    }, (err) => console.error('[snapshot:config/members]', err.code, err.message));
   }, []);
 
   useEffect(() => {
@@ -138,7 +138,7 @@ function MainApp() {
         if (isAdminRef.current) setDoc(docRef, { device_id: null }).catch(console.error);
         setOspite({ device_id: null });
       }
-    });
+    }, (err) => console.error('[snapshot:config/ospite]', err.code, err.message));
   }, []);
 
   useEffect(() => {
@@ -152,7 +152,7 @@ function MainApp() {
         setSlots({});
         setSlotsFromServer(true);
       }
-    });
+    }, (err) => console.error('[snapshot:config/slots]', err.code, err.message));
   }, []);
 
   // Controlla se questo dispositivo deve rifare l'onboarding
@@ -167,7 +167,7 @@ function MainApp() {
         // Rimuove il proprio deviceId dalla lista
         updateDoc(docRef, { deviceIds: arrayRemove(deviceId) }).catch(console.error);
       }
-    });
+    }, (err) => console.error('[snapshot:config/onboarding_reset]', err.code, err.message));
   }, []);
 
   // Quando l'admin si logga, setta solo il nome — NON occupa lo slot
@@ -282,14 +282,14 @@ function MainApp() {
     } catch (e) { console.error(e); }
   };
 
-  const handleDeletePost = async (id: string) => {
+  const handleDeletePost = useCallback(async (id: string) => {
     try {
       await deleteDoc(doc(db, 'posts', id));
     } catch (e) {
       console.error(e);
       alert('Errore durante la cancellazione del messaggio. Riprova.');
     }
-  };
+  }, []);
 
   const handleMarkRead = async (postIds: string[]) => {
     for (const id of postIds) {
