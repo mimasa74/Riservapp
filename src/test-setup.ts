@@ -1,5 +1,26 @@
 import { vi } from 'vitest';
 
+// Node.js v22+ espone un localStorage nativo (node:internal/webstorage) che non implementa
+// l'interfaccia completa (es. clear() mancante senza --localstorage-file).
+// Vitest v4 + jsdom non sovrascrive questa property perché `localStorage` non è nei suoi KEYS.
+// Sostituiamo con un'implementazione in-memory che rispetta la Web Storage API.
+{
+  const store: Record<string, string> = {};
+  const localStoragePolyfill = {
+    getItem: (k: string) => store[k] ?? null,
+    setItem: (k: string, v: string) => { store[k] = String(v); },
+    removeItem: (k: string) => { delete store[k]; },
+    clear: () => { for (const k of Object.keys(store)) delete store[k]; },
+    key: (i: number) => Object.keys(store)[i] ?? null,
+    get length() { return Object.keys(store).length; },
+  };
+  Object.defineProperty(globalThis, 'localStorage', {
+    value: localStoragePolyfill,
+    configurable: true,
+    writable: true,
+  });
+}
+
 // Mock firebase/messaging — non supportato in jsdom
 vi.mock('firebase/messaging', () => ({
   getMessaging: vi.fn(() => ({})),
