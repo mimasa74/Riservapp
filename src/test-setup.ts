@@ -12,6 +12,8 @@ vi.mock('firebase/messaging', () => ({
 vi.mock('firebase/firestore', () => ({
   initializeFirestore: vi.fn(() => ({})),
   getFirestore: vi.fn(() => ({})),
+  persistentLocalCache: vi.fn(() => ({})),
+  persistentMultipleTabManager: vi.fn(() => ({})),
   doc: vi.fn(),
   setDoc: vi.fn(() => Promise.resolve()),
   deleteDoc: vi.fn(() => Promise.resolve()),
@@ -26,6 +28,8 @@ vi.mock('firebase/firestore', () => ({
 // Mock firebase/auth
 vi.mock('firebase/auth', () => ({
   getAuth: vi.fn(() => ({})),
+  signInAnonymously: vi.fn(() => Promise.resolve({ user: { getIdToken: () => Promise.resolve('mock') } })),
+  onAuthStateChanged: vi.fn(() => () => {}),
 }));
 
 // Mock firebase/storage
