@@ -16,6 +16,12 @@ import { RuotaView } from './components/RuotaView';
 import { MappaScreen } from './components/MappaScreen';
 import { SettingsScreen } from './components/SettingsScreen';
 import { BottomNav } from './components/BottomNav';
+import { OfflineBanner } from './components/OfflineBanner';
+
+function markSynced() {
+  localStorage.setItem('lastSyncAt', String(Date.now()));
+  window.dispatchEvent(new Event('lastSyncAt'));
+}
 
 const ALL_SCREENS = ['bacheca', 'capriolo', 'cervo', 'camoscio'] as const;
 type Screen = typeof ALL_SCREENS[number];
@@ -92,12 +98,13 @@ function MainApp() {
 
   useEffect(() => {
     const docRef = doc(db, 'config', 'main');
-    const unsubscribe = onSnapshot(docRef, snapshot => {
+    const unsubscribe = onSnapshot(docRef, { includeMetadataChanges: true }, snapshot => {
       if (snapshot.exists()) {
         const raw = snapshot.data();
         setRegolamentoUrl(raw.regolamento_url ?? null);
         const { regolamento_url, ...specieData } = raw;
         setData(specieData as AppData);
+        if (!snapshot.metadata.fromCache && !snapshot.metadata.hasPendingWrites) markSynced();
       } else {
         // Documento non esiste — inizializza con i dati di default
         if (isAdminRef.current) setDoc(docRef, fallbackData as unknown as Record<string, unknown>).catch(console.error);
@@ -108,8 +115,9 @@ function MainApp() {
 
   useEffect(() => {
     const q = query(collection(db, 'posts'), orderBy('data', 'desc'));
-    const unsubscribe = onSnapshot(q, snapshot => {
+    const unsubscribe = onSnapshot(q, { includeMetadataChanges: true }, snapshot => {
       setPosts(snapshot.docs.map(d => ({ id: d.id, ...d.data() } as Post)));
+      if (!snapshot.metadata.fromCache && !snapshot.metadata.hasPendingWrites) markSynced();
     }, (err) => console.error('[snapshot:posts]', err.code, err.message));
     return () => unsubscribe();
   }, []);
@@ -120,7 +128,7 @@ function MainApp() {
       if (snapshot.exists()) {
         const d = snapshot.data();
         setMembers({ nomi: d.nomi ?? [], direttivo: d.direttivo ?? [] });
-        if (!snapshot.metadata.fromCache) setMembersFromServer(true);
+        if (!snapshot.metadata.fromCache) { setMembersFromServer(true); markSynced(); }
       } else {
         if (isAdminRef.current) setDoc(docRef, { nomi: [], direttivo: [] }).catch(console.error);
         setMembers({ nomi: [], direttivo: [] });
@@ -146,7 +154,7 @@ function MainApp() {
     return onSnapshot(docRef, { includeMetadataChanges: true }, snapshot => {
       if (snapshot.exists()) {
         setSlots(snapshot.data() as Slots);
-        if (!snapshot.metadata.fromCache) setSlotsFromServer(true);
+        if (!snapshot.metadata.fromCache) { setSlotsFromServer(true); markSynced(); }
       } else {
         if (isAdminRef.current) setDoc(docRef, {}).catch(console.error);
         setSlots({});
@@ -431,6 +439,7 @@ function MainApp() {
 
   return (
     <div className="h-dvh bg-[#EDEEE6] text-[#1A1A14] select-none flex flex-col max-w-lg mx-auto">
+      <OfflineBanner />
       <div className="flex-1 overflow-y-auto" style={{ WebkitOverflowScrolling: 'touch', overscrollBehavior: 'contain' }}>
         {currentScreen === 'bacheca' ? (
           <BachecaScreen
