@@ -50,6 +50,8 @@ export interface Post {
   testo: string;
   foto_url?: string | null;
   pdf_url?: string | null;
+  foto_width?: number;
+  foto_height?: number;
   data: number; // timestamp ms
   letti?: string[]; // nomi dei soci che hanno letto
   autore?: string; // nome del membro che ha pubblicato (direttivo o admin)

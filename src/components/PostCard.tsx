@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Post } from '../types';
+import { PhotoPlaceholder } from './PhotoPlaceholder';
 
 interface PostCardProps {
   post: Post;
@@ -34,6 +35,7 @@ const BADGE_STYLE: Record<Post['tipo'], React.CSSProperties> = {
 
 const PostCardInner = ({ post, isAdmin, canDelete, onDelete }: PostCardProps) => {
   const [showLetti, setShowLetti] = useState(false);
+  const [fotoFailed, setFotoFailed] = useState(false);
   const letti: string[] = post.letti ?? [];
 
   return (
@@ -75,9 +77,32 @@ const PostCardInner = ({ post, isAdmin, canDelete, onDelete }: PostCardProps) =>
       </p>
 
       {/* Foto */}
-      {post.foto_url && (
-        <img src={post.foto_url} alt="foto" loading="lazy"
-          style={{ marginTop: 12, width: '100%', borderRadius: 6, display: 'block' }} />
+      {post.foto_url && !fotoFailed && (
+        <img
+          src={post.foto_url}
+          alt="foto"
+          loading="lazy"
+          style={{
+            marginTop: 12,
+            width: '100%',
+            aspectRatio: post.foto_width && post.foto_height
+              ? `${post.foto_width} / ${post.foto_height}`
+              : '4 / 3',
+            objectFit: 'cover',
+            borderRadius: 6,
+            display: 'block',
+          }}
+          onError={() => setFotoFailed(true)}
+        />
+      )}
+      {post.foto_url && fotoFailed && (
+        <PhotoPlaceholder
+          aspectRatio={
+            post.foto_width && post.foto_height
+              ? `${post.foto_width} / ${post.foto_height}`
+              : '4 / 3'
+          }
+        />
       )}
 
       {/* PDF */}
@@ -143,6 +168,8 @@ export const PostCard = React.memo(PostCardInner, (prev, next) =>
   prev.post.testo === next.post.testo &&
   prev.post.foto_url === next.post.foto_url &&
   prev.post.pdf_url === next.post.pdf_url &&
+  prev.post.foto_width === next.post.foto_width &&
+  prev.post.foto_height === next.post.foto_height &&
   prev.post.data === next.post.data &&
   (prev.post.letti?.length ?? 0) === (next.post.letti?.length ?? 0) &&
   prev.canDelete === next.canDelete &&
