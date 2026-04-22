@@ -214,6 +214,10 @@ function MainApp() {
   };
 
   const handleToggleAbbattimento = async (catId: string, index: number) => {
+    if (!navigator.onLine) {
+      alert('Sei offline. Riprova quando torni online.');
+      return;
+    }
     const sData = data[currentSpecieId];
     const catIndex = sData.categorie.findIndex(c => c.id === catId);
     if (catIndex === -1) return;
@@ -246,6 +250,10 @@ function MainApp() {
   };
 
   const handleUpdateText = async (field: 'note' | 'alert' | 'penalita', value: string) => {
+    if (!navigator.onLine) {
+      alert('Sei offline. Riprova quando torni online.');
+      return;
+    }
     try {
       const docRef = doc(db, 'config', 'main');
       await updateDoc(docRef, { [`${currentSpecieId}.${field}`]: value });
@@ -253,6 +261,10 @@ function MainApp() {
   };
 
   const handleSaveSettings = async (updatedData: AppData) => {
+    if (!navigator.onLine) {
+      alert('Sei offline. Riprova quando torni online.');
+      return;
+    }
     try {
       const docRef = doc(db, 'config', 'main');
       const updates: Record<string, unknown> = {};
@@ -266,6 +278,10 @@ function MainApp() {
   };
 
   const handleNewSeason = async () => {
+    if (!navigator.onLine) {
+      alert('Sei offline. Riprova quando torni online.');
+      return;
+    }
     try {
       const docRef = doc(db, 'config', 'main');
       const updates: Record<string, unknown> = {};
@@ -278,6 +294,10 @@ function MainApp() {
   };
 
   const handleUpdateRuota = async (testo: string, foto: string[]) => {
+    if (!navigator.onLine) {
+      alert('Sei offline. Riprova quando torni online.');
+      return;
+    }
     try {
       const docRef = doc(db, 'config', 'main');
       await updateDoc(docRef, { [`${currentSpecieId}.ruota`]: { testo, foto } });
@@ -307,6 +327,10 @@ function MainApp() {
   };
 
   const handleDeletePost = useCallback(async (id: string) => {
+    if (!navigator.onLine) {
+      alert('Sei offline. Riprova quando torni online.');
+      return;
+    }
     try {
       await deleteDoc(doc(db, 'posts', id));
     } catch (e) {
@@ -316,6 +340,10 @@ function MainApp() {
   }, []);
 
   const handleMarkRead = async (postIds: string[]) => {
+    if (!navigator.onLine) {
+      alert('Sei offline. Riprova quando torni online.');
+      return;
+    }
     for (const id of postIds) {
       try {
         await updateDoc(doc(db, 'posts', id), { letti: arrayUnion(hunterName) });
@@ -324,6 +352,10 @@ function MainApp() {
   };
 
   const handleUpdateRegolamento = async (url: string) => {
+    if (!navigator.onLine) {
+      alert('Sei offline. Riprova quando torni online.');
+      return;
+    }
     await updateDoc(doc(db, 'config', 'main'), { regolamento_url: url });
   };
 
@@ -342,30 +374,50 @@ function MainApp() {
   }, [hunterName]);
 
   const handleAddMember = async (nome: string) => {
+    if (!navigator.onLine) {
+      alert('Sei offline. Riprova quando torni online.');
+      return;
+    }
     try {
       await updateDoc(doc(db, 'config', 'members'), { nomi: arrayUnion(nome) });
     } catch (e) { console.error(e); }
   };
 
   const handleRemoveMember = async (nome: string) => {
+    if (!navigator.onLine) {
+      alert('Sei offline. Riprova quando torni online.');
+      return;
+    }
     try {
       await updateDoc(doc(db, 'config', 'members'), { nomi: arrayRemove(nome) });
     } catch (e) { console.error(e); }
   };
 
   const handleReleaseOspite = async () => {
+    if (!navigator.onLine) {
+      alert('Sei offline. Riprova quando torni online.');
+      return;
+    }
     try {
       await updateDoc(doc(db, 'config', 'ospite'), { device_id: null });
     } catch (e) { console.error(e); }
   };
 
   const handleReleaseSlot = async (normalizedName: string) => {
+    if (!navigator.onLine) {
+      alert('Sei offline. Riprova quando torni online.');
+      return;
+    }
     try {
       await updateDoc(doc(db, 'config', 'slots'), { [normalizedName]: null });
     } catch (e) { console.error(e); }
   };
 
   const handleResetOnboarding = async (normalizedName: string) => {
+    if (!navigator.onLine) {
+      alert('Sei offline. Riprova quando torni online.');
+      return;
+    }
     const targetDeviceId = slots?.[normalizedName];
     if (!targetDeviceId) {
       alert('Nessun dispositivo associato a questo socio.');
@@ -382,12 +434,20 @@ function MainApp() {
   };
 
   const handleAddDirettivo = async (nome: string) => {
+    if (!navigator.onLine) {
+      alert('Sei offline. Riprova quando torni online.');
+      return;
+    }
     try {
       await updateDoc(doc(db, 'config', 'members'), { direttivo: arrayUnion(nome) });
     } catch (e) { console.error(e); }
   };
 
   const handleRemoveDirettivo = async (nome: string) => {
+    if (!navigator.onLine) {
+      alert('Sei offline. Riprova quando torni online.');
+      return;
+    }
     try {
       await updateDoc(doc(db, 'config', 'members'), { direttivo: arrayRemove(nome) });
     } catch (e) { console.error(e); }

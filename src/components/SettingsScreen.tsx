@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { AppData, CategoriaStato, Members, Slots } from '../types';
+import { useOnlineStatus } from '../hooks/useOnlineStatus';
 
 function normalizeName(s: string): string {
   return s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
@@ -43,6 +44,7 @@ export const SettingsScreen = ({
   onAddMember, onRemoveMember, onReleaseSlot, onResetOnboarding,
   onAddDirettivo, onRemoveDirettivo,
 }: SettingsScreenProps) => {
+  const { online } = useOnlineStatus();
   const [localData, setLocalData] = useState<AppData>(JSON.parse(JSON.stringify(data)));
   const [activeSpecie, setActiveSpecie] = useState(SPECIE_ORDER[0]);
   const [confirmNewSeason, setConfirmNewSeason] = useState(false);
@@ -128,6 +130,12 @@ export const SettingsScreen = ({
       </div>
 
       <div style={{ padding: '16px 18px', display: 'flex', flexDirection: 'column', gap: 20 }}>
+
+        {!online && (
+          <div style={{ background: '#8B1A1A20', color: '#8B1A1A', padding: '8px 12px', borderRadius: 6, marginBottom: 12, fontSize: 14 }}>
+            Sei offline — le modifiche sono bloccate fino al ritorno della connessione.
+          </div>
+        )}
 
         {/* Anno */}
         <div style={{ background: '#fff', borderRadius: 10, border: '1px solid #d0d5c4', padding: '14px 16px' }}>
@@ -261,12 +269,14 @@ export const SettingsScreen = ({
             />
             <button
               onClick={() => { if (newMember.trim()) { onAddMember(newMember.trim()); setNewMember(''); } }}
-              disabled={!newMember.trim()}
+              disabled={!newMember.trim() || !online}
               style={{
                 padding: '9px 16px', borderRadius: 6, border: 'none',
-                background: newMember.trim() ? '#5C6B3A' : '#d0d5c4',
+                background: newMember.trim() && online ? '#5C6B3A' : '#d0d5c4',
                 color: '#EDEEE6', fontFamily: 'inherit', fontSize: 18, fontWeight: 700,
-                cursor: newMember.trim() ? 'pointer' : 'default',
+                cursor: newMember.trim() && online ? 'pointer' : 'not-allowed',
+                opacity: online ? 1 : 0.5,
+                pointerEvents: online ? 'auto' : 'none',
               }}
             >
               +
@@ -303,24 +313,30 @@ export const SettingsScreen = ({
                   <>
                     <button
                       onClick={() => onResetOnboarding(norm)}
+                      disabled={!online}
                       style={{
                         fontSize: 10, fontWeight: 700, color: '#5C6B3A',
                         background: 'transparent', border: '1px solid #5C6B3A',
-                        borderRadius: 10, padding: '3px 8px', cursor: 'pointer',
+                        borderRadius: 10, padding: '3px 8px', cursor: online ? 'pointer' : 'not-allowed',
                         fontFamily: '-apple-system, sans-serif', textTransform: 'uppercase',
                         letterSpacing: '0.04em', flexShrink: 0,
+                        opacity: online ? 1 : 0.5,
+                        pointerEvents: online ? 'auto' : 'none',
                       }}
                     >
                       ↺ Onb.
                     </button>
                     <button
                       onClick={() => onReleaseSlot(norm)}
+                      disabled={!online}
                       style={{
                         fontSize: 10, fontWeight: 700, color: '#8B1A1A',
                         background: 'transparent', border: '1px solid #8B1A1A',
-                        borderRadius: 10, padding: '3px 8px', cursor: 'pointer',
+                        borderRadius: 10, padding: '3px 8px', cursor: online ? 'pointer' : 'not-allowed',
                         fontFamily: '-apple-system, sans-serif', textTransform: 'uppercase',
                         letterSpacing: '0.04em', flexShrink: 0,
+                        opacity: online ? 1 : 0.5,
+                        pointerEvents: online ? 'auto' : 'none',
                       }}
                     >
                       Libera
@@ -329,12 +345,15 @@ export const SettingsScreen = ({
                 )}
                 <button
                   onClick={() => onRemoveMember(nome)}
+                  disabled={!online}
                   style={{
                     width: 26, height: 26, borderRadius: '50%',
                     border: '1px solid #d0d5c4', background: 'transparent',
-                    cursor: 'pointer', display: 'flex', alignItems: 'center',
+                    cursor: online ? 'pointer' : 'not-allowed', display: 'flex', alignItems: 'center',
                     justifyContent: 'center', color: '#8B1A1A', fontSize: 18, lineHeight: 1,
                     flexShrink: 0,
+                    opacity: online ? 1 : 0.5,
+                    pointerEvents: online ? 'auto' : 'none',
                   }}
                 >
                   ×
@@ -376,12 +395,14 @@ export const SettingsScreen = ({
             />
             <button
               onClick={() => { if (newDirettivo.trim()) { onAddDirettivo(newDirettivo.trim()); setNewDirettivo(''); } }}
-              disabled={!newDirettivo.trim()}
+              disabled={!newDirettivo.trim() || !online}
               style={{
                 padding: '9px 16px', borderRadius: 6, border: 'none',
-                background: newDirettivo.trim() ? '#5C6B3A' : '#d0d5c4',
+                background: newDirettivo.trim() && online ? '#5C6B3A' : '#d0d5c4',
                 color: '#EDEEE6', fontFamily: 'inherit', fontSize: 18, fontWeight: 700,
-                cursor: newDirettivo.trim() ? 'pointer' : 'default',
+                cursor: newDirettivo.trim() && online ? 'pointer' : 'not-allowed',
+                opacity: online ? 1 : 0.5,
+                pointerEvents: online ? 'auto' : 'none',
               }}
             >
               +
@@ -407,11 +428,14 @@ export const SettingsScreen = ({
               <span style={{ fontSize: 15, color: '#1A1A14', fontFamily: '-apple-system, sans-serif' }}>{nome}</span>
               <button
                 onClick={() => onRemoveDirettivo(nome)}
+                disabled={!online}
                 style={{
                   width: 28, height: 28, borderRadius: '50%',
                   border: '1px solid #d0d5c4', background: 'transparent',
-                  cursor: 'pointer', display: 'flex', alignItems: 'center',
+                  cursor: online ? 'pointer' : 'not-allowed', display: 'flex', alignItems: 'center',
                   justifyContent: 'center', color: '#8B1A1A', fontSize: 18, lineHeight: 1,
+                  opacity: online ? 1 : 0.5,
+                  pointerEvents: online ? 'auto' : 'none',
                 }}
               >
                 ×
@@ -423,12 +447,15 @@ export const SettingsScreen = ({
         {/* Salva */}
         <button
           onClick={() => onSave(localData)}
+          disabled={!online}
           style={{
             width: '100%', padding: '16px', borderRadius: 28,
             border: 'none', background: '#5C6B3A',
             fontFamily: 'inherit', fontSize: 16, fontWeight: 800,
-            color: '#EDEEE6', cursor: 'pointer',
+            color: '#EDEEE6', cursor: online ? 'pointer' : 'not-allowed',
             textTransform: 'uppercase', letterSpacing: '0.07em',
+            opacity: online ? 1 : 0.5,
+            pointerEvents: online ? 'auto' : 'none',
           }}
         >
           Salva impostazioni
@@ -467,12 +494,15 @@ export const SettingsScreen = ({
               </button>
               <button
                 onClick={() => { onNewSeason(); setConfirmNewSeason(false); }}
+                disabled={!online}
                 style={{
                   flex: 2, padding: '12px', borderRadius: 24,
                   border: 'none', background: '#8B1A1A',
                   fontFamily: 'inherit', fontSize: 14, fontWeight: 800,
-                  color: '#fff', cursor: 'pointer',
+                  color: '#fff', cursor: online ? 'pointer' : 'not-allowed',
                   textTransform: 'uppercase', letterSpacing: '0.05em',
+                  opacity: online ? 1 : 0.5,
+                  pointerEvents: online ? 'auto' : 'none',
                 }}
               >
                 Conferma reset
