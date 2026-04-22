@@ -284,9 +284,25 @@ function MainApp() {
     } catch (e) { console.error(e); }
   };
 
-  const handleAddPost = async (tipo: Post['tipo'], testo: string, foto_url?: string | null) => {
+  const handleAddPost = async (
+    tipo: Post['tipo'],
+    testo: string,
+    foto_url?: string | null,
+    foto_width?: number,
+    foto_height?: number,
+  ) => {
+    if (!navigator.onLine) {
+      alert('Sei offline. Riprova quando torni online.');
+      return;
+    }
     try {
-      await addDoc(collection(db, 'posts'), { tipo, testo, data: Date.now(), foto_url: foto_url ?? null, pdf_url: null, autore: hunterName });
+      await addDoc(collection(db, 'posts'), {
+        tipo, testo, data: Date.now(),
+        foto_url: foto_url ?? null,
+        pdf_url: null,
+        autore: hunterName,
+        ...(foto_width && foto_height ? { foto_width, foto_height } : {}),
+      });
     } catch (e) { console.error(e); }
   };
 

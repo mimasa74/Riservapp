@@ -5,6 +5,23 @@ import { Post } from '../types';
 import { PostCard } from './PostCard';
 import { useAuth } from '../contexts/AuthContext';
 
+async function readImageSize(file: File): Promise<{ width: number; height: number }> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      const out = { width: img.naturalWidth, height: img.naturalHeight };
+      URL.revokeObjectURL(url);
+      resolve(out);
+    };
+    img.onerror = (e) => {
+      URL.revokeObjectURL(url);
+      reject(e);
+    };
+    img.src = url;
+  });
+}
+
 function normalizeName(s: string): string {
   return s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
     .split(/\s+/).filter(Boolean).sort().join('');
@@ -14,7 +31,7 @@ interface BachecaScreenProps {
   posts: Post[];
   hunterName: string;
   isModerator: boolean;
-  onAddPost: (tipo: Post['tipo'], testo: string, foto_url?: string | null) => void;
+  onAddPost: (tipo: Post['tipo'], testo: string, foto_url?: string | null, foto_width?: number, foto_height?: number) => Promise<void> | void;
   onDeletePost: (id: string) => void;
   onMarkRead: (postIds: string[]) => void;
   onOpenSettings: () => void;
@@ -76,9 +93,26 @@ export const BachecaScreen = ({ posts, hunterName, isModerator, onAddPost, onDel
     if (photoInputRef.current) photoInputRef.current.value = '';
   };
 
+  const handleOpenRegolamento = async () => {
+    const url = regolamentoUrl || '/decreto%2086_TUENNO20.pdf';
+    if (!navigator.onLine) {
+      const cache = await caches.open('photos');
+      const hit = await cache.match(url);
+      if (!hit) {
+        alert('Regolamento non disponibile offline. Aprilo una volta con connessione.');
+        return;
+      }
+    }
+    window.open(url, '_blank', 'noopener,noreferrer');
+  };
+
   const handleUploadPdf = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !onUpdateRegolamento) return;
+    if (!navigator.onLine) {
+      alert('Sei offline. Riprova quando torni online.');
+      return;
+    }
     setUploadingPdf(true);
     try {
       const fileRef = storageRef(storage, 'regolamento/regolamento.pdf');
@@ -97,15 +131,28 @@ export const BachecaScreen = ({ posts, hunterName, isModerator, onAddPost, onDel
 
   const handleSubmit = async () => {
     if (!formTesto.trim() && !selectedPhoto) return;
+    if (!navigator.onLine) {
+      alert('Sei offline. Riprova quando torni online.');
+      return;
+    }
     setUploading(true);
     try {
       let foto_url: string | null = null;
+      let width: number | undefined;
+      let height: number | undefined;
       if (selectedPhoto) {
+        try {
+          const dim = await readImageSize(selectedPhoto);
+          width = dim.width;
+          height = dim.height;
+        } catch {
+          // file corrotto o non-immagine — procedi senza dimensioni (PostCard userà fallback 4/3)
+        }
         const fileRef = storageRef(storage, `posts/${Date.now()}_${selectedPhoto.name}`);
         await uploadBytes(fileRef, selectedPhoto);
         foto_url = await getDownloadURL(fileRef);
       }
-      onAddPost(formTipo, formTesto.trim(), foto_url);
+      await onAddPost(formTipo, formTesto.trim(), foto_url, width, height);
       setFormTesto('');
       setFormTipo('normale');
       setSelectedPhoto(null);
@@ -367,14 +414,14 @@ export const BachecaScreen = ({ posts, hunterName, isModerator, onAddPost, onDel
 
         {/* Regolamento interno — sempre visibile */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <a
-            href={regolamentoUrl || '/decreto%2086_TUENNO20.pdf'}
-            rel="noopener noreferrer"
+          <button
+            onClick={handleOpenRegolamento}
             style={{
               flex: 1, display: 'flex', alignItems: 'center', gap: 14,
               padding: '14px 16px', borderRadius: 10,
               background: '#fff', border: '1.5px solid #d0d5c4',
               textDecoration: 'none', color: '#1A1A14',
+              cursor: 'pointer', fontFamily: 'inherit', textAlign: 'left',
             }}
           >
             <div style={{
@@ -397,7 +444,7 @@ export const BachecaScreen = ({ posts, hunterName, isModerator, onAddPost, onDel
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#aaa" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <polyline points="9 18 15 12 9 6"/>
             </svg>
-          </a>
+          </button>
           {isAdmin && (
             <>
               <input
