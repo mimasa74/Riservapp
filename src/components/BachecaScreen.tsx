@@ -4,6 +4,8 @@ import { storage } from '../firebase';
 import { Post } from '../types';
 import { PostCard } from './PostCard';
 import { useAuth } from '../contexts/AuthContext';
+import { requireOnline } from '../utils/requireOnline';
+import { PHOTO_CACHE } from '../constants/cacheNames';
 
 async function readImageSize(file: File): Promise<{ width: number; height: number }> {
   return new Promise((resolve, reject) => {
@@ -96,7 +98,7 @@ export const BachecaScreen = ({ posts, hunterName, isModerator, onAddPost, onDel
   const handleOpenRegolamento = async () => {
     const url = regolamentoUrl || '/decreto%2086_TUENNO20.pdf';
     if (!navigator.onLine) {
-      const cache = await caches.open('photos');
+      const cache = await caches.open(PHOTO_CACHE);
       const hit = await cache.match(url);
       if (!hit) {
         alert('Regolamento non disponibile offline. Aprilo una volta con connessione.');
@@ -109,10 +111,7 @@ export const BachecaScreen = ({ posts, hunterName, isModerator, onAddPost, onDel
   const handleUploadPdf = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !onUpdateRegolamento) return;
-    if (!navigator.onLine) {
-      alert('Sei offline. Riprova quando torni online.');
-      return;
-    }
+    if (!requireOnline()) return;
     setUploadingPdf(true);
     try {
       const fileRef = storageRef(storage, 'regolamento/regolamento.pdf');
@@ -131,10 +130,7 @@ export const BachecaScreen = ({ posts, hunterName, isModerator, onAddPost, onDel
 
   const handleSubmit = async () => {
     if (!formTesto.trim() && !selectedPhoto) return;
-    if (!navigator.onLine) {
-      alert('Sei offline. Riprova quando torni online.');
-      return;
-    }
+    if (!requireOnline()) return;
     setUploading(true);
     try {
       let foto_url: string | null = null;
