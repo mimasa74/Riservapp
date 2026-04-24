@@ -8,6 +8,7 @@ import fallbackData from '../data.json';
 import { initFCM } from './hooks/useFCM';
 import { useGeolocation } from './hooks/useGeolocation';
 import { requireOnline } from './utils/requireOnline';
+import { PHOTO_CACHE } from './constants/cacheNames';
 
 import { AssegnazioniScreen } from './components/AssegnazioniScreen';
 import { BachecaScreen } from './components/BachecaScreen';
@@ -67,6 +68,10 @@ function MainApp() {
   const [slots, setSlots] = useState<Slots | null>(null);
   const [slotsFromServer, setSlotsFromServer] = useState(false);
   const [isOffline, setIsOffline] = useState(!navigator.onLine);
+  const [postsSynced, setPostsSynced] = useState(false);
+  const [configSynced, setConfigSynced] = useState(false);
+  const [prefetchDone, setPrefetchDone] = useState(false);
+  const reconcileDone = React.useRef(false);
   const membersValidated = React.useRef(false);
 
   useEffect(() => {
@@ -105,7 +110,7 @@ function MainApp() {
         setRegolamentoUrl(raw.regolamento_url ?? null);
         const { regolamento_url, ...specieData } = raw;
         setData(specieData as AppData);
-        if (!snapshot.metadata.fromCache && !snapshot.metadata.hasPendingWrites) markSynced();
+        if (!snapshot.metadata.fromCache && !snapshot.metadata.hasPendingWrites) { markSynced(); setConfigSynced(true); }
       } else {
         // Documento non esiste — inizializza con i dati di default
         if (isAdminRef.current) setDoc(docRef, fallbackData as unknown as Record<string, unknown>).catch(console.error);
@@ -118,7 +123,7 @@ function MainApp() {
     const q = query(collection(db, 'posts'), orderBy('data', 'desc'));
     const unsubscribe = onSnapshot(q, { includeMetadataChanges: true }, snapshot => {
       setPosts(snapshot.docs.map(d => ({ id: d.id, ...d.data() } as Post)));
-      if (!snapshot.metadata.fromCache && !snapshot.metadata.hasPendingWrites) markSynced();
+      if (!snapshot.metadata.fromCache && !snapshot.metadata.hasPendingWrites) { markSynced(); setPostsSynced(true); }
     }, (err) => console.error('[snapshot:posts]', err.code, err.message));
     return () => unsubscribe();
   }, []);
@@ -163,6 +168,44 @@ function MainApp() {
       }
     }, (err) => console.error('[snapshot:config/slots]', err.code, err.message));
   }, []);
+
+  // Pre-fetch top-30 recent post assets al primo sync server
+  useEffect(() => {
+    if (!postsSynced || !configSynced) return;
+    if (prefetchDone) return;
+    if (!navigator.onLine) return;
+
+    const opts: RequestInit = { mode: 'no-cors' };
+
+    const recent = [...posts]
+      .filter(p => p.foto_url || p.pdf_url)
+      .sort((a, b) => b.data - a.data)
+      .slice(0, 30);
+    recent.forEach(p => {
+      if (p.foto_url) fetch(p.foto_url, opts).catch(() => {});
+      if (p.pdf_url) fetch(p.pdf_url, opts).catch(() => {});
+    });
+
+    (Object.values(data as AppData)).forEach(sp => {
+      sp?.ruota?.foto?.forEach(u => u && fetch(u, opts).catch(() => {}));
+    });
+
+    if (regolamentoUrl) fetch(regolamentoUrl, opts).catch(() => {});
+
+    setPrefetchDone(true);
+  }, [postsSynced, configSynced, prefetchDone, posts, data, regolamentoUrl]);
+
+  // Reconcile photo cache una volta, sync-gated
+  useEffect(() => {
+    if (!postsSynced || !configSynced) return;
+    if (reconcileDone.current) return;
+    reconcileDone.current = true;
+
+    import('./utils/reconcilePhotoCache').then(({ collectValidUrls, reconcilePhotoCache }) => {
+      const valid = collectValidUrls(posts, data, regolamentoUrl);
+      reconcilePhotoCache(valid).catch((e) => console.error('[reconcile]', e));
+    });
+  }, [postsSynced, configSynced, posts, data, regolamentoUrl]);
 
   // Controlla se questo dispositivo deve rifare l'onboarding
   useEffect(() => {
@@ -311,13 +354,23 @@ function MainApp() {
 
   const handleDeletePost = useCallback(async (id: string) => {
     if (!requireOnline()) return;
+    const target = posts.find(p => p.id === id);
     try {
       await deleteDoc(doc(db, 'posts', id));
+      if (target && (target.foto_url || target.pdf_url)) {
+        try {
+          const cache = await caches.open(PHOTO_CACHE);
+          if (target.foto_url) await cache.delete(target.foto_url);
+          if (target.pdf_url) await cache.delete(target.pdf_url);
+        } catch (e) {
+          console.warn('[cache cleanup]', e);
+        }
+      }
     } catch (e) {
       console.error(e);
       alert('Errore durante la cancellazione del messaggio. Riprova.');
     }
-  }, []);
+  }, [posts]);
 
   const handleMarkRead = async (postIds: string[]) => {
     if (!navigator.onLine) return;  // silent — fires from auto-useEffect, not user action
