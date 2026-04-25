@@ -1,5 +1,11 @@
-importScripts('https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js');
-importScripts('https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging-compat.js');
+// public/firebase-messaging-sw.js
+// UN SOLO Service Worker: FCM + Workbox precache/runtime.
+// NON aggiungere skipWaiting: vogliamo che il nuovo SW attenda la chiusura dei tab.
+
+importScripts('https://storage.googleapis.com/workbox-cdn/releases/7.1.0/workbox-sw.js');
+
+importScripts('https://www.gstatic.com/firebasejs/12.10.0/firebase-app-compat.js');
+importScripts('https://www.gstatic.com/firebasejs/12.10.0/firebase-messaging-compat.js');
 
 firebase.initializeApp({
   apiKey: 'AIzaSyDuygauGnMqxL8Rf6QvyVgnRTwDbZ20VbI',
@@ -11,6 +17,19 @@ firebase.initializeApp({
 });
 
 const messaging = firebase.messaging();
+
+workbox.core.clientsClaim();
+workbox.precaching.precacheAndRoute(self.__WB_MANIFEST || []);
+
+workbox.routing.registerRoute(
+  ({ url }) => url.hostname.includes('firebasestorage.googleapis.com') || url.hostname.includes('firebasestorage.app'),
+  new workbox.strategies.CacheFirst({
+    cacheName: 'photos',
+    plugins: [
+      new workbox.cacheableResponse.CacheableResponsePlugin({ statuses: [0, 200] }),
+    ],
+  })
+);
 
 messaging.onBackgroundMessage((payload) => {
   const title = payload.notification?.title || 'Riserva Tuenno';
