@@ -1,0 +1,41 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return request.auth != null && request.auth.token.email == 'michele.bruni@gmail.com';
+    }
+
+    // Foto post bacheca: lettura per autenticati, scrittura per autenticati.
+    // L'identità "direttivo" non è verificabile a livello Storage (anon auth,
+    // niente custom claims). La protezione effettiva sta nelle firestore.rules
+    // su posts/{postId}.create, che richiedono autore in config/members.direttivo.
+    // Worst case: foto orfana se la create del post fallisce.
+    match /posts/{file} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated();
+    }
+
+    // File ruote (foto, allegati): lettura per autenticati, scrittura solo admin.
+    match /ruote/{ruotaId}/{file} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
+
+    // Regolamento interno PDF: lettura per autenticati, scrittura solo admin.
+    match /regolamento/{file} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
+
+    // Default deny: qualsiasi altro percorso non è scrivibile né leggibile.
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}
