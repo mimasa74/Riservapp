@@ -50,7 +50,8 @@ Conseguenze pratiche:
 - Il build è `vite build && workbox injectManifest workbox-config.cjs`. Dal 17 ago
   è agganciato come `predeploy` hosting in `firebase.json`: `firebase deploy`
   builda da solo, impossibile deployare un `dist/` stale o senza precache.
-- `globPatterns` include `pdf` — serve per il regolamento offline.
+- `globPatterns` include `pdf` per sicurezza, ma dal 17 ago 2026 in `public/` non
+  c'è nessun PDF: il regolamento vive solo su Storage (vedi sotto).
 - Niente `skipWaiting` automatico. Il nuovo SW resta in waiting; `UpdateBanner.tsx`
   mostra "Nuova versione — tocca per aggiornare" → postMessage `SKIP_WAITING` →
   reload. Il reload avviene solo su gesto (clientsClaim fa scattare
@@ -58,9 +59,22 @@ Conseguenze pratiche:
 - Le push sono DATA-ONLY (title/body/priority in `data`): la notifica la
   costruisce solo il SW. Non aggiungere payload `notification` nelle Functions:
   l'SDK la mostrerebbe in automatico → notifica doppia.
-- Il PDF regolamento è cachato anche lato app in `REGOLAMENTO_CACHE`, perché un
-  utente può avere in giro un SW vecchio senza il PDF nel precache. Non usare
-  `PHOTO_CACHE` (`'photos'`) per il regolamento: è un errore già fatto una volta.
+## Regolamento interno — solo Storage, nessun PDF bundled
+
+Non esiste PDF di riserva in `public/`. L'unica fonte è
+`config/main.regolamento_url`, che punta al file caricato dal Rettore. Senza
+quel campo il socio non vede la riga in bacheca (l'admin vede solo l'upload).
+Il PDF è cachato lato app in `REGOLAMENTO_CACHE` — non usare `PHOTO_CACHE`
+(`'photos'`): è un errore già fatto una volta.
+
+L'upload sovrascrive sempre `regolamento/regolamento.pdf`, quindi un regolamento
+nuovo ha lo stesso path e cambia **solo il token in query string**. Da qui due
+regole non negoziabili:
+- Il lookup in cache deve essere **match esatto**. Con `ignoreSearch: true` il
+  vecchio PDF risultava già presente e il nuovo non veniva mai scaricato: i soci
+  offline leggevano il regolamento superato (bug corretto il 17 ago 2026).
+- Dopo ogni `cache.put` vanno cancellate le entry con URL diverso.
+  `reconcilePhotoCache` NON copre questa cache: lavora solo su `PHOTO_CACHE`.
 
 ## Ruoli
 - **Cacciatore** — legge tutto, nome validato contro lista soci, nessun login

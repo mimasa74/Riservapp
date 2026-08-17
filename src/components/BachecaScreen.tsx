@@ -5,7 +5,7 @@ import { Post } from '../types';
 import { PostCard } from './PostCard';
 import { useAuth } from '../contexts/AuthContext';
 import { requireOnline } from '../utils/requireOnline';
-import { REGOLAMENTO_CACHE, DEFAULT_REGOLAMENTO_URL } from '../constants/cacheNames';
+import { REGOLAMENTO_CACHE } from '../constants/cacheNames';
 
 const BLOB_URL_TTL_MS = 5 * 60_000;
 
@@ -61,24 +61,21 @@ export const BachecaScreen = ({ posts, hunterName, onEnableNotifications, onAddP
   const photoInputRef = useRef<HTMLInputElement>(null);
   const pdfInputRef = useRef<HTMLInputElement>(null);
 
-  // Cache PDF gestita dall'app: il SW potrebbe essere una vecchia versione senza il PDF nel precache
+  // Cache PDF gestita dall'app: il regolamento sta solo su Storage, mai nel precache SW
   React.useEffect(() => {
-    if (!navigator.onLine) return;
-    const pdfUrl = regolamentoUrl || DEFAULT_REGOLAMENTO_URL;
+    if (!navigator.onLine || !regolamentoUrl) return;
     (async () => {
       try {
         const cache = await caches.open(REGOLAMENTO_CACHE);
-        // Match esatto sugli URL Storage: l'upload sovrascrive sempre lo stesso path,
-        // quindi un regolamento nuovo differisce dal vecchio solo per il token in query.
-        // Il PDF bundled invece vive nel precache Workbox con ?__WB_REVISION__.
-        const matchOpts = regolamentoUrl ? undefined : { ignoreSearch: true };
-        if (!(await cache.match(pdfUrl, matchOpts))) {
-          const res = await fetch(pdfUrl);
+        // Match esatto: l'upload sovrascrive sempre lo stesso path Storage, quindi un
+        // regolamento nuovo differisce dal vecchio solo per il token in query string.
+        if (!(await cache.match(regolamentoUrl))) {
+          const res = await fetch(regolamentoUrl);
           if (!res.ok) return;
-          await cache.put(pdfUrl, res);
+          await cache.put(regolamentoUrl, res);
         }
         // Via le versioni precedenti: offline deve restare solo il regolamento corrente
-        const currentUrl = new Request(pdfUrl).url;
+        const currentUrl = new Request(regolamentoUrl).url;
         for (const req of await cache.keys()) {
           if (req.url !== currentUrl) await cache.delete(req);
         }
@@ -123,15 +120,16 @@ export const BachecaScreen = ({ posts, hunterName, onEnableNotifications, onAddP
   };
 
   const handleOpenRegolamento = async () => {
-    const url = regolamentoUrl || DEFAULT_REGOLAMENTO_URL;
+    const url = regolamentoUrl;
+    if (!url) return;
     if (navigator.onLine) {
       window.open(url, '_blank', 'noopener,noreferrer');
       return;
     }
-    // Prima il match esatto (regolamento corrente), poi il fallback largo per il
-    // PDF bundled nel precache Workbox e per chi è offline dall'ultimo aggiornamento.
+    // Solo match esatto: un'entry con token diverso è un regolamento superato,
+    // meglio l'avviso che far leggere al socio un documento non più valido.
     const cache = await caches.open(REGOLAMENTO_CACHE);
-    const hit = (await cache.match(url)) ?? (await caches.match(url, { ignoreSearch: true }));
+    const hit = await cache.match(url);
     if (!hit) {
       alert('Regolamento non disponibile offline. Aprilo una volta con connessione.');
       return;
@@ -481,8 +479,11 @@ export const BachecaScreen = ({ posts, hunterName, onEnableNotifications, onAddP
       {/* Lista post */}
       <div style={{ padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: 10 }}>
 
-        {/* Regolamento interno — sempre visibile */}
+        {/* Regolamento interno: nessun PDF bundled, esiste solo quello caricato dal
+            Rettore. Senza upload il socio non vede la riga; l'admin vede il pulsante. */}
+        {(regolamentoUrl || isAdmin) && (
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          {regolamentoUrl && (
           <button
             onClick={handleOpenRegolamento}
             style={{
@@ -514,6 +515,7 @@ export const BachecaScreen = ({ posts, hunterName, onEnableNotifications, onAddP
               <polyline points="9 18 15 12 9 6"/>
             </svg>
           </button>
+          )}
           {isAdmin && (
             <>
               <input
@@ -550,6 +552,7 @@ export const BachecaScreen = ({ posts, hunterName, onEnableNotifications, onAddP
             </>
           )}
         </div>
+        )}
 
         {/* Pulsante + (solo Rettore, quando form chiuso) */}
         {isAdmin && !showForm && (
