@@ -18,8 +18,6 @@ interface SettingsScreenProps {
   onRemoveMember: (nome: string) => void;
   onReleaseSlot: (normalizedName: string) => void;
   onResetOnboarding: (normalizedName: string) => void;
-  onAddDirettivo: (nome: string) => void;
-  onRemoveDirettivo: (nome: string) => void;
 }
 
 const SPECIE_ORDER = ['capriolo', 'cervo', 'camoscio'];
@@ -42,14 +40,12 @@ function camoscioSortKey(id: string): number {
 export const SettingsScreen = ({
   data, members, slots, onClose, onSave, onNewSeason,
   onAddMember, onRemoveMember, onReleaseSlot, onResetOnboarding,
-  onAddDirettivo, onRemoveDirettivo,
 }: SettingsScreenProps) => {
   const { online } = useOnlineStatus();
   const [localData, setLocalData] = useState<AppData>(JSON.parse(JSON.stringify(data)));
   const [activeSpecie, setActiveSpecie] = useState(SPECIE_ORDER[0]);
   const [confirmNewSeason, setConfirmNewSeason] = useState(false);
   const [newMember, setNewMember] = useState('');
-  const [newDirettivo, setNewDirettivo] = useState('');
 
   const specie = localData[activeSpecie];
   if (!specie) return null;
@@ -361,87 +357,6 @@ export const SettingsScreen = ({
               </div>
             );
           })}
-        </div>
-
-        {/* Direttivo */}
-        <div style={{ background: '#fff', borderRadius: 10, border: '1px solid #d0d5c4', overflow: 'hidden' }}>
-          <div style={{ padding: '12px 16px', borderBottom: '1px solid #f0f0ec' }}>
-            <p style={{ fontSize: 12, fontWeight: 700, color: '#5C6B3A', textTransform: 'uppercase', letterSpacing: '0.08em', fontFamily: '-apple-system, sans-serif' }}>
-              Direttivo ({members.direttivo.length})
-            </p>
-          </div>
-
-          <div style={{
-            padding: '12px 16px',
-            borderBottom: members.direttivo.length > 0 ? '1px solid #f0f0ec' : 'none',
-            display: 'flex', gap: 8,
-          }}>
-            <input
-              type="text"
-              value={newDirettivo}
-              onChange={e => setNewDirettivo(e.target.value)}
-              onKeyDown={e => {
-                if (e.key === 'Enter' && newDirettivo.trim()) {
-                  onAddDirettivo(newDirettivo.trim());
-                  setNewDirettivo('');
-                }
-              }}
-              placeholder="Nome e Cognome"
-              style={{
-                flex: 1, padding: '9px 12px', borderRadius: 6,
-                border: '1.5px solid #d0d5c4', fontFamily: 'inherit',
-                fontSize: 15, color: '#1A1A14', outline: 'none', background: '#FAFAF8',
-              }}
-            />
-            <button
-              onClick={() => { if (newDirettivo.trim()) { onAddDirettivo(newDirettivo.trim()); setNewDirettivo(''); } }}
-              disabled={!newDirettivo.trim() || !online}
-              style={{
-                padding: '9px 16px', borderRadius: 6, border: 'none',
-                background: newDirettivo.trim() && online ? '#5C6B3A' : '#d0d5c4',
-                color: '#EDEEE6', fontFamily: 'inherit', fontSize: 18, fontWeight: 700,
-                cursor: newDirettivo.trim() && online ? 'pointer' : 'not-allowed',
-                opacity: online ? 1 : 0.5,
-                pointerEvents: online ? 'auto' : 'none',
-              }}
-            >
-              +
-            </button>
-          </div>
-
-          {members.direttivo.length === 0 && (
-            <div style={{ padding: '14px 16px' }}>
-              <p style={{ fontSize: 14, color: '#9B9B8A', fontStyle: 'italic', fontFamily: '-apple-system, sans-serif' }}>
-                Nessun membro direttivo
-              </p>
-            </div>
-          )}
-          {members.direttivo.map((nome, i) => (
-            <div
-              key={nome}
-              style={{
-                padding: '12px 16px',
-                borderBottom: i < members.direttivo.length - 1 ? '1px solid #f0f0ec' : 'none',
-                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-              }}
-            >
-              <span style={{ fontSize: 15, color: '#1A1A14', fontFamily: '-apple-system, sans-serif' }}>{nome}</span>
-              <button
-                onClick={() => onRemoveDirettivo(nome)}
-                disabled={!online}
-                style={{
-                  width: 28, height: 28, borderRadius: '50%',
-                  border: '1px solid #d0d5c4', background: 'transparent',
-                  cursor: online ? 'pointer' : 'not-allowed', display: 'flex', alignItems: 'center',
-                  justifyContent: 'center', color: '#8B1A1A', fontSize: 18, lineHeight: 1,
-                  opacity: online ? 1 : 0.5,
-                  pointerEvents: online ? 'auto' : 'none',
-                }}
-              >
-                ×
-              </button>
-            </div>
-          ))}
         </div>
 
         {/* Salva */}

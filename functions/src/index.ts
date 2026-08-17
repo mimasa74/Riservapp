@@ -31,6 +31,9 @@ function extractCategorie(specieData: Record<string, unknown>): Categoria[] {
 }
 
 // ─── Helper: invia push a tutti i token FCM registrati ───────────────────────
+// Messaggi DATA-ONLY: la notifica la costruisce il SW (firebase-messaging-sw.js).
+// Con payload `notification` l'SDK web la mostrerebbe automaticamente in background
+// E il SW la mostrerebbe di nuovo → doppia notifica.
 
 async function sendPushToAll(
   title: string,
@@ -38,35 +41,35 @@ async function sendPushToAll(
   priority: 'high' | 'normal' = 'normal'
 ): Promise<void> {
   const snap = await getFirestore().collection('fcm_tokens').get();
-  const docs = snap.docs;
-  const tokens = docs.map(d => (d.data() as FcmToken).token).filter(Boolean);
-  console.log(`sendPushToAll: trovati ${docs.length} docs, ${tokens.length} token validi. Titolo: "${title}"`);
+
+  // Dedup per token: due doc con lo stesso token (deviceId rigenerato sullo
+  // stesso browser) non devono produrre notifiche duplicate.
+  const byToken = new Map<string, FirebaseFirestore.DocumentReference[]>();
+  for (const d of snap.docs) {
+    const t = (d.data() as FcmToken).token;
+    if (!t) continue;
+    const refs = byToken.get(t) ?? [];
+    refs.push(d.ref);
+    byToken.set(t, refs);
+  }
+  const tokens = [...byToken.keys()];
+  console.log(`sendPushToAll: ${snap.size} docs, ${tokens.length} token unici. Titolo: "${title}"`);
   if (!tokens.length) return;
 
   const response = await getMessaging().sendEachForMulticast({
     tokens,
-    notification: { title, body },
-    android: {
-      priority: priority === 'high' ? 'high' : 'normal',
-      notification: {
-        sound: 'default',
-        channelId: priority === 'high' ? 'riservapp_alert' : 'riservapp_default',
+    data: { title, body, priority },
+    webpush: {
+      headers: {
+        Urgency: priority === 'high' ? 'high' : 'normal',
+        TTL: '86400',
       },
     },
-    apns: {
-      payload: {
-        aps: {
-          sound: 'default',
-          'interruption-level': priority === 'high' ? 'time-sensitive' : 'active',
-        },
-      },
-      headers: { 'apns-priority': priority === 'high' ? '10' : '5' },
-    },
-    data: { priority },
   });
 
-  // Rimuovi token non validi
-  const invalid: number[] = [];
+  // Rimuovi token non validi (tutti i doc che condividono quel token)
+  const batch = getFirestore().batch();
+  let toDelete = 0;
   response.responses.forEach((r, i) => {
     if (!r.success) {
       const code = r.error?.code ?? '';
@@ -74,18 +77,35 @@ async function sendPushToAll(
         code === 'messaging/registration-token-not-registered' ||
         code === 'messaging/invalid-registration-token'
       ) {
-        invalid.push(i);
+        for (const ref of byToken.get(tokens[i]) ?? []) {
+          batch.delete(ref);
+          toDelete++;
+        }
       }
     }
   });
 
-  console.log(`sendPushToAll: inviati ${tokens.length - invalid.length} ok, ${invalid.length} falliti`);
+  const failed = response.responses.filter(r => !r.success).length;
+  console.log(`sendPushToAll: ${tokens.length - failed} ok, ${failed} falliti, ${toDelete} doc rimossi`);
 
-  if (invalid.length > 0) {
-    const batch = getFirestore().batch();
-    invalid.forEach(i => batch.delete(docs[i].ref));
-    await batch.commit();
-  }
+  if (toDelete > 0) await batch.commit();
+}
+
+// ─── Helper: post di sistema in bacheca ──────────────────────────────────────
+// Fallback per chi non riceve la push (iOS vecchi, permesso negato, token rotto):
+// l'evento resta consultabile in bacheca. noPush evita che onPostCreate
+// generi una seconda notifica.
+
+async function createSystemPost(tipo: 'avviso' | 'alert', testo: string): Promise<void> {
+  await getFirestore().collection('posts').add({
+    tipo,
+    testo,
+    data: Date.now(),
+    foto_url: null,
+    pdf_url: null,
+    autore: 'Sistema',
+    noPush: true,
+  });
 }
 
 // ─── Trigger: nuovo post in bacheca ──────────────────────────────────────────
@@ -93,6 +113,7 @@ async function sendPushToAll(
 export const onPostCreate = onDocumentCreated({ document: 'posts/{postId}', region: 'europe-west12' }, async (event) => {
   const post = event.data?.data();
   if (!post) return;
+  if (post.noPush === true) return; // post di sistema: push già inviata da onConfigUpdate
 
   const tipo: 'normale' | 'avviso' | 'alert' = post.tipo;
   const testo: string = post.testo || '';
@@ -107,7 +128,7 @@ export const onPostCreate = onDocumentCreated({ document: 'posts/{postId}', regi
   }
 });
 
-// ─── Trigger: aggiornamento config/main (quota + sospeso) ────────────────────
+// ─── Trigger: aggiornamento config/main (quota, sospeso, chiuso) ─────────────
 
 export const onConfigUpdate = onDocumentUpdated({ document: 'config/main', region: 'europe-west12' }, async (event) => {
   const before = event.data?.before.data() as Record<string, Record<string, unknown>> | undefined;
@@ -120,27 +141,31 @@ export const onConfigUpdate = onDocumentUpdated({ document: 'config/main', regio
     const beforeCats = extractCategorie(before[specieId] ?? {});
     const afterCats = extractCategorie(after[specieId] ?? {});
 
-    for (let i = 0; i < afterCats.length; i++) {
-      const b = beforeCats[i];
-      const a = afterCats[i];
-      if (!b || !a) continue;
+    for (const a of afterCats) {
+      // Accoppia per id, NON per indice: se l'admin aggiunge/rimuove una categoria
+      // gli indici slittano e il confronto produrrebbe notifiche spurie.
+      const b = beforeCats.find(c => c.id === a.id);
+      if (!b) continue;
 
       // Quota raggiunta (abbattuti appena arrivato a totale)
       if (a.totale > 0 && a.abbattuti === a.totale && b.abbattuti !== b.totale) {
-        await sendPushToAll(
-          'Quota raggiunta',
-          `${a.nome}: ${a.abbattuti}/${a.totale} capi abbattuti`,
-          'normal'
-        );
+        const testo = `${a.nome}: ${a.abbattuti}/${a.totale} capi abbattuti`;
+        await sendPushToAll('Quota raggiunta', testo, 'normal');
+        await createSystemPost('avviso', `Quota raggiunta — ${testo}`);
       }
 
       // Categoria sospesa
       if (a.stato === 'sospeso' && b.stato !== 'sospeso') {
-        await sendPushToAll(
-          'Categoria sospesa',
-          `${a.nome} è stata sospesa`,
-          'normal'
-        );
+        const testo = `${a.nome} è stata sospesa`;
+        await sendPushToAll('Categoria sospesa', testo, 'normal');
+        await createSystemPost('avviso', `Categoria sospesa — ${testo}`);
+      }
+
+      // Categoria chiusa — l'evento più critico: priorità alta
+      if (a.stato === 'chiuso' && b.stato !== 'chiuso') {
+        const testo = `${a.nome} è stata chiusa`;
+        await sendPushToAll('Categoria chiusa', testo, 'high');
+        await createSystemPost('alert', `Categoria chiusa — ${testo}`);
       }
     }
   }

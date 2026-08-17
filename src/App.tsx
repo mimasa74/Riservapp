@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { db } from './firebase';
-import { doc, onSnapshot, updateDoc, setDoc, collection, query, orderBy, addDoc, deleteDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
+import { doc, onSnapshot, updateDoc, setDoc, collection, query, orderBy, addDoc, deleteDoc, deleteField, arrayUnion, arrayRemove } from 'firebase/firestore';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
-import { AppData, Post, Members, OspiteData, Slots } from './types';
+import { AppData, Post, Members, Slots } from './types';
 import fallbackData from '../data.json';
 
 import { initFCM } from './hooks/useFCM';
@@ -19,6 +19,7 @@ import { MappaScreen } from './components/MappaScreen';
 import { SettingsScreen } from './components/SettingsScreen';
 import { BottomNav } from './components/BottomNav';
 import { OfflineBanner } from './components/OfflineBanner';
+import { UpdateBanner } from './components/UpdateBanner';
 
 function markSynced() {
   localStorage.setItem('lastSyncAt', String(Date.now()));
@@ -56,15 +57,12 @@ function MainApp() {
   const [hunterName, setHunterName] = useState<string>(
     () => localStorage.getItem('riservapp_nome') || ''
   );
-  const [posts, setPosts] = useState<Post[]>([
-    { id: 'demo1', tipo: 'alert', testo: 'ATTENZIONE!! SABATO SEI SETTEMBRE CACCIA CHIUSA!', data: Date.now() },
-  ]);
+  const [posts, setPosts] = useState<Post[]>([]);
   const [onboardingDone, setOnboardingDone] = useState<boolean>(
     () => !!localStorage.getItem('riservapp_onboarding')
   );
   const [members, setMembers] = useState<Members | null>(null);
   const [membersFromServer, setMembersFromServer] = useState(false);
-  const [ospite, setOspite] = useState<OspiteData | null>(null);
   const [slots, setSlots] = useState<Slots | null>(null);
   const [slotsFromServer, setSlotsFromServer] = useState(false);
   const [isOffline, setIsOffline] = useState(!navigator.onLine);
@@ -85,9 +83,6 @@ function MainApp() {
     };
   }, []);
 
-  const isModerator = !isAdmin && (members?.direttivo ?? []).some(
-    n => normalizeName(n) === normalizeName(hunterName)
-  );
   const isAdminRef = React.useRef(isAdmin);
   isAdminRef.current = isAdmin;
 
@@ -141,18 +136,6 @@ function MainApp() {
         setMembersFromServer(true);
       }
     }, (err) => console.error('[snapshot:config/members]', err.code, err.message));
-  }, []);
-
-  useEffect(() => {
-    const docRef = doc(db, 'config', 'ospite');
-    return onSnapshot(docRef, snapshot => {
-      if (snapshot.exists()) {
-        setOspite(snapshot.data() as OspiteData);
-      } else {
-        if (isAdminRef.current) setDoc(docRef, { device_id: null }).catch(console.error);
-        setOspite({ device_id: null });
-      }
-    }, (err) => console.error('[snapshot:config/ospite]', err.code, err.message));
   }, []);
 
   useEffect(() => {
@@ -231,6 +214,18 @@ function MainApp() {
     setHunterName(adminName);
   }, [isAdmin]);
 
+  // Migrazione one-shot (solo admin): slot liberi come valore null → chiave rimossa.
+  // Le nuove rules permettono al socio solo di AGGIUNGERE chiavi, quindi uno slot
+  // "null" residuo non sarebbe più rivendicabile.
+  useEffect(() => {
+    if (!isAdmin || !slots || !slotsFromServer || !navigator.onLine) return;
+    const nulls = Object.entries(slots).filter(([, v]) => v === null).map(([k]) => k);
+    if (nulls.length === 0) return;
+    updateDoc(doc(db, 'config', 'slots'),
+      Object.fromEntries(nulls.map(k => [k, deleteField()]))
+    ).catch(console.error);
+  }, [isAdmin, slots, slotsFromServer]);
+
   useEffect(() => {
     if (!members || !slots || !membersFromServer || !slotsFromServer || isOffline) return;
     if (membersValidated.current || isAdmin) return;
@@ -267,6 +262,15 @@ function MainApp() {
     let newCount = index + 1;
     if (index === cat.abbattuti - 1) newCount = index;
     newCount = Math.min(Math.max(newCount, 0), cat.totale);
+
+    // Chiudere la quota manda una push a tutti i soci: chiedi conferma
+    // (i quadratini sono piccoli, un tap impreciso non deve notificare 45 persone)
+    if (newCount === cat.totale && cat.abbattuti !== cat.totale) {
+      const ok = window.confirm(
+        `Quota completata per ${cat.nome} (${newCount}/${cat.totale}).\nVerrà inviata una notifica a tutti i soci. Confermi?`
+      );
+      if (!ok) return;
+    }
 
     setData(prev => {
       const p = { ...prev };
@@ -389,14 +393,21 @@ function MainApp() {
   const handleSetName = (nome: string) => {
     localStorage.setItem('riservapp_nome', nome);
     setHunterName(nome);
-    // initFCM viene chiamato dal useEffect([hunterName]) — non chiamare qui per evitare doppio getToken()
+    // Prompt del permesso QUI, dentro il gesto utente (tap "Entra"): su iOS
+    // requestPermission fuori da user activation fallisce silenziosamente.
+    initFCM(deviceId, nome).catch(console.warn);
   };
 
+  const handleEnableNotifications = async () => {
+    if (!hunterName) return;
+    await initFCM(deviceId, hunterName);
+  };
 
   useEffect(() => {
     if (!hunterName) return;
-    if (localStorage.getItem('riservapp_fcm') === 'denied') return;
-    // Chiama sempre initFCM per rinnovare il token (gestisce internamente il caso già-granted)
+    // Rinnovo token a ogni apertura, ma SOLO se il permesso è già concesso:
+    // il prompt parte solo da gesti utente (handleSetName / banner in bacheca).
+    if (typeof Notification === 'undefined' || Notification.permission !== 'granted') return;
     initFCM(deviceId, hunterName).catch(console.warn);
   }, [hunterName]);
 
@@ -414,17 +425,11 @@ function MainApp() {
     } catch (e) { console.error(e); }
   };
 
-  const handleReleaseOspite = async () => {
-    if (!requireOnline()) return;
-    try {
-      await updateDoc(doc(db, 'config', 'ospite'), { device_id: null });
-    } catch (e) { console.error(e); }
-  };
-
   const handleReleaseSlot = async (normalizedName: string) => {
     if (!requireOnline()) return;
     try {
-      await updateDoc(doc(db, 'config', 'slots'), { [normalizedName]: null });
+      // deleteField, NON null: slot libero = chiave assente (vincolo delle rules)
+      await updateDoc(doc(db, 'config', 'slots'), { [normalizedName]: deleteField() });
     } catch (e) { console.error(e); }
   };
 
@@ -443,20 +448,6 @@ function MainApp() {
       console.error(e);
       alert('Errore durante il reset.');
     }
-  };
-
-  const handleAddDirettivo = async (nome: string) => {
-    if (!requireOnline()) return;
-    try {
-      await updateDoc(doc(db, 'config', 'members'), { direttivo: arrayUnion(nome) });
-    } catch (e) { console.error(e); }
-  };
-
-  const handleRemoveDirettivo = async (nome: string) => {
-    if (!requireOnline()) return;
-    try {
-      await updateDoc(doc(db, 'config', 'members'), { direttivo: arrayRemove(nome) });
-    } catch (e) { console.error(e); }
   };
 
   if (!onboardingDone) {
@@ -492,8 +483,6 @@ function MainApp() {
           onRemoveMember={handleRemoveMember}
           onReleaseSlot={handleReleaseSlot}
           onResetOnboarding={handleResetOnboarding}
-          onAddDirettivo={handleAddDirettivo}
-          onRemoveDirettivo={handleRemoveDirettivo}
         />
       </div>
     );
@@ -521,13 +510,14 @@ function MainApp() {
 
   return (
     <div className="h-dvh bg-[#EDEEE6] text-[#1A1A14] select-none flex flex-col max-w-lg mx-auto">
+      <UpdateBanner />
       <OfflineBanner />
       <div className="flex-1 overflow-y-auto" style={{ WebkitOverflowScrolling: 'touch', overscrollBehavior: 'contain' }}>
         {currentScreen === 'bacheca' ? (
           <BachecaScreen
             posts={posts}
             hunterName={hunterName}
-            isModerator={isModerator}
+            onEnableNotifications={handleEnableNotifications}
             onAddPost={handleAddPost}
             onDeletePost={handleDeletePost}
             onMarkRead={handleMarkRead}

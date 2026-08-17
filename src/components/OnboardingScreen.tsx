@@ -53,7 +53,7 @@ I tuoi dati personali sono trattati con strumenti elettronici e, in casi limitat
 
 I dati identificativi (es. nome e cognome) e di contatto sono conservati per il tempo necessario alla gestione del rapporto con la riserva e all'utilizzo dell'app, e, successivamente, per il periodo eventualmente previsto dalla legge (es. termini di prescrizione).
 
-I dati di geolocalizzazione sono utilizzati solo per il tempo strettamente necessario a fornire le funzionalità di sicurezza e coordinamento in tempo reale e vengono cancellati automaticamente entro circa 1 minuto dalla loro raccolta, senza creare uno storico permanente dei tuoi spostamenti.
+I dati di geolocalizzazione sono utilizzati solo per il tempo strettamente necessario a fornire le funzionalità di sicurezza e coordinamento in tempo reale e vengono cancellati automaticamente entro circa 35 minuti dalla loro raccolta, senza creare uno storico permanente dei tuoi spostamenti.
 
 La Riserva Cacciatori Tuenno non conserva un archivio storico dettagliato delle tue posizioni; la geolocalizzazione serve esclusivamente a verificare in tempo reale la presenza di cacciatori nelle diverse aree e a prevenire sovrapposizioni di battute.
 
@@ -87,7 +87,7 @@ Hai inoltre il diritto di proporre reclamo all'Autorità Garante per la protezio
 8. Consenso al trattamento dei dati di geolocalizzazione
 Per procedere con l'utilizzo delle funzionalità di geolocalizzazione all'interno della riserva, ti chiediamo di esprimere il tuo consenso esplicito:
 
-"Ho letto e compreso l'informativa sul trattamento dei miei dati personali, compresi i dati di geolocalizzazione all'interno della Riserva Cacciatori Tuenno. Acconsento al trattamento della mia posizione tramite sistemi di geolocalizzazione con attivazione mediante geofence, esclusivamente per le finalità di sicurezza e gestione delle battute di caccia descritte, con cancellazione automatica dei dati di posizione entro circa 1 minuto dalla raccolta."`;
+"Ho letto e compreso l'informativa sul trattamento dei miei dati personali, compresi i dati di geolocalizzazione all'interno della Riserva Cacciatori Tuenno. Acconsento al trattamento della mia posizione tramite sistemi di geolocalizzazione con attivazione mediante geofence, esclusivamente per le finalità di sicurezza e gestione delle battute di caccia descritte, con cancellazione automatica dei dati di posizione entro circa 35 minuti dalla raccolta."`;
 
 export const OnboardingScreen = ({ onDone }: OnboardingScreenProps) => {
   const [phase, setPhase] = useState<Phase>('tap');

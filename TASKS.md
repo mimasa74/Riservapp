@@ -106,9 +106,29 @@ Scrivi a Claude Code:
 - [x] Recuperato il lavoro del 25 apr che era in produzione ma mai committato
 - [x] `globPatterns` con `pdf` ripristinato, `@types/react@^19` reinstallato
 - [ ] Mettere al sicuro `.env.local` fuori dal disco (password manager o secret store)
-- [ ] Rimuovere la regola header `/sw.js` da `firebase.json` (config morta)
+- [x] Rimuovere la regola header `/sw.js` da `firebase.json` (config morta) — ora punta a `/firebase-messaging-sw.js`
 - [ ] Cancellare `Desktop\michele\riservapp_v2` (rotta) e `Desktop\backup\riservapp_v2g`
       — solo DOPO aver messo al sicuro `.env.local`, il backup ne è l'unica altra copia
+
+## HARDENING + SOLO RETTORE (2026-08-17)
+Semplificazione voluta: SOLO il Rettore pubblica/modifica/scrive. Il direttivo non pubblica più.
+- [x] Rules: post create/delete solo admin (la vecchia regola era spoofabile via campo `autore`)
+- [x] Rules: `letti` solo append; `fcm_tokens`/`user_locations` richiedono auth + schema
+- [x] Rules: `config/slots` — il socio può solo AGGIUNGERE la propria chiave (slot libero = chiave assente)
+- [x] Rules: `config/onboarding_reset` — il device può solo rimuovere id; `config/ospite` rimosso (deny)
+- [x] Storage rules: `posts/` write solo admin
+- [x] Functions: trigger "categoria chiusa" (mancava!), pairing categorie per id, push data-only
+      (niente doppia notifica), dedup token, post di sistema in bacheca (`noPush`) come fallback push
+- [x] Client: rimosso ruolo direttivo (UI + handler), rimosso post demo hard-coded
+- [x] Client: `handleReleaseSlot` usa `deleteField`; migrazione automatica slot `null` (solo admin)
+- [x] Client: conferma prima di chiudere una quota (evita push per tap accidentale)
+- [x] FCM: prompt permesso dentro il gesto utente (fix iOS); `Notification.permission` è la fonte
+      di verità (recupero dopo "nega"); banner stato notifiche in bacheca (attiva/bloccate/non supportate)
+- [x] UpdateBanner: nuovo SW in waiting → "Nuova versione — tocca per aggiornare" (SKIP_WAITING su gesto)
+- [x] `firebase.json`: predeploy `npm run build` (impossibile deployare dist stale/senza precache)
+- [x] Privacy onboarding: TTL posizioni corretto a 35 minuti (prima diceva 1 minuto, non vero)
+- [ ] **Deploy**: `firebase deploy` (rules + functions + hosting insieme)
+- [ ] **Test su telefono reale**: notifica singola (non doppia), banner attiva notifiche, update banner
 
 ## DA FARE
 - [ ] **Verifica geofence** con socio fisicamente in riserva
@@ -141,3 +161,6 @@ Scrivi a Claude Code:
 <!--   refactor del 25 apr, che era live in produzione ma non committato da nessuna parte.   -->
 <!--   Fuso clone + copia locale congelata, build verificato identico a produzione (hash     -->
 <!--   bundle e 14 URL nel precache), commit e2f1d79 su main. Da qui GitHub è la fonte unica.-->
+<!-- 2026-08-17 pom: Code review completa + hardening. Modello semplificato: solo Rettore    -->
+<!--   scrive. Rules blindate (post spoofabili, slots, token), trigger "chiusa" aggiunto,    -->
+<!--   push data-only, post di sistema, UpdateBanner, fix permesso iOS, predeploy build.     -->

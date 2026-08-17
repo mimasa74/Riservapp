@@ -37,11 +37,8 @@ export interface Members {
   direttivo: string[];
 }
 
-export interface OspiteData {
-  device_id: string | null;
-}
-
-// mappa normalizedName → deviceId (null = slot libero)
+// mappa normalizedName → deviceId (slot libero = chiave assente;
+// null può comparire solo come residuo legacy, trattato come libero)
 export type Slots = Record<string, string | null>;
 
 export interface Post {
@@ -54,5 +51,6 @@ export interface Post {
   foto_height?: number;
   data: number; // timestamp ms
   letti?: string[]; // nomi dei soci che hanno letto
-  autore?: string; // nome del membro che ha pubblicato (direttivo o admin)
+  autore?: string; // chi ha pubblicato (Rettore o 'Sistema' per i post automatici)
+  noPush?: boolean; // post di sistema: la push è già stata inviata da onConfigUpdate
 }

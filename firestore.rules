@@ -17,23 +17,31 @@ service cloud.firestore {
     }
 
     // posts: lettura per autenticati (blocca scraping via API).
-    // creazione: admin o membro del direttivo (verificato contro config/members)
-    // eliminazione: solo admin. L'utente anonimo non può provare la propria identità
-    //   quindi il direttivo che cancella dalla UI lo fa dopo long-press + login Google.
-    // aggiornamento campo 'letti': permesso a tutti gli autenticati
+    // creazione/eliminazione: SOLO admin — l'identità "direttivo" non è verificabile
+    //   con auth anonima, quindi la vecchia regola basata su request.resource.data.autore
+    //   era spoofabile da qualsiasi client (post 'alert' → push a tutti i soci).
+    //   I post di sistema (quota/sospeso/chiuso) li scrive la Cloud Function via Admin SDK,
+    //   che bypassa le rules.
+    // aggiornamento: solo il campo 'letti', e solo in append (non si possono togliere nomi)
     match /posts/{postId} {
       allow read: if isAuthenticated();
-      allow create: if isAdmin() ||
-        get(/databases/$(database)/documents/config/members).data.direttivo.hasAny([request.resource.data.autore]);
-      allow delete: if isAdmin();
-      allow update: if isAdmin() || (isAuthenticated() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['letti']));
+      allow create, delete: if isAdmin();
+      allow update: if isAdmin() || (
+        isAuthenticated() &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['letti']) &&
+        request.resource.data.letti is list &&
+        request.resource.data.letti.hasAll(resource.data.get('letti', []))
+      );
     }
 
     // fcm_tokens: il dispositivo può scrivere/aggiornare solo il proprio documento
-    // (verificato tramite deviceId nel body == deviceId nel path)
+    // (auth anonima obbligatoria + deviceId nel body == deviceId nel path + schema minimo)
     // lettura e delete solo admin (anon auth NON deve vedere token altrui)
     match /fcm_tokens/{deviceId} {
-      allow create, update: if request.resource.data.deviceId == deviceId;
+      allow create, update: if isAuthenticated() &&
+        request.resource.data.deviceId == deviceId &&
+        request.resource.data.token is string &&
+        request.resource.data.nome is string;
       allow delete: if isAdmin();
       allow read: if isAdmin();
     }
@@ -42,8 +50,11 @@ service cloud.firestore {
     // DELETE: dispositivo può eliminare solo il proprio (deviceId match)
     // lettura solo admin (anon auth NON deve vedere posizioni altrui)
     match /user_locations/{deviceId} {
-      allow create, update: if request.resource.data.deviceId == deviceId;
-      allow delete: if resource != null && resource.data.deviceId == deviceId;
+      allow create, update: if isAuthenticated() &&
+        request.resource.data.deviceId == deviceId &&
+        request.resource.data.lat is number &&
+        request.resource.data.lng is number;
+      allow delete: if isAuthenticated() && resource != null && resource.data.deviceId == deviceId;
       allow read: if isAdmin();
     }
 
@@ -60,24 +71,33 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
-    // config/ospite: deprecato, sostituito da config/slots
-    match /config/ospite {
-      allow read: if isAuthenticated();
-      allow write: if isAuthenticated();
-    }
-
-    // config/slots: mappa normalizedName → deviceId — lettura e scrittura per autenticati.
-    // Ogni slot è occupato da un solo dispositivo.
+    // config/slots: mappa normalizedName → deviceId.
+    // Slot libero = chiave ASSENTE (l'admin libera con deleteField, non con null).
+    // Un socio può SOLO aggiungere una chiave nuova (rivendicare uno slot libero),
+    // una alla volta: niente furto di slot occupati, niente wipe del documento.
     match /config/slots {
       allow read: if isAuthenticated();
-      allow write: if isAuthenticated();
+      allow create, delete: if isAdmin();
+      allow update: if isAdmin() || (
+        isAuthenticated() &&
+        request.resource.data.diff(resource.data).addedKeys().size() == 1 &&
+        request.resource.data.diff(resource.data).changedKeys().size() == 0 &&
+        request.resource.data.diff(resource.data).removedKeys().size() == 0
+      );
     }
 
-    // config/onboarding_reset: lista di deviceId che devono rifare l'onboarding
-    // scrittura admin (aggiunge) o autenticata (il dispositivo si rimuove dalla lista)
+    // config/onboarding_reset: lista di deviceId che devono rifare l'onboarding.
+    // Admin aggiunge; un dispositivo può solo RIMUOVERE id dalla lista (il proprio):
+    // la nuova lista deve essere un sottoinsieme della vecchia.
     match /config/onboarding_reset {
       allow read: if isAuthenticated();
-      allow write: if isAuthenticated();
+      allow create, delete: if isAdmin();
+      allow update: if isAdmin() || (
+        isAuthenticated() &&
+        request.resource.data.keys().hasOnly(['deviceIds']) &&
+        request.resource.data.deviceIds is list &&
+        resource.data.get('deviceIds', []).hasAll(request.resource.data.deviceIds)
+      );
     }
   }
 }

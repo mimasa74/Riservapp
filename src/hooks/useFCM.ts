@@ -6,8 +6,10 @@ import { getMessagingInstance, db } from '../firebase';
 // Usa SW showNotification perché new Notification() non è supportato su Android Chrome
 function setupForegroundHandler(messaging: Messaging): void {
   onMessage(messaging, (payload) => {
-    const title = payload.notification?.title || 'Riserva Tuenno';
-    const body = payload.notification?.body || '';
+    // Messaggi data-only (title/body in payload.data); fallback su payload.notification
+    // per la transizione da vecchie Functions.
+    const title = payload.data?.title || payload.notification?.title || 'Riserva Tuenno';
+    const body = payload.data?.body || payload.notification?.body || '';
     if (Notification.permission === 'granted') {
       navigator.serviceWorker.ready.then(reg => {
         reg.showNotification(title, {
@@ -22,21 +24,20 @@ function setupForegroundHandler(messaging: Messaging): void {
 
 let foregroundHandlerSetup = false;
 
+// Chiamare da un GESTO UTENTE quando il permesso non è ancora stato concesso:
+// su iOS Notification.requestPermission() fuori da user activation fallisce.
+// La fonte di verità è Notification.permission, NON il flag in localStorage:
+// se il socio riattiva il permesso dalle impostazioni di sistema, qui ripartiamo.
 export async function initFCM(deviceId: string, nome: string): Promise<void> {
   const supported = await isSupported();
   if (!supported) return;
 
-  const alreadyGranted = localStorage.getItem('riservapp_fcm') === 'granted';
-
-  // Se non ancora concesso, chiedi il permesso
-  if (!alreadyGranted) {
-    const permission = await Notification.requestPermission();
-    localStorage.setItem('riservapp_fcm', permission === 'granted' ? 'granted' : 'denied');
-    if (permission !== 'granted') return;
+  let permission = Notification.permission;
+  if (permission === 'default') {
+    permission = await Notification.requestPermission();
   }
-
-  // Se esplicitamente negato, esci
-  if (localStorage.getItem('riservapp_fcm') === 'denied') return;
+  localStorage.setItem('riservapp_fcm', permission === 'granted' ? 'granted' : 'denied');
+  if (permission !== 'granted') return;
 
   // Registra (o rinnova) il token FCM — eseguito sempre per mantenere il token valido
   try {

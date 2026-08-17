@@ -1,6 +1,8 @@
 // public/firebase-messaging-sw.js
 // UN SOLO Service Worker: FCM + Workbox precache/runtime.
-// NON aggiungere skipWaiting: vogliamo che il nuovo SW attenda la chiusura dei tab.
+// Niente skipWaiting automatico: il nuovo SW attende. L'attivazione immediata
+// avviene SOLO su richiesta esplicita dell'utente (banner "nuova versione"
+// nell'app → postMessage 'SKIP_WAITING').
 
 importScripts('https://storage.googleapis.com/workbox-cdn/releases/7.1.0/workbox-sw.js');
 
@@ -18,6 +20,10 @@ firebase.initializeApp({
 
 const messaging = firebase.messaging();
 
+self.addEventListener('message', (event) => {
+  if (event.data === 'SKIP_WAITING') self.skipWaiting();
+});
+
 workbox.core.clientsClaim();
 workbox.precaching.precacheAndRoute(self.__WB_MANIFEST || []);
 
@@ -31,9 +37,12 @@ workbox.routing.registerRoute(
   })
 );
 
+// I messaggi arrivano DATA-ONLY (title/body/priority in payload.data): la notifica
+// la costruiamo solo qui, così non ci sono doppioni con l'auto-display dell'SDK.
+// Il fallback su payload.notification copre la transizione da vecchie Functions.
 messaging.onBackgroundMessage((payload) => {
-  const title = payload.notification?.title || 'Riserva Tuenno';
-  const body = payload.notification?.body || '';
+  const title = payload.data?.title || payload.notification?.title || 'Riserva Tuenno';
+  const body = payload.data?.body || payload.notification?.body || '';
   const isAlert = payload.data?.priority === 'high';
   self.registration.showNotification(title, {
     body,

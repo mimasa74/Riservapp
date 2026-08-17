@@ -47,20 +47,28 @@ Non esiste `sw.js`. Workbox inietta il precache **dentro** il service worker FCM
 perché era in conflitto con FCM.
 
 Conseguenze pratiche:
-- Il build è `vite build && workbox injectManifest workbox-config.cjs`. Il solo
-  `vite build` produce un `dist/` senza precache: non deployarlo.
+- Il build è `vite build && workbox injectManifest workbox-config.cjs`. Dal 17 ago
+  è agganciato come `predeploy` hosting in `firebase.json`: `firebase deploy`
+  builda da solo, impossibile deployare un `dist/` stale o senza precache.
 - `globPatterns` include `pdf` — serve per il regolamento offline.
-- La regola header per `/sw.js` in `firebase.json` è config morta, residuo di
-  `vite-plugin-pwa`. Da rimuovere, non da "far funzionare".
+- Niente `skipWaiting` automatico. Il nuovo SW resta in waiting; `UpdateBanner.tsx`
+  mostra "Nuova versione — tocca per aggiornare" → postMessage `SKIP_WAITING` →
+  reload. Il reload avviene solo su gesto (clientsClaim fa scattare
+  controllerchange anche alla prima install: non ricaricare in automatico).
+- Le push sono DATA-ONLY (title/body/priority in `data`): la notifica la
+  costruisce solo il SW. Non aggiungere payload `notification` nelle Functions:
+  l'SDK la mostrerebbe in automatico → notifica doppia.
 - Il PDF regolamento è cachato anche lato app in `REGOLAMENTO_CACHE`, perché un
   utente può avere in giro un SW vecchio senza il PDF nel precache. Non usare
   `PHOTO_CACHE` (`'photos'`) per il regolamento: è un errore già fatto una volta.
 
 ## Ruoli
 - **Cacciatore** — legge tutto, nome validato contro lista soci, nessun login
-- **Direttivo** — come cacciatore + pubblica/cancella post bacheca (riconosciuto dal nome)
-- **Rettore** (admin) — tutto — long press 3s logo → Google Sign-In
+- **Rettore** (admin) — UNICO che pubblica/modifica/scrive — long press 3s logo → Google Sign-In
 
+Il ruolo "Direttivo" è stato RIMOSSO il 17 ago 2026 (semplificazione voluta:
+la vecchia regola Firestore basata sul campo `autore` era spoofabile da qualsiasi
+client anonimo). `config/members.direttivo` esiste ancora su Firestore ma non è usato.
 Il cacciatore NON deve mai sapere che esiste una modalità admin.
 
 ## Struttura schermate
@@ -79,8 +87,10 @@ Il cacciatore NON deve mai sapere che esiste una modalità admin.
 
 ## Firestore collections
 - `config/main` — dati specie
-- `config/members` — `{ nomi: string[], direttivo: string[] }`
-- `config/slots` — `{ [normalizedName]: deviceId | null }`
+- `config/members` — `{ nomi: string[], direttivo: string[] }` (direttivo non più usato)
+- `config/slots` — `{ [normalizedName]: deviceId }` — slot libero = chiave ASSENTE
+  (l'admin libera con `deleteField`; le rules permettono al socio solo di aggiungere
+  la propria chiave, mai modificare o rimuovere)
 - `posts` — messaggi bacheca
 - `fcm_tokens/{deviceId}` — token push
 - `user_locations/{deviceId}` — posizioni (TTL 35min)

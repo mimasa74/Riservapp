@@ -11,14 +11,11 @@ service firebase.storage {
       return request.auth != null && request.auth.token.email == 'michele.bruni@gmail.com';
     }
 
-    // Foto post bacheca: lettura per autenticati, scrittura per autenticati.
-    // L'identità "direttivo" non è verificabile a livello Storage (anon auth,
-    // niente custom claims). La protezione effettiva sta nelle firestore.rules
-    // su posts/{postId}.create, che richiedono autore in config/members.direttivo.
-    // Worst case: foto orfana se la create del post fallisce.
+    // Foto post bacheca: lettura per autenticati, scrittura solo admin
+    // (solo il Rettore pubblica in bacheca).
     match /posts/{file} {
       allow read: if isAuthenticated();
-      allow write: if isAuthenticated();
+      allow write: if isAdmin();
     }
 
     // File ruote (foto, allegati): lettura per autenticati, scrittura solo admin.

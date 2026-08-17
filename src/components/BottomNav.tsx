@@ -79,7 +79,7 @@ export const BottomNav = ({ currentScreenIndex, onNavigate }: BottomNavProps) =>
               )}
             </div>
             <span style={{
-              fontSize: 10,
+              fontSize: 11,
               fontWeight: active ? 700 : 500,
               color: active ? '#5C6B3A' : '#6B6B5A',
               fontFamily: '-apple-system, sans-serif',

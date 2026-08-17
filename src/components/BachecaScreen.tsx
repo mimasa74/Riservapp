@@ -34,7 +34,7 @@ function normalizeName(s: string): string {
 interface BachecaScreenProps {
   posts: Post[];
   hunterName: string;
-  isModerator: boolean;
+  onEnableNotifications: () => Promise<void>;
   onAddPost: (tipo: Post['tipo'], testo: string, foto_url?: string | null, foto_width?: number, foto_height?: number) => Promise<void> | void;
   onDeletePost: (id: string) => void;
   onMarkRead: (postIds: string[]) => void;
@@ -44,9 +44,15 @@ interface BachecaScreenProps {
   onUpdateRegolamento?: (url: string) => void;
 }
 
-export const BachecaScreen = ({ posts, hunterName, isModerator, onAddPost, onDeletePost, onMarkRead, onOpenSettings, onOpenMappa, regolamentoUrl, onUpdateRegolamento }: BachecaScreenProps) => {
+export const BachecaScreen = ({ posts, hunterName, onEnableNotifications, onAddPost, onDeletePost, onMarkRead, onOpenSettings, onOpenMappa, regolamentoUrl, onUpdateRegolamento }: BachecaScreenProps) => {
   const { isAdmin, login, logout } = useAuth();
   const [showForm, setShowForm] = useState(false);
+  // Stato permesso notifiche — 'unsupported' = niente API Notification
+  // (es. iOS con app non installata da Safari, o iOS < 16.4)
+  const [notifPermission, setNotifPermission] = useState<NotificationPermission | 'unsupported'>(
+    () => (typeof Notification === 'undefined' ? 'unsupported' : Notification.permission)
+  );
+  const [enablingNotif, setEnablingNotif] = useState(false);
   const [showAdminModal, setShowAdminModal] = useState(false);
   const [selectedPhoto, setSelectedPhoto] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
@@ -282,11 +288,6 @@ export const BachecaScreen = ({ posts, hunterName, isModerator, onAddPost, onDel
               Modalità Rettore
             </span>
           )}
-          {isModerator && (
-            <span style={{ fontSize: 10, fontWeight: 700, color: '#5C6B3A', textTransform: 'uppercase', letterSpacing: '0.12em', fontFamily: '-apple-system, sans-serif' }}>
-              Direttivo
-            </span>
-          )}
         </div>
         {isAdmin ? (
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flexShrink: 0 }}>
@@ -309,8 +310,47 @@ export const BachecaScreen = ({ posts, hunterName, isModerator, onAddPost, onDel
         )}
       </div>
 
-      {/* Form nuovo post (admin o direttivo) */}
-      {(isAdmin || isModerator) && showForm && (
+      {/* Banner stato notifiche: il socio deve SAPERE se non riceverà le push */}
+      {notifPermission === 'unsupported' && (
+        <div style={{
+          background: '#B8730A', color: '#fff', padding: '10px 16px',
+          fontSize: 14, fontWeight: 600, lineHeight: 1.4, textAlign: 'center',
+        }}>
+          Questo dispositivo non riceve le notifiche.
+          Su iPhone: apri il sito in Safari → Condividi → "Aggiungi alla schermata Home" e riapri l'app.
+        </div>
+      )}
+      {notifPermission === 'default' && (
+        <button
+          onClick={async () => {
+            setEnablingNotif(true);
+            try { await onEnableNotifications(); } finally {
+              setEnablingNotif(false);
+              setNotifPermission(typeof Notification === 'undefined' ? 'unsupported' : Notification.permission);
+            }
+          }}
+          disabled={enablingNotif}
+          style={{
+            width: '100%', padding: '12px 16px', border: 'none',
+            background: '#5C6B3A', color: '#EDEEE6', cursor: 'pointer',
+            fontFamily: 'inherit', fontSize: 15, fontWeight: 700, textAlign: 'center',
+          }}
+        >
+          {enablingNotif ? 'Attivazione…' : '🔔 Attiva le notifiche per gli avvisi della Riserva'}
+        </button>
+      )}
+      {notifPermission === 'denied' && (
+        <div style={{
+          background: '#8B1A1A', color: '#fff', padding: '10px 16px',
+          fontSize: 14, fontWeight: 600, lineHeight: 1.4, textAlign: 'center',
+        }}>
+          Notifiche bloccate: non riceverai gli avvisi della Riserva.
+          Riattivale dalle impostazioni del telefono (Notifiche → RiservApp).
+        </div>
+      )}
+
+      {/* Form nuovo post (solo Rettore) */}
+      {isAdmin && showForm && (
         <div style={{ background: '#fff', borderBottom: '1px solid #d0d5c4', padding: '16px 18px', display: 'flex', flexDirection: 'column', gap: 12 }}>
 
           {/* Selezione tipo */}
@@ -498,8 +538,8 @@ export const BachecaScreen = ({ posts, hunterName, isModerator, onAddPost, onDel
           )}
         </div>
 
-        {/* Pulsante + (admin o direttivo, quando form chiuso) */}
-        {(isAdmin || isModerator) && !showForm && (
+        {/* Pulsante + (solo Rettore, quando form chiuso) */}
+        {isAdmin && !showForm && (
           <button
             onClick={() => setShowForm(true)}
             style={{
@@ -525,7 +565,7 @@ export const BachecaScreen = ({ posts, hunterName, isModerator, onAddPost, onDel
         )}
 
         {posts.map(post => (
-          <PostCard key={post.id} post={post} isAdmin={isAdmin} canDelete={isAdmin || isModerator} onDelete={onDeletePost} />
+          <PostCard key={post.id} post={post} isAdmin={isAdmin} canDelete={isAdmin} onDelete={onDeletePost} />
         ))}
 
       </div>
