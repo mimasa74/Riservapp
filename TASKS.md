@@ -1,5 +1,6 @@
 # TASKS.md — RiservApp
-# Aggiorna dopo ogni sessione Claude Code
+# Aggiorna dopo ogni sessione Claude Code, poi committa e pusha su main.
+# Un lavoro non committato può esistere in un solo posto al mondo: è già successo.
 
 ## Come riprendere
 Scrivi a Claude Code:
@@ -76,6 +77,39 @@ Scrivi a Claude Code:
 - [x] manifest.json: short_name = "Caccia Tuen"
 - [x] firebase-messaging-sw.js: notificationclick funziona su localhost e produzione
 
+## SICUREZZA FASE 1 (2026-04-19)
+- [x] Anonymous Auth all'avvio — Firestore rules richiedono `request.auth != null` per ogni read
+- [x] `authReady` attende `getIdToken()` prima di risolvere (evita permission-denied al boot)
+- [x] Mock `persistentLocalCache` + auth nei test
+
+## OFFLINE-FIRST (2026-04-19 → 04-25)
+- [x] `useOnlineStatus` con tracking `lastSyncAt`
+- [x] `OfflineBanner` montato, `lastSyncAt` da snapshot freschi
+- [x] `PhotoPlaceholder` + `foto_width`/`foto_height` per aspect-ratio senza layout shift
+- [x] Write Firestore protette da check online (`requireOnline`), bottoni Settings disabilitati
+- [x] `reconcilePhotoCache` — collector puro + GC async, cleanup cache su delete
+- [x] Prefetch dei 30 post più recenti
+- [x] Migrazione a Workbox `injectManifest` manuale, rimosso `vite-plugin-pwa`
+- [x] PDF regolamento offline via `REGOLAMENTO_CACHE` + blob URL
+- [x] Lightbox foto in PostCard (Escape, swipe giù, tap sul fondo)
+- [x] `docs/` — audit del gap service worker e strategia offline
+- [ ] **Verificare l'offline su telefono reale** — il PDF e le foto in aereo mode
+
+## SICUREZZA STORAGE (2026-04-26)
+- [x] `storage.rules` — read autenticata, write solo admin su ruote/regolamento
+- [x] `firebase.json` include storage nel deploy
+- [x] Realtime Database: non usato dall'app, root a `null`
+- [ ] **Disabilitare RTDB** dalla console Firebase (va fatto a mano, non da CLI)
+
+## RECUPERO ALBERO (2026-08-17)
+- [x] Albero di lavoro ricostruito in `riservapp_v2_restore`, `main` = `e2f1d79`
+- [x] Recuperato il lavoro del 25 apr che era in produzione ma mai committato
+- [x] `globPatterns` con `pdf` ripristinato, `@types/react@^19` reinstallato
+- [ ] Mettere al sicuro `.env.local` fuori dal disco (password manager o secret store)
+- [ ] Rimuovere la regola header `/sw.js` da `firebase.json` (config morta)
+- [ ] Cancellare `Desktop\michele\riservapp_v2` (rotta) e `Desktop\backup\riservapp_v2g`
+      — solo DOPO aver messo al sicuro `.env.local`, il backup ne è l'unica altra copia
+
 ## DA FARE
 - [ ] **Verifica geofence** con socio fisicamente in riserva
 - [x] Deploy Firebase — hosting + rules + functions deployato
@@ -97,3 +131,13 @@ Scrivi a Claude Code:
 <!-- 2026-04-11: Nuovo logo senza scritta, short_name Caccia Tuen, fix notificationclick URL -->
 <!-- 2026-04-12: Fix FCM push (vite-plugin-pwa conflict), foreground notifications, SW self-destroying -->
 <!-- 2026-04-13: Rimossi file morti (SwipeContainer, AssignmentView, AssignmentGrid), TASKS.md allineato allo stato reale -->
+<!-- 2026-04-19: Sicurezza Fase 1 (Anonymous Auth + rules), spec offline-first, useOnlineStatus, OfflineBanner -->
+<!-- 2026-04-20: PhotoPlaceholder, aspect-ratio foto, lastSyncAt da snapshot -->
+<!-- 2026-04-22: Write protette offline, requireOnline, PHOTO_CACHE, reconcilePhotoCache -->
+<!-- 2026-04-24: Prefetch 30 post, reconcile gated, cleanup cache su delete -->
+<!-- 2026-04-25: Workbox injectManifest manuale, rimosso vite-plugin-pwa, PDF offline, lightbox foto, deploy prod 16:22 -->
+<!-- 2026-04-26: storage.rules deployate, RTDB verificato vuoto, push su GitHub -->
+<!-- 2026-08-17: Albero di lavoro trovato senza file di config e senza .git. Recuperato il -->
+<!--   refactor del 25 apr, che era live in produzione ma non committato da nessuna parte.   -->
+<!--   Fuso clone + copia locale congelata, build verificato identico a produzione (hash     -->
+<!--   bundle e 14 URL nel precache), commit e2f1d79 su main. Da qui GitHub è la fonte unica.-->
