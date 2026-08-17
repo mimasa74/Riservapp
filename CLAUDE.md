@@ -59,6 +59,11 @@ Conseguenze pratiche:
 - Le push sono DATA-ONLY (title/body/priority in `data`): la notifica la
   costruisce solo il SW. Non aggiungere payload `notification` nelle Functions:
   l'SDK la mostrerebbe in automatico → notifica doppia.
+- `onConfigUpdate` invia **una push per ogni transizione di categoria**, più un
+  post di sistema ciascuna: nessuna aggregazione. Modificare più categorie in
+  una volta produce quindi una raffica di notifiche. È il problema di usabilità
+  segnalato dall'uso reale il 17 ago 2026 — vedi "DESIGN E NOTIFICHE" in
+  TASKS.md prima di toccare il trigger.
 ## Regolamento interno — solo Storage, nessun PDF bundled
 
 Non esiste PDF di riserva in `public/`. L'unica fonte è

@@ -6,6 +6,14 @@
 Scrivi a Claude Code:
 "Leggi CLAUDE.md e TASKS.md e riprendi dal primo task non completato."
 
+### ► PROSSIMA SESSIONE: DESIGN E USABILITÀ
+L'app **funziona**, la parte tecnica è a posto. Il prossimo lavoro è di
+design, non di funzionalità. Michele sta raccogliendo note usandola: partire
+da quelle, non da un redesign a tavolino.
+
+Problema già emerso in produzione: **arrivano troppe notifiche**.
+Vedi "DESIGN E NOTIFICHE" in DA FARE per l'analisi.
+
 ---
 
 ## FASE 1 — UI base
@@ -132,6 +140,30 @@ Semplificazione voluta: SOLO il Rettore pubblica/modifica/scrive. Il direttivo n
 - [ ] **Verificare il regolamento in modalità aereo** — deve aprirsi il decreto 45, non il vecchio
 - [ ] **Upgrade runtime functions a Node 22** + `firebase-functions@latest` — Node 20 dismesso il 2026-10-30 (breaking changes, sessione dedicata)
 
+## DESIGN E NOTIFICHE (aperto — focus prossima sessione)
+
+Feedback dall'uso reale (Michele, 17 ago 2026): l'app funziona ma
+**arrivano troppe notifiche** e l'interfaccia non è abbastanza intuitiva.
+Michele sta prendendo note man mano che la usa: aspettare quelle prima di
+riprogettare, sono la fonte migliore che abbiamo.
+
+- [ ] **Raccogliere le note d'uso di Michele** — punto di partenza obbligato
+- [ ] **Ridurre il volume di notifiche.** Ipotesi da verificare (non ancora
+      confermata sul campo): in `functions/src/index.ts` il trigger
+      `onConfigUpdate` cicla su tutte le specie e categorie e invia **una push
+      per ogni transizione**, più un post di sistema ciascuna. Chiudere o
+      sospendere 4 categorie in un colpo → 4 notifiche + 4 post in bacheca.
+      Direzione: aggregare le transizioni della stessa invocazione in una sola
+      notifica ("3 categorie chiuse: ...") e un solo post. Da verificare anche
+      quante scritture su `config/main` genera SettingsScreen per ogni modifica
+      dell'admin: se ne fa una per campo, ogni ritocco è una push a sé.
+- [ ] **Review usabilità.** Utenti anziani, 45 soci. Guardare: gerarchia della
+      bacheca, riconoscibilità dei tasti, `AssignmentBoxes` (aree di tocco
+      26×26px, sotto i 44px consigliati), leggibilità dei font già ingranditi.
+- [ ] Decidere se le notifiche vanno rese silenziabili per categoria dal socio
+
+---
+
 ## DA FARE
 - [ ] **Verifica geofence** con socio fisicamente in riserva
 - [x] Deploy Firebase — hosting + rules + functions deployato
@@ -172,3 +204,5 @@ Semplificazione voluta: SOLO il Rettore pubblica/modifica/scrive. Il direttivo n
 <!--   solo il token, e match(ignoreSearch) trovava il vecchio PDF considerandolo valido.    -->
 <!--   Ora match esatto + prune delle versioni precedenti. Rimosso il PDF bundled del        -->
 <!--   decreto 86 (fallback sbagliato, -1,58 MB di precache): unica fonte regolamento_url.   -->
+<!--   Chiusa la fase tecnica. Feedback dall'uso: troppe notifiche, UI da rendere più        -->
+<!--   intuitiva. Prossima sessione sul design, partendo dalle note d'uso di Michele.        -->
