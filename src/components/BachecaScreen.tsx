@@ -68,10 +68,20 @@ export const BachecaScreen = ({ posts, hunterName, onEnableNotifications, onAddP
     (async () => {
       try {
         const cache = await caches.open(REGOLAMENTO_CACHE);
-        if (await cache.match(pdfUrl, { ignoreSearch: true })) return;
-        const res = await fetch(pdfUrl);
-        if (!res.ok) return;
-        await cache.put(pdfUrl, res);
+        // Match esatto sugli URL Storage: l'upload sovrascrive sempre lo stesso path,
+        // quindi un regolamento nuovo differisce dal vecchio solo per il token in query.
+        // Il PDF bundled invece vive nel precache Workbox con ?__WB_REVISION__.
+        const matchOpts = regolamentoUrl ? undefined : { ignoreSearch: true };
+        if (!(await cache.match(pdfUrl, matchOpts))) {
+          const res = await fetch(pdfUrl);
+          if (!res.ok) return;
+          await cache.put(pdfUrl, res);
+        }
+        // Via le versioni precedenti: offline deve restare solo il regolamento corrente
+        const currentUrl = new Request(pdfUrl).url;
+        for (const req of await cache.keys()) {
+          if (req.url !== currentUrl) await cache.delete(req);
+        }
       } catch {}
     })();
   }, [regolamentoUrl]);
@@ -118,7 +128,10 @@ export const BachecaScreen = ({ posts, hunterName, onEnableNotifications, onAddP
       window.open(url, '_blank', 'noopener,noreferrer');
       return;
     }
-    const hit = await caches.match(url, { ignoreSearch: true });
+    // Prima il match esatto (regolamento corrente), poi il fallback largo per il
+    // PDF bundled nel precache Workbox e per chi è offline dall'ultimo aggiornamento.
+    const cache = await caches.open(REGOLAMENTO_CACHE);
+    const hit = (await cache.match(url)) ?? (await caches.match(url, { ignoreSearch: true }));
     if (!hit) {
       alert('Regolamento non disponibile offline. Aprilo una volta con connessione.');
       return;
@@ -495,7 +508,7 @@ export const BachecaScreen = ({ posts, hunterName, onEnableNotifications, onAddP
             </div>
             <div style={{ flex: 1 }}>
               <p style={{ fontSize: 15, fontWeight: 700, margin: 0, lineHeight: 1.3 }}>Regolamento Interno</p>
-              <p style={{ fontSize: 12, color: '#6B6B5A', margin: '2px 0 0', fontFamily: '-apple-system, sans-serif' }}>Decreto 86 — Tuenno</p>
+              <p style={{ fontSize: 12, color: '#6B6B5A', margin: '2px 0 0', fontFamily: '-apple-system, sans-serif' }}>Decreto 45 del 25 maggio 2026</p>
             </div>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#aaa" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <polyline points="9 18 15 12 9 6"/>
