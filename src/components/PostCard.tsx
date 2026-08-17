@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Post } from '../types';
 import { PhotoPlaceholder } from './PhotoPlaceholder';
 
@@ -14,6 +14,8 @@ function formatData(ts: number): string {
   const pad = (n: number) => n.toString().padStart(2, '0');
   return `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
+
+const SWIPE_DISMISS_PX = 60;
 
 const TIPO_LABEL: Record<Post['tipo'], string> = {
   normale: 'INFO',
@@ -36,7 +38,32 @@ const BADGE_STYLE: Record<Post['tipo'], React.CSSProperties> = {
 const PostCardInner = ({ post, isAdmin, canDelete, onDelete }: PostCardProps) => {
   const [showLetti, setShowLetti] = useState(false);
   const [fotoFailed, setFotoFailed] = useState(false);
+  const [showLightbox, setShowLightbox] = useState(false);
+  const touchStartY = useRef<number | null>(null);
   const letti: string[] = post.letti ?? [];
+  const fotoUrl = post.foto_url;
+
+  useEffect(() => {
+    if (!showLightbox) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setShowLightbox(false); };
+    window.addEventListener('keydown', onKey);
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      window.removeEventListener('keydown', onKey);
+      document.body.style.overflow = prev;
+    };
+  }, [showLightbox]);
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartY.current = e.touches[0].clientY;
+  };
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (touchStartY.current === null) return;
+    const dy = e.changedTouches[0].clientY - touchStartY.current;
+    touchStartY.current = null;
+    if (dy < -SWIPE_DISMISS_PX) setShowLightbox(false);
+  };
 
   return (
     <div style={{ ...TIPO_STYLE[post.tipo], borderRadius: 8, padding: '14px 16px' }}>
@@ -77,11 +104,12 @@ const PostCardInner = ({ post, isAdmin, canDelete, onDelete }: PostCardProps) =>
       </p>
 
       {/* Foto */}
-      {post.foto_url && !fotoFailed && (
+      {fotoUrl && !fotoFailed && (
         <img
-          src={post.foto_url}
+          src={fotoUrl}
           alt="foto"
           loading="lazy"
+          onClick={() => setShowLightbox(true)}
           style={{
             marginTop: 12,
             width: '100%',
@@ -91,11 +119,50 @@ const PostCardInner = ({ post, isAdmin, canDelete, onDelete }: PostCardProps) =>
             objectFit: 'cover',
             borderRadius: 6,
             display: 'block',
+            cursor: 'zoom-in',
           }}
           onError={() => setFotoFailed(true)}
         />
       )}
-      {post.foto_url && fotoFailed && (
+      {showLightbox && fotoUrl && (
+        <div
+          onClick={() => setShowLightbox(false)}
+          onTouchStart={handleTouchStart}
+          onTouchEnd={handleTouchEnd}
+          style={{
+            position: 'fixed', inset: 0, zIndex: 10000,
+            background: 'rgba(0,0,0,0.92)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            touchAction: 'pan-y',
+          }}
+        >
+          <button
+            onClick={(e) => { e.stopPropagation(); setShowLightbox(false); }}
+            aria-label="Chiudi"
+            style={{
+              position: 'absolute', top: 16, right: 16, zIndex: 1,
+              width: 44, height: 44, borderRadius: '50%',
+              background: 'rgba(0,0,0,0.55)', border: 'none',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              color: '#fff', cursor: 'pointer',
+            }}
+          >
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+              <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+          </button>
+          <img
+            src={fotoUrl}
+            alt="foto"
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              maxWidth: '100%', maxHeight: '100%',
+              objectFit: 'contain', display: 'block',
+            }}
+          />
+        </div>
+      )}
+      {fotoUrl && fotoFailed && (
         <PhotoPlaceholder
           aspectRatio={
             post.foto_width && post.foto_height

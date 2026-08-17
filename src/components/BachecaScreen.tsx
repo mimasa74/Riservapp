@@ -5,7 +5,9 @@ import { Post } from '../types';
 import { PostCard } from './PostCard';
 import { useAuth } from '../contexts/AuthContext';
 import { requireOnline } from '../utils/requireOnline';
-import { PHOTO_CACHE } from '../constants/cacheNames';
+import { REGOLAMENTO_CACHE, DEFAULT_REGOLAMENTO_URL } from '../constants/cacheNames';
+
+const BLOB_URL_TTL_MS = 5 * 60_000;
 
 async function readImageSize(file: File): Promise<{ width: number; height: number }> {
   return new Promise((resolve, reject) => {
@@ -53,10 +55,19 @@ export const BachecaScreen = ({ posts, hunterName, isModerator, onAddPost, onDel
   const photoInputRef = useRef<HTMLInputElement>(null);
   const pdfInputRef = useRef<HTMLInputElement>(null);
 
-  // Pre-fetch PDF regolamento per scaldare cache SW (funziona offline dopo)
+  // Cache PDF gestita dall'app: il SW potrebbe essere una vecchia versione senza il PDF nel precache
   React.useEffect(() => {
-    const pdfUrl = regolamentoUrl || '/decreto%2086_TUENNO20.pdf';
-    fetch(pdfUrl).catch(() => {});
+    if (!navigator.onLine) return;
+    const pdfUrl = regolamentoUrl || DEFAULT_REGOLAMENTO_URL;
+    (async () => {
+      try {
+        const cache = await caches.open(REGOLAMENTO_CACHE);
+        if (await cache.match(pdfUrl, { ignoreSearch: true })) return;
+        const res = await fetch(pdfUrl);
+        if (!res.ok) return;
+        await cache.put(pdfUrl, res);
+      } catch {}
+    })();
   }, [regolamentoUrl]);
 
   // Auto-segna come letti tutti i post dove il nome non è ancora in post.letti
@@ -96,16 +107,25 @@ export const BachecaScreen = ({ posts, hunterName, isModerator, onAddPost, onDel
   };
 
   const handleOpenRegolamento = async () => {
-    const url = regolamentoUrl || '/decreto%2086_TUENNO20.pdf';
-    if (!navigator.onLine) {
-      const cache = await caches.open(PHOTO_CACHE);
-      const hit = await cache.match(url);
-      if (!hit) {
-        alert('Regolamento non disponibile offline. Aprilo una volta con connessione.');
-        return;
-      }
+    const url = regolamentoUrl || DEFAULT_REGOLAMENTO_URL;
+    if (navigator.onLine) {
+      window.open(url, '_blank', 'noopener,noreferrer');
+      return;
     }
-    window.open(url, '_blank', 'noopener,noreferrer');
+    const hit = await caches.match(url, { ignoreSearch: true });
+    if (!hit) {
+      alert('Regolamento non disponibile offline. Aprilo una volta con connessione.');
+      return;
+    }
+    const blob = await hit.blob();
+    const blobUrl = URL.createObjectURL(blob);
+    window.open(blobUrl, '_blank', 'noopener,noreferrer');
+    // PDF viewer in nuovo tab fa streaming del blob: revoca tardi
+    const tid = setTimeout(() => URL.revokeObjectURL(blobUrl), BLOB_URL_TTL_MS);
+    window.addEventListener('pagehide', () => {
+      clearTimeout(tid);
+      URL.revokeObjectURL(blobUrl);
+    }, { once: true });
   };
 
   const handleUploadPdf = async (e: React.ChangeEvent<HTMLInputElement>) => {
