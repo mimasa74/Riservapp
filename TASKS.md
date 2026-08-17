@@ -127,7 +127,7 @@ Semplificazione voluta: SOLO il Rettore pubblica/modifica/scrive. Il direttivo n
 - [x] UpdateBanner: nuovo SW in waiting → "Nuova versione — tocca per aggiornare" (SKIP_WAITING su gesto)
 - [x] `firebase.json`: predeploy `npm run build` (impossibile deployare dist stale/senza precache)
 - [x] Privacy onboarding: TTL posizioni corretto a 35 minuti (prima diceva 1 minuto, non vero)
-- [ ] **Deploy**: `firebase deploy` (rules + functions + hosting insieme)
+- [x] **Deploy**: `firebase deploy` eseguito 2026-08-17 ~17:20 — rules Firestore/Storage rilasciate, 3 functions aggiornate (onPostCreate, onConfigUpdate, cleanupOldLocations), hosting `riservatuenno` release completa. Warning: runtime Node 20 deprecato, decommission 2026-10-30 → upgrade a Node 22 + firebase-functions@latest prima di ottobre
 - [ ] **Test su telefono reale**: notifica singola (non doppia), banner attiva notifiche, update banner
 
 ## DA FARE
