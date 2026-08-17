@@ -129,6 +129,8 @@ Semplificazione voluta: SOLO il Rettore pubblica/modifica/scrive. Il direttivo n
 - [x] Privacy onboarding: TTL posizioni corretto a 35 minuti (prima diceva 1 minuto, non vero)
 - [x] **Deploy**: `firebase deploy` eseguito 2026-08-17 ~17:20 — rules Firestore/Storage rilasciate, 3 functions aggiornate (onPostCreate, onConfigUpdate, cleanupOldLocations), hosting `riservatuenno` release completa. Warning: runtime Node 20 deprecato, decommission 2026-10-30 → upgrade a Node 22 + firebase-functions@latest prima di ottobre
 - [ ] **Test su telefono reale**: notifica singola (non doppia), banner attiva notifiche, update banner
+- [ ] **Verificare il regolamento in modalità aereo** — deve aprirsi il decreto 45, non il vecchio
+- [ ] **Upgrade runtime functions a Node 22** + `firebase-functions@latest` — Node 20 dismesso il 2026-10-30 (breaking changes, sessione dedicata)
 
 ## DA FARE
 - [ ] **Verifica geofence** con socio fisicamente in riserva
@@ -164,3 +166,9 @@ Semplificazione voluta: SOLO il Rettore pubblica/modifica/scrive. Il direttivo n
 <!-- 2026-08-17 pom: Code review completa + hardening. Modello semplificato: solo Rettore    -->
 <!--   scrive. Rules blindate (post spoofabili, slots, token), trigger "chiusa" aggiunto,    -->
 <!--   push data-only, post di sistema, UpdateBanner, fix permesso iOS, predeploy build.     -->
+<!-- 2026-08-17 sera: Deploy in produzione (rules + 3 functions + hosting). Poi dicitura    -->
+<!--   regolamento corretta in "Decreto 45 del 25 maggio 2026". Trovato che il regolamento   -->
+<!--   nuovo non raggiungeva i soci offline: l'upload riusa lo stesso path Storage, cambia   -->
+<!--   solo il token, e match(ignoreSearch) trovava il vecchio PDF considerandolo valido.    -->
+<!--   Ora match esatto + prune delle versioni precedenti. Rimosso il PDF bundled del        -->
+<!--   decreto 86 (fallback sbagliato, -1,58 MB di precache): unica fonte regolamento_url.   -->
