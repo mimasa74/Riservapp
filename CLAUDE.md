@@ -56,14 +56,42 @@ Conseguenze pratiche:
   mostra "Nuova versione — tocca per aggiornare" → postMessage `SKIP_WAITING` →
   reload. Il reload avviene solo su gesto (clientsClaim fa scattare
   controllerchange anche alla prima install: non ricaricare in automatico).
-- Le push sono DATA-ONLY (title/body/priority in `data`): la notifica la
-  costruisce solo il SW. Non aggiungere payload `notification` nelle Functions:
+- Le push sono DATA-ONLY (`title`/`body`/`priority`/`ts` in `data`): la notifica
+  la costruisce solo il SW. Non aggiungere payload `notification` nelle Functions:
   l'SDK la mostrerebbe in automatico → notifica doppia.
+- `ts` è l'istante dell'evento, non della consegna. Il SW lo passa a
+  `showNotification` come `timestamp`: un telefono spento per ore mostra al
+  risveglio l'ora in cui la categoria è stata chiusa. Non toglierlo.
 - `onConfigUpdate` invia **una push per ogni transizione di categoria**, più un
   post di sistema ciascuna: nessuna aggregazione. Modificare più categorie in
   una volta produce quindi una raffica di notifiche. È il problema di usabilità
   segnalato dall'uso reale il 17 ago 2026 — vedi "DESIGN E NOTIFICHE" in
   TASKS.md prima di toccare il trigger.
+
+## Testo delle notifiche di categoria — non improvvisarlo
+
+Le etichette stanno in `functions/src/labels.ts`, non inline nel trigger:
+`index.ts` chiama `initializeApp()` al load e non è importabile in un test.
+`functions/src/labels.test.ts` è escluso dal build Functions via `tsconfig.json`,
+altrimenti finirebbe compilato in `lib/` e verrebbe deployato.
+
+Forma decisa il 18 ago 2026 leggendo le notifiche sul telefono:
+- **titolo** = specie, più la zona per il solo camoscio — `Camoscio — Zona Campa - Spora`
+- **corpo**  = categoria + stato in maiuscolo — `FEMMINE DI TERZA CLASSE CHIUSE`
+
+Cervo e capriolo hanno il titolo con la sola specie: non hanno subzone e
+"Riserva Tuenno" in un'app della riserva è pleonastico. Scelta di Michele.
+
+La specie nel titolo **non è decorazione**: prima del 18 ago la notifica
+nominava solo la categoria, e "MASCHI DI PRIMA CLASSE" esiste sia nel capriolo
+sia nel camoscio — dove per giunta le 12 categorie sono duplicate sulle due
+subzone (`cam1_` / `cam2_`) con nome identico. Tre eventi diversi producevano
+notifiche indistinguibili. Se togli specie o zona il bug torna.
+
+Lo stato è accordato al genere (`statoLabel`): nome che inizia per FEMMINE →
+`CHIUSE`/`SOSPESE`, tutto il resto → `CHIUSI`/`SOSPESI`. Una categoria nuova
+con un nome fuori da MASCHI/FEMMINE/PICCOLI finisce al maschile.
+
 ## Regolamento interno — solo Storage, nessun PDF bundled
 
 Non esiste PDF di riserva in `public/`. L'unica fonte è

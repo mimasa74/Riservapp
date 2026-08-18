@@ -147,6 +147,14 @@ Feedback dall'uso reale (Michele, 17 ago 2026): l'app funziona ma
 Michele sta prendendo note man mano che la usa: aspettare quelle prima di
 riprogettare, sono la fonte migliore che abbiamo.
 
+- [x] **Notifiche senza indicazione della specie** — RISOLTO 18 ago 2026.
+      `onConfigUpdate` componeva il testo dalla sola categoria: il socio leggeva
+      "MASCHI DI PRIMA CLASSE è stata chiusa" senza sapere di quale animale si
+      parlasse. Nome condiviso fra capriolo e camoscio, e nel camoscio duplicato
+      sulle due subzone: tre eventi, una sola notifica indistinguibile.
+      Ora titolo = specie + zona, corpo = categoria + stato accordato al genere.
+      Aggiunto `ts` (ora dell'evento) usato dal SW come `timestamp`.
+      Vedi "Testo delle notifiche di categoria" in CLAUDE.md.
 - [ ] **Raccogliere le note d'uso di Michele** — punto di partenza obbligato
 - [ ] **Ridurre il volume di notifiche.** Ipotesi da verificare (non ancora
       confermata sul campo): in `functions/src/index.ts` il trigger
@@ -206,3 +214,10 @@ riprogettare, sono la fonte migliore che abbiamo.
 <!--   decreto 86 (fallback sbagliato, -1,58 MB di precache): unica fonte regolamento_url.   -->
 <!--   Chiusa la fase tecnica. Feedback dall'uso: troppe notifiche, UI da rendere più        -->
 <!--   intuitiva. Prossima sessione sul design, partendo dalle note d'uso di Michele.        -->
+<!-- 2026-08-18: Notifiche di categoria senza specie. Root cause: onConfigUpdate     -->
+<!--   usava solo cat.nome, specieId era nel loop ma inutilizzato. Aggravante: il     -->
+<!--   camoscio ha 12 categorie duplicate su due subzone con nome identico.           -->
+<!--   Etichette estratte in functions/src/labels.ts (index.ts non e' importabile:    -->
+<!--   chiama initializeApp al load), 15 test di regressione, test esclusi dal build   -->
+<!--   Functions. Formato rivisto con Michele guardando le notifiche sul telefono.    -->
+<!--   Commit f3ef50d + a995e8a. DA DEPLOYARE: functions E hosting (il SW e' cambiato).-->
