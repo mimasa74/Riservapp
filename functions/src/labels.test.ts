@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import rawData from '../../data.json';
-import { categoriaLabel, specieLabel, zonaLabel } from './labels';
+import { categoriaLabel, specieLabel, statoLabel, titoloNotifica, zonaLabel } from './labels';
 
 // I dati reali della riserva: il bug si vede solo su questi, perché il camoscio
 // ha 12 categorie duplicate su due subzone con lo stesso nome.
@@ -68,5 +68,45 @@ describe('regressione: nessuna notifica ambigua', () => {
       data[id].categorie.map((cat: { nome: string }) => cat.nome)
     );
     expect(new Set(soloNomi).size).toBeLessThan(soloNomi.length);
+  });
+});
+
+describe('titoloNotifica', () => {
+  it('per cervo e capriolo è la sola specie', () => {
+    expect(titoloNotifica('cervo', data.cervo, { id: 'ce1' })).toBe('Cervo');
+    expect(titoloNotifica('capriolo', data.capriolo, { id: 'ca1' })).toBe('Capriolo');
+  });
+
+  it('per il camoscio porta la zona in evidenza', () => {
+    expect(titoloNotifica('camoscio', data.camoscio, { id: 'cam1_f3' }))
+      .toBe(`Camoscio — ${data.camoscio.subZone[0].nome}`);
+    expect(titoloNotifica('camoscio', data.camoscio, { id: 'cam2_f3' }))
+      .toBe(`Camoscio — ${data.camoscio.subZone[1].nome}`);
+  });
+
+  it('distingue le due zone già dal titolo', () => {
+    expect(titoloNotifica('camoscio', data.camoscio, { id: 'cam1_m1' }))
+      .not.toBe(titoloNotifica('camoscio', data.camoscio, { id: 'cam2_m1' }));
+  });
+});
+
+describe('statoLabel', () => {
+  it('accorda al femminile le categorie FEMMINE', () => {
+    expect(statoLabel('FEMMINE DI TERZA CLASSE', 'chiuso')).toBe('CHIUSE');
+    expect(statoLabel('FEMMINE ADULTE', 'sospeso')).toBe('SOSPESE');
+  });
+
+  it('accorda al maschile le altre', () => {
+    expect(statoLabel('MASCHI PALCUTI', 'chiuso')).toBe('CHIUSI');
+    expect(statoLabel('PICCOLI', 'sospeso')).toBe('SOSPESI');
+  });
+
+  it('copre ogni categoria reale senza errori di accordo', () => {
+    for (const id of ['cervo', 'capriolo', 'camoscio']) {
+      for (const cat of data[id].categorie) {
+        const atteso = cat.nome.startsWith('FEMMINE') ? 'CHIUSE' : 'CHIUSI';
+        expect(statoLabel(cat.nome, 'chiuso')).toBe(atteso);
+      }
+    }
   });
 });

@@ -3,7 +3,7 @@ import { getFirestore, Timestamp } from 'firebase-admin/firestore';
 import { getMessaging } from 'firebase-admin/messaging';
 import { onDocumentCreated, onDocumentUpdated } from 'firebase-functions/v2/firestore';
 import { onSchedule } from 'firebase-functions/v2/scheduler';
-import { categoriaLabel, specieLabel } from './labels';
+import { categoriaLabel, specieLabel, statoLabel, titoloNotifica } from './labels';
 
 initializeApp();
 
@@ -59,7 +59,9 @@ async function sendPushToAll(
 
   const response = await getMessaging().sendEachForMulticast({
     tokens,
-    data: { title, body, priority },
+    // ts = istante dell'evento. Il SW lo usa come timestamp della notifica:
+    // un telefono spento per ore mostra l'ora del fatto, non della consegna.
+    data: { title, body, priority, ts: String(Date.now()) },
     webpush: {
       headers: {
         Urgency: priority === 'high' ? 'high' : 'normal',
@@ -150,27 +152,26 @@ export const onConfigUpdate = onDocumentUpdated({ document: 'config/main', regio
       const b = beforeCats.find(c => c.id === a.id);
       if (!b) continue;
 
+      // Titolo = specie (+ zona per il camoscio); corpo = categoria + stato.
+      const titolo = titoloNotifica(specieId, specieData, a);
       const categoria = categoriaLabel(specieId, specieData, a);
 
       // Quota raggiunta (abbattuti appena arrivato a totale)
       if (a.totale > 0 && a.abbattuti === a.totale && b.abbattuti !== b.totale) {
-        const testo = `${categoria}: ${a.abbattuti}/${a.totale} capi abbattuti`;
-        await sendPushToAll(`${specie} — quota raggiunta`, testo, 'normal');
-        await createSystemPost('avviso', `${specie} — quota raggiunta: ${testo}`);
+        await sendPushToAll(titolo, `${a.nome}: QUOTA RAGGIUNTA ${a.abbattuti}/${a.totale}`, 'normal');
+        await createSystemPost('avviso', `${specie} — ${categoria}: quota raggiunta (${a.abbattuti}/${a.totale})`);
       }
 
       // Categoria sospesa
       if (a.stato === 'sospeso' && b.stato !== 'sospeso') {
-        const testo = `${categoria} è stata sospesa`;
-        await sendPushToAll(`${specie} — categoria sospesa`, testo, 'normal');
-        await createSystemPost('avviso', `${specie} — categoria sospesa: ${categoria}`);
+        await sendPushToAll(titolo, `${a.nome} ${statoLabel(a.nome, 'sospeso')}`, 'normal');
+        await createSystemPost('avviso', `${specie} — ${categoria}: sospesa`);
       }
 
       // Categoria chiusa — l'evento più critico: priorità alta
       if (a.stato === 'chiuso' && b.stato !== 'chiuso') {
-        const testo = `${categoria} è stata chiusa`;
-        await sendPushToAll(`${specie} — categoria chiusa`, testo, 'high');
-        await createSystemPost('alert', `${specie} — categoria chiusa: ${categoria}`);
+        await sendPushToAll(titolo, `${a.nome} ${statoLabel(a.nome, 'chiuso')}`, 'high');
+        await createSystemPost('alert', `${specie} — ${categoria}: chiusa`);
       }
     }
   }

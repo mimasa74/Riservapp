@@ -44,8 +44,12 @@ messaging.onBackgroundMessage((payload) => {
   const title = payload.data?.title || payload.notification?.title || 'Riserva Tuenno';
   const body = payload.data?.body || payload.notification?.body || '';
   const isAlert = payload.data?.priority === 'high';
+  // L'ora mostrata è quella dell'evento (data.ts), non quella di consegna:
+  // una push arrivata in ritardo non deve sembrare appena successa.
+  const ts = Number(payload.data?.ts);
   self.registration.showNotification(title, {
     body,
+    timestamp: Number.isFinite(ts) && ts > 0 ? ts : Date.now(),
     icon: '/logo_tuenno_ui.png',
     vibrate: isAlert ? [200, 100, 200, 100, 200] : [100],
     requireInteraction: isAlert,

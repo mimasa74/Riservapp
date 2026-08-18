@@ -38,3 +38,25 @@ export function categoriaLabel(
   const zona = zonaLabel(specieId, specieData, cat.id);
   return zona ? `${cat.nome} (${zona})` : cat.nome;
 }
+
+// Titolo della notifica: la specie, più la zona quando la specie ne ha
+// (solo il camoscio). È la riga in evidenza sulla schermata di blocco.
+
+export function titoloNotifica(
+  specieId: string,
+  specieData: Record<string, unknown>,
+  cat: Pick<Categoria, 'id'>
+): string {
+  const specie = specieLabel(specieId, specieData);
+  const zona = zonaLabel(specieId, specieData, cat.id);
+  return zona ? `${specie} — ${zona}` : specie;
+}
+
+// Accordo di genere: le categorie reali iniziano tutte per FEMMINE, MASCHI o
+// PICCOLI. "FEMMINE DI TERZA CLASSE CHIUSE" ma "MASCHI PALCUTI CHIUSI".
+
+export function statoLabel(nomeCategoria: string, stato: 'chiuso' | 'sospeso'): string {
+  const femminile = nomeCategoria.trim().toUpperCase().startsWith('FEMMINE');
+  if (stato === 'chiuso') return femminile ? 'CHIUSE' : 'CHIUSI';
+  return femminile ? 'SOSPESE' : 'SOSPESI';
+}

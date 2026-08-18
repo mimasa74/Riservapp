@@ -38,7 +38,9 @@ async function sendPushToAll(title, body, priority = 'normal') {
         return;
     const response = await (0, messaging_1.getMessaging)().sendEachForMulticast({
         tokens,
-        data: { title, body, priority },
+        // ts = istante dell'evento. Il SW lo usa come timestamp della notifica:
+        // un telefono spento per ore mostra l'ora del fatto, non della consegna.
+        data: { title, body, priority, ts: String(Date.now()) },
         webpush: {
             headers: {
                 Urgency: priority === 'high' ? 'high' : 'normal',
@@ -119,24 +121,23 @@ exports.onConfigUpdate = (0, firestore_2.onDocumentUpdated)({ document: 'config/
             const b = beforeCats.find(c => c.id === a.id);
             if (!b)
                 continue;
+            // Titolo = specie (+ zona per il camoscio); corpo = categoria + stato.
+            const titolo = (0, labels_1.titoloNotifica)(specieId, specieData, a);
             const categoria = (0, labels_1.categoriaLabel)(specieId, specieData, a);
             // Quota raggiunta (abbattuti appena arrivato a totale)
             if (a.totale > 0 && a.abbattuti === a.totale && b.abbattuti !== b.totale) {
-                const testo = `${categoria}: ${a.abbattuti}/${a.totale} capi abbattuti`;
-                await sendPushToAll(`${specie} — quota raggiunta`, testo, 'normal');
-                await createSystemPost('avviso', `${specie} — quota raggiunta: ${testo}`);
+                await sendPushToAll(titolo, `${a.nome}: QUOTA RAGGIUNTA ${a.abbattuti}/${a.totale}`, 'normal');
+                await createSystemPost('avviso', `${specie} — ${categoria}: quota raggiunta (${a.abbattuti}/${a.totale})`);
             }
             // Categoria sospesa
             if (a.stato === 'sospeso' && b.stato !== 'sospeso') {
-                const testo = `${categoria} è stata sospesa`;
-                await sendPushToAll(`${specie} — categoria sospesa`, testo, 'normal');
-                await createSystemPost('avviso', `${specie} — categoria sospesa: ${categoria}`);
+                await sendPushToAll(titolo, `${a.nome} ${(0, labels_1.statoLabel)(a.nome, 'sospeso')}`, 'normal');
+                await createSystemPost('avviso', `${specie} — ${categoria}: sospesa`);
             }
             // Categoria chiusa — l'evento più critico: priorità alta
             if (a.stato === 'chiuso' && b.stato !== 'chiuso') {
-                const testo = `${categoria} è stata chiusa`;
-                await sendPushToAll(`${specie} — categoria chiusa`, testo, 'high');
-                await createSystemPost('alert', `${specie} — categoria chiusa: ${categoria}`);
+                await sendPushToAll(titolo, `${a.nome} ${(0, labels_1.statoLabel)(a.nome, 'chiuso')}`, 'high');
+                await createSystemPost('alert', `${specie} — ${categoria}: chiusa`);
             }
         }
     }
