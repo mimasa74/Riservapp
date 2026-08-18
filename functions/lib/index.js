@@ -6,6 +6,7 @@ const firestore_1 = require("firebase-admin/firestore");
 const messaging_1 = require("firebase-admin/messaging");
 const firestore_2 = require("firebase-functions/v2/firestore");
 const scheduler_1 = require("firebase-functions/v2/scheduler");
+const labels_1 = require("./labels");
 (0, app_1.initializeApp)();
 // ─── Helper: estrae categorie da un oggetto specie ───────────────────────────
 function extractCategorie(specieData) {
@@ -108,31 +109,34 @@ exports.onConfigUpdate = (0, firestore_2.onDocumentUpdated)({ document: 'config/
         return;
     const species = ['cervo', 'capriolo', 'camoscio'];
     for (const specieId of species) {
+        const specieData = after[specieId] ?? {};
+        const specie = (0, labels_1.specieLabel)(specieId, specieData);
         const beforeCats = extractCategorie(before[specieId] ?? {});
-        const afterCats = extractCategorie(after[specieId] ?? {});
+        const afterCats = extractCategorie(specieData);
         for (const a of afterCats) {
             // Accoppia per id, NON per indice: se l'admin aggiunge/rimuove una categoria
             // gli indici slittano e il confronto produrrebbe notifiche spurie.
             const b = beforeCats.find(c => c.id === a.id);
             if (!b)
                 continue;
+            const categoria = (0, labels_1.categoriaLabel)(specieId, specieData, a);
             // Quota raggiunta (abbattuti appena arrivato a totale)
             if (a.totale > 0 && a.abbattuti === a.totale && b.abbattuti !== b.totale) {
-                const testo = `${a.nome}: ${a.abbattuti}/${a.totale} capi abbattuti`;
-                await sendPushToAll('Quota raggiunta', testo, 'normal');
-                await createSystemPost('avviso', `Quota raggiunta — ${testo}`);
+                const testo = `${categoria}: ${a.abbattuti}/${a.totale} capi abbattuti`;
+                await sendPushToAll(`${specie} — quota raggiunta`, testo, 'normal');
+                await createSystemPost('avviso', `${specie} — quota raggiunta: ${testo}`);
             }
             // Categoria sospesa
             if (a.stato === 'sospeso' && b.stato !== 'sospeso') {
-                const testo = `${a.nome} è stata sospesa`;
-                await sendPushToAll('Categoria sospesa', testo, 'normal');
-                await createSystemPost('avviso', `Categoria sospesa — ${testo}`);
+                const testo = `${categoria} è stata sospesa`;
+                await sendPushToAll(`${specie} — categoria sospesa`, testo, 'normal');
+                await createSystemPost('avviso', `${specie} — categoria sospesa: ${categoria}`);
             }
             // Categoria chiusa — l'evento più critico: priorità alta
             if (a.stato === 'chiuso' && b.stato !== 'chiuso') {
-                const testo = `${a.nome} è stata chiusa`;
-                await sendPushToAll('Categoria chiusa', testo, 'high');
-                await createSystemPost('alert', `Categoria chiusa — ${testo}`);
+                const testo = `${categoria} è stata chiusa`;
+                await sendPushToAll(`${specie} — categoria chiusa`, testo, 'high');
+                await createSystemPost('alert', `${specie} — categoria chiusa: ${categoria}`);
             }
         }
     }
