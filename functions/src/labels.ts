@@ -39,24 +39,56 @@ export function categoriaLabel(
   return zona ? `${cat.nome} (${zona})` : cat.nome;
 }
 
-// Titolo della notifica: la specie, più la zona quando la specie ne ha
-// (solo il camoscio). È la riga in evidenza sulla schermata di blocco.
+// Titolo della notifica: la specie IN MAIUSCOLO, più la zona quando la specie
+// ne ha (solo il camoscio).
+//
+// Il grassetto e il corpo più grande NON si possono impostare: l'API
+// showNotification non accetta markup. È il sistema operativo a rendere il
+// titolo in grassetto e più grande del corpo, sempre. Per questo la specie sta
+// da sola qui: è l'unico modo di darle quel peso. Non spostarla nel corpo.
 
 export function titoloNotifica(
   specieId: string,
   specieData: Record<string, unknown>,
   cat: Pick<Categoria, 'id'>
 ): string {
-  const specie = specieLabel(specieId, specieData);
+  const specie = specieLabel(specieId, specieData).toUpperCase();
   const zona = zonaLabel(specieId, specieData, cat.id);
   return zona ? `${specie} — ${zona}` : specie;
 }
 
-// Accordo di genere: le categorie reali iniziano tutte per FEMMINE, MASCHI o
-// PICCOLI. "FEMMINE DI TERZA CLASSE CHIUSE" ma "MASCHI PALCUTI CHIUSI".
+// Nome categoria in forma leggibile: i dati sono TUTTI IN MAIUSCOLO, ma nel
+// corpo servono in caso normale, così lo stato in caps risalta per contrasto.
+// Il maiuscolo pieno è anche più faticoso da leggere, e i soci sono anziani.
 
-export function statoLabel(nomeCategoria: string, stato: 'chiuso' | 'sospeso'): string {
-  const femminile = nomeCategoria.trim().toUpperCase().startsWith('FEMMINE');
+export function categoriaLeggibile(nomeCategoria: string): string {
+  const t = nomeCategoria.trim().toLowerCase();
+  return t.charAt(0).toUpperCase() + t.slice(1);
+}
+
+// Corpo della notifica: categoria in caso normale, stato in maiuscolo.
+// Il contrasto di maiuscole è l'unica evidenziazione possibile in una push.
+
+export function corpoNotifica(
+  cat: Pick<Categoria, 'nome'> & { badgeChiusura?: string },
+  stato: 'chiuso' | 'sospeso'
+): string {
+  return `${categoriaLeggibile(cat.nome)} ${statoLabel(cat, stato)}`;
+}
+
+
+// Accordo di genere. La fonte è `badgeChiusura`, il campo che l'admin compila
+// e che CategoryRow.tsx mostra già nel badge: stessa regola dell'app, non una
+// seconda verità. Il fallback sul nome copre solo una categoria senza il campo.
+
+export function statoLabel(
+  cat: Pick<Categoria, 'nome'> & { badgeChiusura?: string },
+  stato: 'chiuso' | 'sospeso'
+): string {
+  const badge = cat.badgeChiusura?.trim().toUpperCase();
+  const femminile = badge
+    ? badge === 'CHIUSE'
+    : cat.nome.trim().toUpperCase().startsWith('FEMMINE');
   if (stato === 'chiuso') return femminile ? 'CHIUSE' : 'CHIUSI';
   return femminile ? 'SOSPESE' : 'SOSPESI';
 }

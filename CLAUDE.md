@@ -76,11 +76,25 @@ Le etichette stanno in `functions/src/labels.ts`, non inline nel trigger:
 altrimenti finirebbe compilato in `lib/` e verrebbe deployato.
 
 Forma decisa il 18 ago 2026 leggendo le notifiche sul telefono:
-- **titolo** = specie, più la zona per il solo camoscio — `Camoscio — Zona Campa - Spora`
-- **corpo**  = categoria + stato in maiuscolo — `FEMMINE DI TERZA CLASSE CHIUSE`
+- **titolo** = specie IN MAIUSCOLO, più la zona per il solo camoscio —
+  `CERVO`, `CAMOSCIO — Zona Campa - Spora`
+- **corpo**  = categoria in caso normale + stato in maiuscolo —
+  `Maschi palcuti CHIUSI`
+
+Grassetto e dimensione **non sono impostabili**: `showNotification` accetta solo
+testo. È l'OS a rendere il titolo più grande e in grassetto del corpo, ed è per
+questo che la specie sta lì da sola. Nel corpo, il maiuscolo dello stato è
+l'unica evidenziazione disponibile: per questo la categoria scende in caso
+normale, altrimenti non risalterebbe nulla.
 
 Cervo e capriolo hanno il titolo con la sola specie: non hanno subzone e
 "Riserva Tuenno" in un'app della riserva è pleonastico. Scelta di Michele.
+
+Non esiste più la notifica di **quota raggiunta** (rimossa il 18 ago 2026):
+registrare l'ultimo capo e chiudere la categoria sono lo stesso fatto e
+producevano due push più due post. Se la reintroduci, unificala alla chiusura.
+La conferma in `App.tsx` (`handleToggleAbbattimento`) non promette più una
+notifica: se rimetti la push, rimetti anche quella frase.
 
 La specie nel titolo **non è decorazione**: prima del 18 ago la notifica
 nominava solo la categoria, e "MASCHI DI PRIMA CLASSE" esiste sia nel capriolo
@@ -88,9 +102,11 @@ sia nel camoscio — dove per giunta le 12 categorie sono duplicate sulle due
 subzone (`cam1_` / `cam2_`) con nome identico. Tre eventi diversi producevano
 notifiche indistinguibili. Se togli specie o zona il bug torna.
 
-Lo stato è accordato al genere (`statoLabel`): nome che inizia per FEMMINE →
-`CHIUSE`/`SOSPESE`, tutto il resto → `CHIUSI`/`SOSPESI`. Una categoria nuova
-con un nome fuori da MASCHI/FEMMINE/PICCOLI finisce al maschile.
+Lo stato è accordato al genere leggendo **`badgeChiusura`**, il campo che
+compila l'admin e che `CategoryRow.tsx` mostra già nel badge: `CHIUSE` →
+femminile, altrimenti maschile. Non dedurlo dal nome della categoria — sarebbe
+una seconda verità che può divergere da quello che il socio legge in app. Il
+fallback sul nome (inizia per FEMMINE) copre solo una categoria priva del campo.
 
 ## Regolamento interno — solo Storage, nessun PDF bundled
 

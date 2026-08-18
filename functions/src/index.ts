@@ -3,7 +3,7 @@ import { getFirestore, Timestamp } from 'firebase-admin/firestore';
 import { getMessaging } from 'firebase-admin/messaging';
 import { onDocumentCreated, onDocumentUpdated } from 'firebase-functions/v2/firestore';
 import { onSchedule } from 'firebase-functions/v2/scheduler';
-import { categoriaLabel, specieLabel, statoLabel, titoloNotifica } from './labels';
+import { categoriaLabel, corpoNotifica, specieLabel, titoloNotifica } from './labels';
 
 initializeApp();
 
@@ -21,6 +21,9 @@ export interface Categoria {
   abbattuti: number;
   totale: number;
   stato: 'aperto' | 'sospeso' | 'chiuso';
+  // Desinenza scritta dall'admin ('CHIUSE' / 'CHIUSI'). È la stessa che
+  // CategoryRow.tsx mostra nel badge: la notifica non deve inventarne un'altra.
+  badgeChiusura?: string;
 }
 
 // ─── Helper: estrae categorie da un oggetto specie ───────────────────────────
@@ -131,7 +134,7 @@ export const onPostCreate = onDocumentCreated({ document: 'posts/{postId}', regi
   }
 });
 
-// ─── Trigger: aggiornamento config/main (quota, sospeso, chiuso) ─────────────
+// ─── Trigger: aggiornamento config/main (sospeso, chiuso) ────────────────────
 
 export const onConfigUpdate = onDocumentUpdated({ document: 'config/main', region: 'europe-west12' }, async (event) => {
   const before = event.data?.before.data() as Record<string, Record<string, unknown>> | undefined;
@@ -156,21 +159,19 @@ export const onConfigUpdate = onDocumentUpdated({ document: 'config/main', regio
       const titolo = titoloNotifica(specieId, specieData, a);
       const categoria = categoriaLabel(specieId, specieData, a);
 
-      // Quota raggiunta (abbattuti appena arrivato a totale)
-      if (a.totale > 0 && a.abbattuti === a.totale && b.abbattuti !== b.totale) {
-        await sendPushToAll(titolo, `${a.nome}: QUOTA RAGGIUNTA ${a.abbattuti}/${a.totale}`, 'normal');
-        await createSystemPost('avviso', `${specie} — ${categoria}: quota raggiunta (${a.abbattuti}/${a.totale})`);
-      }
+      // Nessuna notifica per la quota raggiunta: registrare l'ultimo capo e
+      // chiudere la categoria sono lo stesso fatto, e producevano due push più
+      // due post in bacheca. Resta la sola chiusura. Deciso il 18 ago 2026.
 
       // Categoria sospesa
       if (a.stato === 'sospeso' && b.stato !== 'sospeso') {
-        await sendPushToAll(titolo, `${a.nome} ${statoLabel(a.nome, 'sospeso')}`, 'normal');
+        await sendPushToAll(titolo, corpoNotifica(a, 'sospeso'), 'normal');
         await createSystemPost('avviso', `${specie} — ${categoria}: sospesa`);
       }
 
       // Categoria chiusa — l'evento più critico: priorità alta
       if (a.stato === 'chiuso' && b.stato !== 'chiuso') {
-        await sendPushToAll(titolo, `${a.nome} ${statoLabel(a.nome, 'chiuso')}`, 'high');
+        await sendPushToAll(titolo, corpoNotifica(a, 'chiuso'), 'high');
         await createSystemPost('alert', `${specie} — ${categoria}: chiusa`);
       }
     }

@@ -152,10 +152,13 @@ riprogettare, sono la fonte migliore che abbiamo.
       "MASCHI DI PRIMA CLASSE è stata chiusa" senza sapere di quale animale si
       parlasse. Nome condiviso fra capriolo e camoscio, e nel camoscio duplicato
       sulle due subzone: tre eventi, una sola notifica indistinguibile.
-      Ora titolo = specie + zona, corpo = categoria + stato accordato al genere.
+      Ora titolo = SPECIE (+ zona), corpo = categoria + stato in maiuscolo.
       Aggiunto `ts` (ora dell'evento) usato dal SW come `timestamp`.
       Vedi "Testo delle notifiche di categoria" in CLAUDE.md.
 - [ ] **Raccogliere le note d'uso di Michele** — punto di partenza obbligato
+- [x] **Notifica di quota raggiunta rimossa** (18 ago 2026). Registrare l'ultimo
+      capo e chiudere la categoria erano due push + due post per lo stesso fatto.
+      Resta la sola chiusura. Primo taglio al volume di notifiche.
 - [ ] **Ridurre il volume di notifiche.** Ipotesi da verificare (non ancora
       confermata sul campo): in `functions/src/index.ts` il trigger
       `onConfigUpdate` cicla su tutte le specie e categorie e invia **una push
@@ -221,3 +224,9 @@ riprogettare, sono la fonte migliore che abbiamo.
 <!--   chiama initializeApp al load), 15 test di regressione, test esclusi dal build   -->
 <!--   Functions. Formato rivisto con Michele guardando le notifiche sul telefono.    -->
 <!--   Commit f3ef50d + a995e8a. DA DEPLOYARE: functions E hosting (il SW e' cambiato).-->
+<!-- 2026-08-18 pom: Formato notifiche rivisto con Michele guardandole sul telefono:  -->
+<!--   SPECIE maiuscola nel titolo (l'OS la rende grassetto/grande, non impostabile   -->
+<!--   da codice), categoria in caso normale + stato in caps come unica evidenziazione.-->
+<!--   Desinenza presa da badgeChiusura invece che dedotta dal nome: stessa fonte del  -->
+<!--   badge in CategoryRow. Notifica di quota raggiunta rimossa e conferma in App.tsx -->
+<!--   riscritta (non promette piu' una push). 36 test verdi.                          -->

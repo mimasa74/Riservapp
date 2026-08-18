@@ -263,11 +263,13 @@ function MainApp() {
     if (index === cat.abbattuti - 1) newCount = index;
     newCount = Math.min(Math.max(newCount, 0), cat.totale);
 
-    // Chiudere la quota manda una push a tutti i soci: chiedi conferma
-    // (i quadratini sono piccoli, un tap impreciso non deve notificare 45 persone)
+    // I quadratini sono piccoli e un tap impreciso completerebbe il piano di
+    // prelievo per sbaglio: chiedi conferma. Dal 18 ago 2026 la quota completata
+    // NON manda piu' alcuna notifica — quella parte solo alla chiusura della
+    // categoria — quindi il messaggio non deve piu' prometterla.
     if (newCount === cat.totale && cat.abbattuti !== cat.totale) {
       const ok = window.confirm(
-        `Quota completata per ${cat.nome} (${newCount}/${cat.totale}).\nVerrà inviata una notifica a tutti i soci. Confermi?`
+        `Quota completata per ${cat.nome} (${newCount}/${cat.totale}). Confermi?`
       );
       if (!ok) return;
     }

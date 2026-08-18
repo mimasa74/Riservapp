@@ -1,6 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import rawData from '../../data.json';
-import { categoriaLabel, specieLabel, statoLabel, titoloNotifica, zonaLabel } from './labels';
+import {
+  categoriaLabel,
+  categoriaLeggibile,
+  corpoNotifica,
+  specieLabel,
+  statoLabel,
+  titoloNotifica,
+  zonaLabel,
+} from './labels';
 
 // I dati reali della riserva: il bug si vede solo su questi, perché il camoscio
 // ha 12 categorie duplicate su due subzone con lo stesso nome.
@@ -73,15 +81,15 @@ describe('regressione: nessuna notifica ambigua', () => {
 
 describe('titoloNotifica', () => {
   it('per cervo e capriolo è la sola specie', () => {
-    expect(titoloNotifica('cervo', data.cervo, { id: 'ce1' })).toBe('Cervo');
-    expect(titoloNotifica('capriolo', data.capriolo, { id: 'ca1' })).toBe('Capriolo');
+    expect(titoloNotifica('cervo', data.cervo, { id: 'ce1' })).toBe('CERVO');
+    expect(titoloNotifica('capriolo', data.capriolo, { id: 'ca1' })).toBe('CAPRIOLO');
   });
 
   it('per il camoscio porta la zona in evidenza', () => {
     expect(titoloNotifica('camoscio', data.camoscio, { id: 'cam1_f3' }))
-      .toBe(`Camoscio — ${data.camoscio.subZone[0].nome}`);
+      .toBe(`CAMOSCIO — ${data.camoscio.subZone[0].nome}`);
     expect(titoloNotifica('camoscio', data.camoscio, { id: 'cam2_f3' }))
-      .toBe(`Camoscio — ${data.camoscio.subZone[1].nome}`);
+      .toBe(`CAMOSCIO — ${data.camoscio.subZone[1].nome}`);
   });
 
   it('distingue le due zone già dal titolo', () => {
@@ -91,21 +99,53 @@ describe('titoloNotifica', () => {
 });
 
 describe('statoLabel', () => {
-  it('accorda al femminile le categorie FEMMINE', () => {
-    expect(statoLabel('FEMMINE DI TERZA CLASSE', 'chiuso')).toBe('CHIUSE');
-    expect(statoLabel('FEMMINE ADULTE', 'sospeso')).toBe('SOSPESE');
+  it('segue badgeChiusura, il campo scritto dall’admin', () => {
+    expect(statoLabel({ nome: 'X', badgeChiusura: 'CHIUSE' }, 'chiuso')).toBe('CHIUSE');
+    expect(statoLabel({ nome: 'X', badgeChiusura: 'CHIUSE' }, 'sospeso')).toBe('SOSPESE');
+    expect(statoLabel({ nome: 'X', badgeChiusura: 'CHIUSI' }, 'chiuso')).toBe('CHIUSI');
+    expect(statoLabel({ nome: 'X', badgeChiusura: 'CHIUSI' }, 'sospeso')).toBe('SOSPESI');
   });
 
-  it('accorda al maschile le altre', () => {
-    expect(statoLabel('MASCHI PALCUTI', 'chiuso')).toBe('CHIUSI');
-    expect(statoLabel('PICCOLI', 'sospeso')).toBe('SOSPESI');
+  it('badgeChiusura vince sul nome', () => {
+    // categoria dal nome maschile ma badge femminile: comanda il badge
+    expect(statoLabel({ nome: 'MASCHI PALCUTI', badgeChiusura: 'CHIUSE' }, 'chiuso')).toBe('CHIUSE');
   });
 
-  it('copre ogni categoria reale senza errori di accordo', () => {
+  it('senza badge ricade sul nome', () => {
+    expect(statoLabel({ nome: 'FEMMINE ADULTE' }, 'chiuso')).toBe('CHIUSE');
+    expect(statoLabel({ nome: 'MASCHI PALCUTI' }, 'chiuso')).toBe('CHIUSI');
+    expect(statoLabel({ nome: 'PICCOLI' }, 'sospeso')).toBe('SOSPESI');
+  });
+
+  it('su ogni categoria reale coincide col badge mostrato in CategoryRow', () => {
     for (const id of ['cervo', 'capriolo', 'camoscio']) {
       for (const cat of data[id].categorie) {
-        const atteso = cat.nome.startsWith('FEMMINE') ? 'CHIUSE' : 'CHIUSI';
-        expect(statoLabel(cat.nome, 'chiuso')).toBe(atteso);
+        expect(statoLabel(cat, 'chiuso')).toBe(cat.badgeChiusura);
+      }
+    }
+  });
+});
+
+describe('corpo della notifica', () => {
+  it('categoria in caso normale, stato in maiuscolo', () => {
+    expect(corpoNotifica({ nome: 'MASCHI PALCUTI', badgeChiusura: 'CHIUSI' }, 'chiuso'))
+      .toBe('Maschi palcuti CHIUSI');
+    expect(corpoNotifica({ nome: 'FEMMINE DI TERZA CLASSE', badgeChiusura: 'CHIUSE' }, 'chiuso'))
+      .toBe('Femmine di terza classe CHIUSE');
+    expect(corpoNotifica({ nome: 'MASCHI DI PRIMA CLASSE', badgeChiusura: 'CHIUSI' }, 'sospeso'))
+      .toBe('Maschi di prima classe SOSPESI');
+  });
+
+  it('normalizza anche le parentesi dei nomi lunghi', () => {
+    expect(categoriaLeggibile('MASCHI DI UN ANNO (FUSONI)')).toBe('Maschi di un anno (fusoni)');
+  });
+
+  it('lo stato resta l’unica parte in maiuscolo del corpo', () => {
+    for (const id of ['cervo', 'capriolo', 'camoscio']) {
+      for (const cat of data[id].categorie) {
+        const corpo = corpoNotifica(cat, 'chiuso');
+        const inCaps = corpo.split(' ').filter(w => w.length > 2 && w === w.toUpperCase());
+        expect(inCaps).toEqual([statoLabel(cat, 'chiuso')]);
       }
     }
   });

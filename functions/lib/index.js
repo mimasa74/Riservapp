@@ -103,7 +103,7 @@ exports.onPostCreate = (0, firestore_2.onDocumentCreated)({ document: 'posts/{po
         await sendPushToAll('Riserva Tuenno', preview, 'normal');
     }
 });
-// ─── Trigger: aggiornamento config/main (quota, sospeso, chiuso) ─────────────
+// ─── Trigger: aggiornamento config/main (sospeso, chiuso) ────────────────────
 exports.onConfigUpdate = (0, firestore_2.onDocumentUpdated)({ document: 'config/main', region: 'europe-west12' }, async (event) => {
     const before = event.data?.before.data();
     const after = event.data?.after.data();
@@ -124,19 +124,17 @@ exports.onConfigUpdate = (0, firestore_2.onDocumentUpdated)({ document: 'config/
             // Titolo = specie (+ zona per il camoscio); corpo = categoria + stato.
             const titolo = (0, labels_1.titoloNotifica)(specieId, specieData, a);
             const categoria = (0, labels_1.categoriaLabel)(specieId, specieData, a);
-            // Quota raggiunta (abbattuti appena arrivato a totale)
-            if (a.totale > 0 && a.abbattuti === a.totale && b.abbattuti !== b.totale) {
-                await sendPushToAll(titolo, `${a.nome}: QUOTA RAGGIUNTA ${a.abbattuti}/${a.totale}`, 'normal');
-                await createSystemPost('avviso', `${specie} — ${categoria}: quota raggiunta (${a.abbattuti}/${a.totale})`);
-            }
+            // Nessuna notifica per la quota raggiunta: registrare l'ultimo capo e
+            // chiudere la categoria sono lo stesso fatto, e producevano due push più
+            // due post in bacheca. Resta la sola chiusura. Deciso il 18 ago 2026.
             // Categoria sospesa
             if (a.stato === 'sospeso' && b.stato !== 'sospeso') {
-                await sendPushToAll(titolo, `${a.nome} ${(0, labels_1.statoLabel)(a.nome, 'sospeso')}`, 'normal');
+                await sendPushToAll(titolo, (0, labels_1.corpoNotifica)(a, 'sospeso'), 'normal');
                 await createSystemPost('avviso', `${specie} — ${categoria}: sospesa`);
             }
             // Categoria chiusa — l'evento più critico: priorità alta
             if (a.stato === 'chiuso' && b.stato !== 'chiuso') {
-                await sendPushToAll(titolo, `${a.nome} ${(0, labels_1.statoLabel)(a.nome, 'chiuso')}`, 'high');
+                await sendPushToAll(titolo, (0, labels_1.corpoNotifica)(a, 'chiuso'), 'high');
                 await createSystemPost('alert', `${specie} — ${categoria}: chiusa`);
             }
         }
