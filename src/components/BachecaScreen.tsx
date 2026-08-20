@@ -6,6 +6,8 @@ import { PostCard } from './PostCard';
 import { useAuth } from '../contexts/AuthContext';
 import { requireOnline } from '../utils/requireOnline';
 import { REGOLAMENTO_CACHE } from '../constants/cacheNames';
+import { AvvisoNovita } from '../utils/novita';
+import { AvvisiNovita } from './AvvisiNovita';
 
 const BLOB_URL_TTL_MS = 5 * 60_000;
 
@@ -33,6 +35,8 @@ function normalizeName(s: string): string {
 
 interface BachecaScreenProps {
   posts: Post[];
+  avvisiNovita?: AvvisoNovita[];
+  onApriSpecie?: (specieId: string) => void;
   hunterName: string;
   onEnableNotifications: () => Promise<void>;
   onAddPost: (tipo: Post['tipo'], testo: string, foto_url?: string | null, foto_width?: number, foto_height?: number) => Promise<void> | void;
@@ -44,7 +48,7 @@ interface BachecaScreenProps {
   onUpdateRegolamento?: (url: string) => void;
 }
 
-export const BachecaScreen = ({ posts, hunterName, onEnableNotifications, onAddPost, onDeletePost, onMarkRead, onOpenSettings, onOpenMappa, regolamentoUrl, onUpdateRegolamento }: BachecaScreenProps) => {
+export const BachecaScreen = ({ posts, avvisiNovita = [], onApriSpecie, hunterName, onEnableNotifications, onAddPost, onDeletePost, onMarkRead, onOpenSettings, onOpenMappa, regolamentoUrl, onUpdateRegolamento }: BachecaScreenProps) => {
   const { isAdmin, login, logout } = useAuth();
   const [showForm, setShowForm] = useState(false);
   // Stato permesso notifiche — 'unsupported' = niente API Notification
@@ -359,6 +363,9 @@ export const BachecaScreen = ({ posts, hunterName, onEnableNotifications, onAddP
           Riattivale dalle impostazioni del telefono (Notifiche → RiservApp).
         </div>
       )}
+
+      {/* Capi segnati dal Rettore da quando il socio ha guardato l'ultima volta */}
+      {onApriSpecie && <AvvisiNovita avvisi={avvisiNovita} onApri={onApriSpecie} />}
 
       {/* Form nuovo post (solo Rettore) */}
       {isAdmin && showForm && (

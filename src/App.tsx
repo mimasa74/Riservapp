@@ -7,6 +7,8 @@ import fallbackData from '../data.json';
 
 import { initFCM } from './hooks/useFCM';
 import { useGeolocation } from './hooks/useGeolocation';
+import { useNovita } from './hooks/useNovita';
+import { avvisiDaNovita } from './utils/novita';
 import { requireOnline } from './utils/requireOnline';
 import { PHOTO_CACHE } from './constants/cacheNames';
 
@@ -18,6 +20,7 @@ import { RuotaView } from './components/RuotaView';
 import { MappaScreen } from './components/MappaScreen';
 import { SettingsScreen } from './components/SettingsScreen';
 import { BottomNav } from './components/BottomNav';
+import { AvvisiNovita } from './components/AvvisiNovita';
 import { OfflineBanner } from './components/OfflineBanner';
 import { UpdateBanner } from './components/UpdateBanner';
 
@@ -96,6 +99,12 @@ function MainApp() {
 
   const currentSpecieId: string =
     ALL_SCREENS[screenIndex] === 'bacheca' ? 'capriolo' : ALL_SCREENS[screenIndex];
+
+  // Avviso "il Rettore ha segnato dei capi": confronto locale, niente push
+  const novita = useNovita(data, ALL_SCREENS[screenIndex]);
+  const capiNuoviPerSpecie = Object.fromEntries(
+    Object.entries(novita).map(([specieId, n]) => [specieId, n.capi]),
+  );
 
   useEffect(() => {
     const docRef = doc(db, 'config', 'main');
@@ -517,6 +526,11 @@ function MainApp() {
       <div className="flex-1 overflow-y-auto" style={{ WebkitOverflowScrolling: 'touch', overscrollBehavior: 'contain' }}>
         {currentScreen === 'bacheca' ? (
           <BachecaScreen
+            avvisiNovita={avvisiDaNovita(data, novita)}
+            onApriSpecie={specieId => {
+              const idx = ALL_SCREENS.indexOf(specieId as typeof ALL_SCREENS[number]);
+              if (idx >= 0) handleScreenChange(idx);
+            }}
             posts={posts}
             hunterName={hunterName}
             onEnableNotifications={handleEnableNotifications}
@@ -535,6 +549,7 @@ function MainApp() {
             return (
               <AssegnazioniScreen
                 data={spData}
+                capiNuovi={novita[currentScreen]?.categorie ?? {}}
                 selectedSubZone={selectedSubZone}
                 onSubZoneChange={setSelectedSubZone}
                 onToggle={handleToggleAbbattimento}
@@ -548,7 +563,7 @@ function MainApp() {
           })()
         )}
       </div>
-      <BottomNav currentScreenIndex={screenIndex} onNavigate={handleScreenChange} />
+      <BottomNav currentScreenIndex={screenIndex} onNavigate={handleScreenChange} novita={capiNuoviPerSpecie} />
     </div>
   );
 }

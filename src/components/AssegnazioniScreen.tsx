@@ -15,6 +15,8 @@ interface AssegnazioniScreenProps {
   onOpenSettings: () => void;
   onOpenMappa: () => void;
   isAdmin: boolean;
+  /** catId → capi segnati da quando il socio ha guardato l'ultima volta */
+  capiNuovi?: Record<string, number>;
 }
 
 export const AssegnazioniScreen = ({
@@ -27,6 +29,7 @@ export const AssegnazioniScreen = ({
   onOpenSettings,
   onOpenMappa,
   isAdmin,
+  capiNuovi = {},
 }: AssegnazioniScreenProps) => {
 
   const haZone = !!data.subZone;
@@ -77,6 +80,7 @@ export const AssegnazioniScreen = ({
             cat={cat}
             onToggle={onToggle}
             isAdmin={isAdmin}
+            capiNuovi={capiNuovi[cat.id] ?? 0}
           />
         ))}
       </div>

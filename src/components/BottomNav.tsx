@@ -3,6 +3,8 @@ import React from 'react';
 interface BottomNavProps {
   currentScreenIndex: number;
   onNavigate: (index: number) => void;
+  /** specieId → capi segnati da quando il socio ha guardato l'ultima volta */
+  novita?: Record<string, number>;
 }
 
 const BachecaIcon = ({ active }: { active: boolean }) => (
@@ -16,13 +18,13 @@ const BachecaIcon = ({ active }: { active: boolean }) => (
 );
 
 const NAV_ITEMS = [
-  { label: 'Bacheca',  icon: (active: boolean) => <BachecaIcon active={active} />, img: null },
-  { label: 'Capriolo', icon: null, img: '/icons/capriolo.png' },
-  { label: 'Cervo',    icon: null, img: '/icons/cervo.png' },
-  { label: 'Camoscio', icon: null, img: '/icons/camoscio.png' },
+  { label: 'Bacheca',  specieId: null,       icon: (active: boolean) => <BachecaIcon active={active} />, img: null },
+  { label: 'Capriolo', specieId: 'capriolo', icon: null, img: '/icons/capriolo.png' },
+  { label: 'Cervo',    specieId: 'cervo',    icon: null, img: '/icons/cervo.png' },
+  { label: 'Camoscio', specieId: 'camoscio', icon: null, img: '/icons/camoscio.png' },
 ];
 
-export const BottomNav = ({ currentScreenIndex, onNavigate }: BottomNavProps) => {
+export const BottomNav = ({ currentScreenIndex, onNavigate, novita }: BottomNavProps) => {
   return (
     <div style={{
       background: '#fdfdfc',
@@ -36,6 +38,8 @@ export const BottomNav = ({ currentScreenIndex, onNavigate }: BottomNavProps) =>
     }}>
       {NAV_ITEMS.map((item, idx) => {
         const active = currentScreenIndex === idx;
+        // sulla specie aperta il bollino non serve: il socio la sta già guardando
+        const haNovita = !active && !!item.specieId && (novita?.[item.specieId] ?? 0) > 0;
         return (
           <button
             key={item.label}
@@ -62,7 +66,25 @@ export const BottomNav = ({ currentScreenIndex, onNavigate }: BottomNavProps) =>
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
+              position: 'relative',
             }}>
+              {haNovita && (
+                <span
+                  data-testid="bollino-novita"
+                  data-specie={item.specieId!}
+                  aria-label="capi nuovi"
+                  style={{
+                    position: 'absolute',
+                    top: -1,
+                    right: -1,
+                    width: 12,
+                    height: 12,
+                    borderRadius: 6,
+                    background: '#8B1A1A',
+                    border: '2px solid #fdfdfc',
+                  }}
+                />
+              )}
               {item.img ? (
                 <img
                   src={item.img}

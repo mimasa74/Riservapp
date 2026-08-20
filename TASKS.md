@@ -138,6 +138,10 @@ Semplificazione voluta: SOLO il Rettore pubblica/modifica/scrive. Il direttivo n
 - [x] **Deploy**: `firebase deploy` eseguito 2026-08-17 ~17:20 — rules Firestore/Storage rilasciate, 3 functions aggiornate (onPostCreate, onConfigUpdate, cleanupOldLocations), hosting `riservatuenno` release completa. Warning: runtime Node 20 deprecato, decommission 2026-10-30 → upgrade a Node 22 + firebase-functions@latest prima di ottobre
 - [ ] **Test su telefono reale**: notifica singola (non doppia), banner attiva notifiche, update banner
 - [ ] **Verificare il regolamento in modalità aereo** — deve aprirsi il decreto 45, non il vecchio
+- [x] **`firebase.json`: predeploy build anche per le functions** (20 ago 2026).
+      L'hosting ce l'aveva, le functions no: `firebase deploy` spediva `lib/`
+      così com'era, quindi bastava dimenticare `npx tsc` per deployare codice
+      vecchio senza accorgersene.
 - [ ] **Upgrade runtime functions a Node 22** + `firebase-functions@latest` — Node 20 dismesso il 2026-10-30 (breaking changes, sessione dedicata)
 
 ## DESIGN E NOTIFICHE (aperto — focus prossima sessione)
@@ -156,6 +160,14 @@ riprogettare, sono la fonte migliore che abbiamo.
       Aggiunto `ts` (ora dell'evento) usato dal SW come `timestamp`.
       Vedi "Testo delle notifiche di categoria" in CLAUDE.md.
 - [ ] **Raccogliere le note d'uso di Michele** — punto di partenza obbligato
+- [x] **Avviso in app quando il Rettore segna degli abbattimenti** (20 ago 2026).
+      Il socio non riceveva nulla: gli abbattimenti comparivano in silenzio.
+      Scelta di Michele: **niente push** (ce ne sono già troppe), l'avviso si
+      vede aprendo l'app. Pastiglia rossa senza numero sull'icona della specie,
+      riquadro in cima alla bacheca che porta al piano, pastiglia NUOVO sulla
+      riga della categoria e crocette rosse sui capi nuovi.
+      Tutto locale: `localStorage`, zero scritture Firestore, zero regole nuove,
+      zero Functions. 42 test nuovi. Vedi "Avviso capi nuovi" in CLAUDE.md.
 - [x] **Notifica di quota raggiunta rimossa** (18 ago 2026). Registrare l'ultimo
       capo e chiudere la categoria erano due push + due post per lo stesso fatto.
       Resta la sola chiusura. Primo taglio al volume di notifiche.
@@ -223,10 +235,17 @@ riprogettare, sono la fonte migliore che abbiamo.
 <!--   Etichette estratte in functions/src/labels.ts (index.ts non e' importabile:    -->
 <!--   chiama initializeApp al load), 15 test di regressione, test esclusi dal build   -->
 <!--   Functions. Formato rivisto con Michele guardando le notifiche sul telefono.    -->
-<!--   Commit f3ef50d + a995e8a. DA DEPLOYARE: functions E hosting (il SW e' cambiato).-->
+<!--   Commit f3ef50d + a995e8a. Deployati poi lo stesso giorno alle 14:30.        -->
 <!-- 2026-08-18 pom: Formato notifiche rivisto con Michele guardandole sul telefono:  -->
 <!--   SPECIE maiuscola nel titolo (l'OS la rende grassetto/grande, non impostabile   -->
 <!--   da codice), categoria in caso normale + stato in caps come unica evidenziazione.-->
 <!--   Desinenza presa da badgeChiusura invece che dedotta dal nome: stessa fonte del  -->
 <!--   badge in CategoryRow. Notifica di quota raggiunta rimossa e conferma in App.tsx -->
 <!--   riscritta (non promette piu' una push). 36 test verdi.                          -->
+<!-- 2026-08-20: Verificato prima di deployare: hosting live identico al build      -->
+<!--   locale (stessi hash bundle e SW), functions aggiornate il 18 alle 14:30 —     -->
+<!--   era gia' tutto in produzione, la nota "DA DEPLOYARE" era rimasta indietro.    -->
+<!--   Aggiunto il predeploy build alle functions in firebase.json. Poi ripreso il   -->
+<!--   task del mattino: avviso in app per gli abbattimenti segnati dal Rettore.     -->
+<!--   Approvata l'opzione C col bollino SENZA numero. Tutto in TDD: novita.ts,      -->
+<!--   useNovita.ts, AvvisiNovita.tsx + pastiglia NUOVO e crocette rosse. 78 test.   -->

@@ -108,6 +108,34 @@ femminile, altrimenti maschile. Non dedurlo dal nome della categoria — sarebbe
 una seconda verità che può divergere da quello che il socio legge in app. Il
 fallback sul nome (inizia per FEMMINE) copre solo una categoria priva del campo.
 
+## Avviso capi nuovi — tutto locale, nessuna push
+
+Quando il Rettore segna degli abbattimenti il socio se ne accorge **aprendo
+l'app**, non dal telefono: niente push, niente scritture Firestore, niente
+regole nuove (deciso con Michele il 20 ago 2026 — le notifiche erano già
+troppe, vedi TASKS.md).
+
+Tre viste dello stesso conto, `src/utils/novita.ts` + `src/hooks/useNovita.ts`:
+- pastiglia rossa **senza numero** sull'icona della specie in `BottomNav`
+- riquadro in cima alla bacheca (`AvvisiNovita`) che porta al piano della specie
+- pastiglia `NUOVO` sulla riga della categoria e crocette rosse sui capi nuovi
+
+Il meccanismo è un confronto con una fotografia `{catId: abbattuti}` tenuta su
+`localStorage` per specie. Regole che non vanno cambiate senza rifare i conti:
+- **Solo gli incrementi contano.** Correzione in meno del Rettore e azzeramento
+  di stagione non sono novità, altrimenti ogni nuova stagione accenderebbe
+  tutto in rosso.
+- **Categoria mai vista prima → entra in silenzio.** Senza termine di paragone
+  un rename di categoria segnalerebbe capi che nessuno ha appena abbattuto.
+- **La fotografia si aggiorna quando il socio ESCE dalla specie**, non quando
+  entra: altrimenti la pastiglia `NUOVO` sparirebbe prima che riesca a vederla.
+- **La specie aperta è congelata**: i capi segnati mentre il socio la guarda
+  non accendono nulla — li vede in diretta, ed è il caso del Rettore che li sta
+  segnando col dito su quella schermata.
+- Il confronto è **sui numeri, non sull'identità dell'oggetto** `data`: lo
+  snapshot Firestore cambia identità a ogni consegna anche quando i capi sono
+  gli stessi, e un `useEffect([data])` andava in ciclo infinito.
+
 ## Regolamento interno — solo Storage, nessun PDF bundled
 
 Non esiste PDF di riserva in `public/`. L'unica fonte è
@@ -162,6 +190,7 @@ Il cacciatore NON deve mai sapere che esiste una modalità admin.
 ## localStorage keys
 - `riservapp_nome`, `riservapp_device_id`, `riservapp_onboarding`
 - `riservapp_geo`, `riservapp_fcm`, `riservapp_letti_${nome}`
+- `riservapp_novita_${specieId}` — fotografia abbattimenti (vedi "Avviso capi nuovi")
 
 ## Normalizzazione nomi
 ```ts
