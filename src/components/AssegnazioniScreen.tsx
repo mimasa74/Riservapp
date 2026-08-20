@@ -4,6 +4,8 @@ import { Header } from './Header';
 import { ZoneTabs } from './ZoneTabs';
 import { CategoryRow } from './CategoryRow';
 import { NotesCard } from './NotesCard';
+import { NoteRettore } from './NoteRettore';
+import { NotaRettore } from '../utils/noteRettore';
 
 interface AssegnazioniScreenProps {
   data: SpecieData;
@@ -17,6 +19,10 @@ interface AssegnazioniScreenProps {
   isAdmin: boolean;
   /** catId → capi segnati da quando il socio ha guardato l'ultima volta */
   capiNuovi?: Record<string, number>;
+  /** diario privato del Rettore: arriva vuoto al socio, che non può leggerlo */
+  noteRettore?: NotaRettore[];
+  onAggiungiNota?: (testo: string) => void;
+  onRimuoviNota?: (id: string) => void;
 }
 
 export const AssegnazioniScreen = ({
@@ -30,6 +36,9 @@ export const AssegnazioniScreen = ({
   onOpenMappa,
   isAdmin,
   capiNuovi = {},
+  noteRettore = [],
+  onAggiungiNota,
+  onRimuoviNota,
 }: AssegnazioniScreenProps) => {
 
   const haZone = !!data.subZone;
@@ -99,6 +108,15 @@ export const AssegnazioniScreen = ({
         <p className="text-center text-[11px] text-[#6B6B5A] italic px-[18px] pb-2">
           Ultimo aggiornamento: {data.lastUpdated}
         </p>
+      )}
+
+      {/* Diario del Rettore — solo admin, subito sotto la data dell'ultimo capo */}
+      {isAdmin && onAggiungiNota && onRimuoviNota && (
+        <NoteRettore
+          note={noteRettore}
+          onAggiungi={onAggiungiNota}
+          onRimuovi={onRimuoviNota}
+        />
       )}
 
       {/* Pulsante Ruota — visibile sempre all'admin, ai cacciatori solo se c'è contenuto */}

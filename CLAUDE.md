@@ -136,6 +136,32 @@ Il meccanismo è un confronto con una fotografia `{catId: abbattuti}` tenuta su
   snapshot Firestore cambia identità a ogni consegna anche quando i capi sono
   gli stessi, e un `useEffect([data])` andava in ciclo infinito.
 
+## Diario del Rettore — privato davvero, non solo nascosto
+
+In fondo alla scheda di ogni specie, sotto la data dell'ultimo capo, l'admin
+trova un diario: tocca `+`, scrive una riga, l'app ci mette la data. Serve a
+ricordare **perché** il piano è cambiato (`src/utils/noteRettore.ts` +
+`src/components/NoteRettore.tsx`).
+
+Vive in `config/note_rettore`, **non** in `config/main`, e le rules lo aprono
+al solo `isAdmin()`. Non è una scelta estetica: `config/main` è leggibile da
+qualsiasi client autenticato, anche anonimo, e ogni telefono lo scarica per
+intero. Una nota lì dentro sarebbe invisibile nella UI ma estraibile dalla
+console. Per lo stesso motivo `App.tsx` **non sottoscrive** il documento se non
+è admin: al socio la onSnapshot fallirebbe e basta.
+
+Regole del meccanismo:
+- La data è **gg/mm/aaaa** con l'anno per esteso, non il `gg/mm` del resto
+  dell'app: queste note si rileggono da una stagione all'altra.
+- L'ordine è quello dell'array (nuova in cima), **non** la data: la data è una
+  stringa già formattata e rileggerla per ordinare sarebbe una seconda verità.
+- `noteDiSpecie` scarta le voci malformate invece di far saltare la schermata.
+- La scrittura è `setDoc(..., { merge: true })`: alla prima nota il documento
+  non esiste ancora e `updateDoc` fallirebbe.
+- **Niente cestino** (deciso con Michele il 20 ago 2026): una nota cancellata è
+  persa, per questo la `✕` chiede conferma. Se serve il ripristino va dentro il
+  lavoro su "tutto deve essere reversibile", non aggiunto qui di corsa.
+
 ## Regolamento interno — solo Storage, nessun PDF bundled
 
 Non esiste PDF di riserva in `public/`. L'unica fonte è
@@ -179,6 +205,8 @@ Il cacciatore NON deve mai sapere che esiste una modalità admin.
 ## Firestore collections
 - `config/main` — dati specie
 - `config/members` — `{ nomi: string[], direttivo: string[] }` (direttivo non più usato)
+- `config/note_rettore` — `{ [specieId]: NotaRettore[] }` — diario privato,
+  leggibile SOLO dall'admin (vedi "Diario del Rettore")
 - `config/slots` — `{ [normalizedName]: deviceId }` — slot libero = chiave ASSENTE
   (l'admin libera con `deleteField`; le rules permettono al socio solo di aggiungere
   la propria chiave, mai modificare o rimuovere)

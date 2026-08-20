@@ -9,6 +9,9 @@ import { initFCM } from './hooks/useFCM';
 import { useGeolocation } from './hooks/useGeolocation';
 import { useNovita } from './hooks/useNovita';
 import { avvisiDaNovita } from './utils/novita';
+import {
+  NoteRettorePerSpecie, creaNota, aggiungiNota, rimuoviNota, noteDiSpecie,
+} from './utils/noteRettore';
 import { requireOnline } from './utils/requireOnline';
 import { PHOTO_CACHE } from './constants/cacheNames';
 
@@ -71,6 +74,7 @@ function MainApp() {
   const [isOffline, setIsOffline] = useState(!navigator.onLine);
   const [postsSynced, setPostsSynced] = useState(false);
   const [configSynced, setConfigSynced] = useState(false);
+  const [noteRettore, setNoteRettore] = useState<NoteRettorePerSpecie>({});
   const [prefetchDone, setPrefetchDone] = useState(false);
   const reconcileDone = React.useRef(false);
   const membersValidated = React.useRef(false);
@@ -160,6 +164,16 @@ function MainApp() {
       }
     }, (err) => console.error('[snapshot:config/slots]', err.code, err.message));
   }, []);
+
+  // Diario privato del Rettore: documento a parte, aperto dalle rules al solo
+  // admin. Il socio non lo sottoscrive proprio — non avrebbe il permesso.
+  useEffect(() => {
+    if (!isAdmin) { setNoteRettore({}); return; }
+    const docRef = doc(db, 'config', 'note_rettore');
+    return onSnapshot(docRef, snapshot => {
+      setNoteRettore(snapshot.exists() ? (snapshot.data() as NoteRettorePerSpecie) : {});
+    }, (err) => console.error('[snapshot:config/note_rettore]', err.code, err.message));
+  }, [isAdmin]);
 
   // Pre-fetch top-30 recent post assets al primo sync server
   useEffect(() => {
@@ -312,6 +326,23 @@ function MainApp() {
       await updateDoc(docRef, { [`${currentSpecieId}.${field}`]: value });
     } catch (e) { console.error(e); }
   };
+
+  const salvaNote = async (specieId: string, note: ReturnType<typeof noteDiSpecie>) => {
+    if (!requireOnline()) return;
+    try {
+      // setDoc con merge: il documento può non esistere ancora alla prima nota
+      await setDoc(doc(db, 'config', 'note_rettore'), { [specieId]: note }, { merge: true });
+    } catch (e) { console.error(e); }
+  };
+
+  const handleAggiungiNota = (testo: string) =>
+    salvaNote(currentSpecieId, aggiungiNota(
+      noteDiSpecie(noteRettore, currentSpecieId),
+      creaNota(testo, new Date()),
+    ));
+
+  const handleRimuoviNota = (id: string) =>
+    salvaNote(currentSpecieId, rimuoviNota(noteDiSpecie(noteRettore, currentSpecieId), id));
 
   const handleSaveSettings = async (updatedData: AppData) => {
     if (!requireOnline()) return;
@@ -550,6 +581,9 @@ function MainApp() {
               <AssegnazioniScreen
                 data={spData}
                 capiNuovi={novita[currentScreen]?.categorie ?? {}}
+                noteRettore={noteDiSpecie(noteRettore, currentScreen)}
+                onAggiungiNota={handleAggiungiNota}
+                onRimuoviNota={handleRimuoviNota}
                 selectedSubZone={selectedSubZone}
                 onSubZoneChange={setSelectedSubZone}
                 onToggle={handleToggleAbbattimento}

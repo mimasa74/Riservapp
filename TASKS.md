@@ -249,3 +249,13 @@ riprogettare, sono la fonte migliore che abbiamo.
 <!--   task del mattino: avviso in app per gli abbattimenti segnati dal Rettore.     -->
 <!--   Approvata l'opzione C col bollino SENZA numero. Tutto in TDD: novita.ts,      -->
 <!--   useNovita.ts, AvvisiNovita.tsx + pastiglia NUOVO e crocette rosse. 78 test.   -->
+<!-- 2026-08-20 sera: Riquadro novita' in bacheca rifatto con Michele: solo    -->
+<!--   specie + "Aggiornamento piano" + data, via il conteggio capi e l'elenco  -->
+<!--   categorie (il numero resta nella pastiglia NUOVO). La data e' lastUpdated -->
+<!--   della specie, la stessa che AssegnazioniScreen mostra in fondo al piano.  -->
+<!--   "Riserva Val di Tovel" -> RISERVA TUENNO, corpo clamp(20px,7.5vw,30px):   -->
+<!--   erano corsivo e letterSpacing 0.09em a mangiare la larghezza. Poi diario  -->
+<!--   privato del Rettore per specie, in TDD: config/note_rettore chiuso dalle  -->
+<!--   rules al solo admin, non un campo nascosto in config/main. 99 test.       -->
+<!--   Chiarito da Michele: i riquadri servono a CORREGGERE un abbattimento,     -->
+<!--   l'ingranaggio a MODIFICARE il piano. Sono due gesti distinti.             -->

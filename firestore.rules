@@ -89,6 +89,14 @@ service cloud.firestore {
     // config/onboarding_reset: lista di deviceId che devono rifare l'onboarding.
     // Admin aggiunge; un dispositivo può solo RIMUOVERE id dalla lista (il proprio):
     // la nuova lista deve essere un sottoinsieme della vecchia.
+    // config/note_rettore: diario privato del Rettore, { specieId: NotaRettore[] }.
+    // Documento a parte apposta: config/main lo scarica per intero ogni dispositivo
+    // autenticato, quindi nasconderlo nella UI non lo renderebbe privato. Qui il
+    // socio non ha nemmeno il permesso di leggere, e il client non lo sottoscrive.
+    match /config/note_rettore {
+      allow read, write: if isAdmin();
+    }
+
     match /config/onboarding_reset {
       allow read: if isAuthenticated();
       allow create, delete: if isAdmin();
