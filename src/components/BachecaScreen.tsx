@@ -289,8 +289,10 @@ export const BachecaScreen = ({ posts, avvisiNovita = [], onApriSpecie, hunterNa
           )}
         </div>
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
-          <p style={{ fontSize: 14, fontWeight: 700, color: '#5C6B3A', textTransform: 'uppercase', letterSpacing: '0.09em', fontFamily: 'inherit', fontStyle: 'italic', lineHeight: 1.4, textAlign: 'center' }}>
-            Riserva Val di Tovel
+          {/* Il più grande che entra su una riga sola: clamp sulla larghezza dello
+              schermo, niente italic e spaziatura stretta per guadagnare corpo. */}
+          <p style={{ fontSize: 'clamp(20px, 7.5vw, 30px)', fontWeight: 800, color: '#5C6B3A', textTransform: 'uppercase', letterSpacing: '0.01em', fontFamily: 'inherit', lineHeight: 1.15, textAlign: 'center', whiteSpace: 'nowrap' }}>
+            Riserva Tuenno
           </p>
           <p style={{ fontSize: 30, fontWeight: 800, color: '#1A1A14', textTransform: 'uppercase', lineHeight: 1.05, letterSpacing: '-0.02em', textAlign: 'center' }}>
             Bacheca

@@ -65,7 +65,7 @@ export const HunterNameModal = ({ members, slots, deviceId, onConfirm }: HunterN
         padding: '28px 24px', width: '100%', maxWidth: 360,
       }}>
         <p style={{ fontSize: 11, fontWeight: 700, color: '#5C6B3A', textTransform: 'uppercase', letterSpacing: '0.1em', fontFamily: '-apple-system, sans-serif', marginBottom: 6 }}>
-          Riserva Val di Tovel
+          Riserva Tuenno
         </p>
         <p style={{ fontSize: 22, fontWeight: 800, color: '#1A1A14', textTransform: 'uppercase', lineHeight: 1.1, marginBottom: 6 }}>
           Benvenuto
