@@ -97,6 +97,16 @@ service cloud.firestore {
       allow read, write: if isAdmin();
     }
 
+    // config/riepilogo: memoria del riepilogo serale — fotografia dei capi
+    // all'ultimo invio e ora dell'invio. Nessun client la tocca, nemmeno
+    // l'admin: la scrive e la legge solo la Cloud Function, che passa
+    // dall'Admin SDK e bypassa le rules. Vietarla esplicitamente evita che un
+    // domani qualcuno la apra "tanto è innocua": manometterla vorrebbe dire
+    // far ripartire o zittire le notifiche serali di tutti i soci.
+    match /config/riepilogo {
+      allow read, write: if false;
+    }
+
     match /config/onboarding_reset {
       allow read: if isAuthenticated();
       allow create, delete: if isAdmin();

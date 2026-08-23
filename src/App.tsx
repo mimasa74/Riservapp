@@ -13,6 +13,7 @@ import {
   NoteRettorePerSpecie, creaNota, aggiungiNota, rimuoviNota, noteDiSpecie,
 } from './utils/noteRettore';
 import { requireOnline } from './utils/requireOnline';
+import { confermaUltimoCapo } from './utils/conferme';
 import { PHOTO_CACHE } from './constants/cacheNames';
 
 import { AssegnazioniScreen } from './components/AssegnazioniScreen';
@@ -290,10 +291,9 @@ function MainApp() {
     // prelievo per sbaglio: chiedi conferma. Dal 18 ago 2026 la quota completata
     // NON manda piu' alcuna notifica — quella parte solo alla chiusura della
     // categoria — quindi il messaggio non deve piu' prometterla.
+    // Il testo cambia nelle classi sospese: vedi confermaUltimoCapo.
     if (newCount === cat.totale && cat.abbattuti !== cat.totale) {
-      const ok = window.confirm(
-        `Quota completata per ${cat.nome} (${newCount}/${cat.totale}). Confermi?`
-      );
+      const ok = window.confirm(confermaUltimoCapo(cat));
       if (!ok) return;
     }
 

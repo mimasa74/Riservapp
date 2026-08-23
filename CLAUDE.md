@@ -108,12 +108,13 @@ femminile, altrimenti maschile. Non dedurlo dal nome della categoria — sarebbe
 una seconda verità che può divergere da quello che il socio legge in app. Il
 fallback sul nome (inizia per FEMMINE) copre solo una categoria priva del campo.
 
-## Avviso capi nuovi — tutto locale, nessuna push
+## Avviso capi nuovi — l'avviso in app è tutto locale
 
 Quando il Rettore segna degli abbattimenti il socio se ne accorge **aprendo
-l'app**, non dal telefono: niente push, niente scritture Firestore, niente
-regole nuove (deciso con Michele il 20 ago 2026 — le notifiche erano già
-troppe, vedi TASKS.md).
+l'app**: niente scritture Firestore, niente regole nuove (deciso con Michele il
+20 ago 2026 — le notifiche erano già troppe, vedi TASKS.md). Dal 23 ago 2026 una
+push c'è, ma è **una sola a sera** e la manda il server, non questo meccanismo:
+vedi "Riepilogo serale". Qui sotto non c'è nulla che tocchi la rete.
 
 Tre viste dello stesso conto, `src/utils/novita.ts` + `src/hooks/useNovita.ts`:
 - pastiglia rossa **senza numero** sull'icona della specie in `BottomNav`
@@ -135,6 +136,72 @@ Il meccanismo è un confronto con una fotografia `{catId: abbattuti}` tenuta su
 - Il confronto è **sui numeri, non sull'identità dell'oggetto** `data`: lo
   snapshot Firestore cambia identità a ogni consegna anche quando i capi sono
   gli stessi, e un `useEffect([data])` andava in ciclo infinito.
+
+## Capi abbattuti in una classe sospesa
+
+Capita che un socio abbatta un capo di una classe sospesa. Il Rettore deve poterlo
+segnare lo stesso (necessità reale del 22 ago 2026): prima nelle classi sospese
+non c'era nessun quadratino, solo la scritta SOSPESI.
+
+- **Admin**: nella classe sospesa vede i quadratini di tutto il piano e li crocia
+  come in una classe aperta. Nessun filtro per stato in `handleToggleAbbattimento`.
+- **Socio**: vede la scritta SOSPESI e accanto **i soli capi caduti**
+  (`soloAbbattuti` in `AssignmentBoxes`). Il piano non si mostra: dei quadratini
+  vuoti direbbero al socio che quella classe è cacciabile.
+- Croce e bordo in arancione `#B8730A`, lo stesso della scritta SOSPESI. Il rosso
+  `#8B1A1A` NON si usa qui: significa una cosa sola, "capo nuovo", e `isNuovo` ha
+  la precedenza sul colore passato — non invertire quel ternario.
+- La pastiglia NUOVO compare anche nelle sospese. Prima non c'era, e un capo
+  segnato lì accendeva il bollino in `BottomNav` (`novita.ts` conta tutte le
+  categorie) senza che la riga mostrasse niente.
+
+`confermaUltimoCapo` (`src/utils/conferme.ts`) è la frase della `window.confirm`
+sull'ultimo quadratino. Nelle sospese non dice "quota completata": nessuna quota
+è stata completata. La conferma resta perché i quadratini sono 26px e un tocco
+storto completerebbe il piano senza che nessuno se ne accorga.
+
+## Riepilogo serale — l'unica push sugli abbattimenti
+
+`riepilogoSerale` (`functions/src/index.ts` + `riepilogo.ts`) gira **ogni sera
+alle 21 italiane** (`schedule: '0 21 * * *'`, `timeZone: 'Europe/Rome'` — il
+timeZone regge da solo il cambio d'ora; la region non c'entra con l'orario) e
+manda **una push per specie**: titolo `CERVO`, corpo `Segnati 2 capi`.
+
+Perché esiste: `onConfigUpdate` manda una push per ogni scrittura, quindi segnare
+i capi uno per uno produceva una raffica di notifiche — è il motivo per cui il 20
+ago gli abbattimenti erano rimasti senza push del tutto. Il raggruppamento serale
+è il pezzo che mancava.
+
+- **Nessun post di sistema in bacheca.** Il riquadro "Aggiornamento piano" che il
+  socio ci trova già fa quel mestiere; un post ogni sera seppellirebbe i messaggi
+  del Rettore.
+- **Il titolo non nomina la zona**, nemmeno sul camoscio: il riepilogo abbraccia
+  tutte le categorie della specie, quindi entrambe le subzone. Le notifiche di
+  chiusura la nominano perché parlano di una categoria sola.
+- **Parte anche sulle specie in cui una classe si è appena chiusa.** Prima
+  tacevano, ma la push di chiusura nomina una sola categoria: i capi caduti nelle
+  altre classi non venivano annunciati mai, nemmeno la sera dopo, perché la
+  fotografia avanzava lo stesso. Scelta di Michele del 23 ago 2026 — meglio due
+  notifiche che un capo taciuto. Se rimetti il silenzio, non far avanzare la
+  fotografia di quella specie.
+- **Contano solo gli incrementi**, e una categoria mai vista prima entra in
+  silenzio: stesse due regole di `src/utils/novita.ts`, stessi motivi.
+- **La prima sera dopo il deploy non parte niente**: senza fotografia precedente
+  `capiSegnati` restituisce 0, altrimenti partirebbe un riepilogo di tutta la
+  stagione.
+- La fotografia sta in `config/riepilogo`, **chiuso a ogni client** nelle rules
+  (`if false`): la tocca solo l'Admin SDK. Manometterla vorrebbe dire zittire o
+  far ripartire le notifiche di tutti i soci.
+- La scrittura usa **`mergeFields`, non `merge: true`**: con `merge` Firestore
+  fonde ricorsivamente anche dentro `snapshot`, e una categoria cancellata da
+  `config/main` resterebbe in fotografia per sempre. Ricreandola con lo stesso id
+  (azzeramento di stagione fatto cancellando le classi) i suoi primi capi
+  darebbero delta negativi e non verrebbero annunciati mai.
+- Se la push di una specie fallisce, quella specie **tiene la fotografia di
+  ieri**: i capi rientrano nel riepilogo di domani invece di sparire.
+
+`riepilogo.test.ts` è escluso dal build Functions via `tsconfig.json`, come
+`labels.test.ts`: altrimenti finirebbe in `lib/` e verrebbe deployato.
 
 ## Diario del Rettore — privato davvero, non solo nascosto
 
@@ -207,6 +274,8 @@ Il cacciatore NON deve mai sapere che esiste una modalità admin.
 - `config/members` — `{ nomi: string[], direttivo: string[] }` (direttivo non più usato)
 - `config/note_rettore` — `{ [specieId]: NotaRettore[] }` — diario privato,
   leggibile SOLO dall'admin (vedi "Diario del Rettore")
+- `config/riepilogo` — `{ ultimoInvio, snapshot }` — memoria del riepilogo
+  serale, chiusa a ogni client (vedi "Riepilogo serale")
 - `config/slots` — `{ [normalizedName]: deviceId }` — slot libero = chiave ASSENTE
   (l'admin libera con `deleteField`; le rules permettono al socio solo di aggiungere
   la propria chiave, mai modificare o rimuovere)

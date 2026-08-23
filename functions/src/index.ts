@@ -4,6 +4,7 @@ import { getMessaging } from 'firebase-admin/messaging';
 import { onDocumentCreated, onDocumentUpdated } from 'firebase-functions/v2/firestore';
 import { onSchedule } from 'firebase-functions/v2/scheduler';
 import { categoriaLabel, corpoNotifica, specieLabel, titoloNotifica } from './labels';
+import { capiSegnati, corpoRiepilogo, snapshotSpecie, titoloRiepilogo, SnapshotSpecie } from './riepilogo';
 
 initializeApp();
 
@@ -27,6 +28,8 @@ export interface Categoria {
 }
 
 // ─── Helper: estrae categorie da un oggetto specie ───────────────────────────
+
+const SPECIE = ['cervo', 'capriolo', 'camoscio'];
 
 function extractCategorie(specieData: Record<string, unknown>): Categoria[] {
   const cats = specieData?.categorie;
@@ -141,9 +144,7 @@ export const onConfigUpdate = onDocumentUpdated({ document: 'config/main', regio
   const after = event.data?.after.data() as Record<string, Record<string, unknown>> | undefined;
   if (!before || !after) return;
 
-  const species = ['cervo', 'capriolo', 'camoscio'];
-
-  for (const specieId of species) {
+  for (const specieId of SPECIE) {
     const specieData = after[specieId] ?? {};
     const specie = specieLabel(specieId, specieData);
     const beforeCats = extractCategorie(before[specieId] ?? {});
@@ -177,6 +178,93 @@ export const onConfigUpdate = onDocumentUpdated({ document: 'config/main', regio
     }
   }
 });
+
+// ─── Scheduled: riepilogo serale dei capi segnati ────────────────────────────
+//
+// Segnare i capi uno per uno manderebbe una push per quadratino: per questo dal
+// 20 ago 2026 gli abbattimenti non ne mandavano nessuna. Qui il conto si fa una
+// volta sola, alle 21, e parte una notifica per specie — quasi sempre una sola.
+//
+// Nessun post di sistema in bacheca: il riquadro "Aggiornamento piano" che il
+// socio ci trova già fa quel mestiere, e un post ogni sera seppellirebbe i
+// messaggi del Rettore.
+//
+// Il riepilogo parte anche sulle specie in cui una classe si è chiusa in
+// giornata, quindi lì il socio riceve due push: la chiusura e il conto della
+// sera. Prima quelle specie tacevano, ma la push di chiusura nomina una sola
+// categoria e i capi caduti nelle altre classi non venivano annunciati mai —
+// nemmeno la sera dopo, perché la fotografia avanzava lo stesso. Scelta di
+// Michele del 23 ago 2026: meglio due notifiche che un capo taciuto.
+//
+// Niente region esplicita, come cleanupOldLocations: gli scheduler di questo
+// progetto girano nella region di default e funzionano.
+
+interface StatoRiepilogo {
+  /** istante dell'ultimo riepilogo inviato */
+  ultimoInvio?: number;
+  /** specieId → fotografia { catId: abbattuti } di quel momento */
+  snapshot?: Record<string, SnapshotSpecie>;
+}
+
+export const riepilogoSerale = onSchedule(
+  { schedule: '0 21 * * *', timeZone: 'Europe/Rome' },
+  async () => {
+    const db = getFirestore();
+    const [configSnap, statoSnap] = await Promise.all([
+      db.doc('config/main').get(),
+      db.doc('config/riepilogo').get(),
+    ]);
+
+    const config = configSnap.data() as Record<string, Record<string, unknown>> | undefined;
+    if (!config) {
+      console.log('riepilogoSerale: config/main assente, niente da fare');
+      return;
+    }
+
+    const stato = (statoSnap.data() ?? {}) as StatoRiepilogo;
+    const snapshotPrec = stato.snapshot ?? {};
+
+    const snapshotNuovo: Record<string, SnapshotSpecie> = {};
+
+    for (const specieId of SPECIE) {
+      const specieData = config[specieId] ?? {};
+      const curr = snapshotSpecie(extractCategorie(specieData));
+      snapshotNuovo[specieId] = curr;
+
+      const capi = capiSegnati(snapshotPrec[specieId] ?? null, curr);
+      if (capi <= 0) {
+        console.log(`riepilogoSerale: ${specieId} tace, nessun capo nuovo`);
+        continue;
+      }
+
+      // Se la push fallisce, questa specie tiene la fotografia di ieri: i capi
+      // ricompaiono nel riepilogo di domani invece di sparire. Senza il catch un
+      // errore a metà loop lascerebbe la scrittura finale inevasa e domani sera
+      // le specie già avvisate riceverebbero una seconda push per gli stessi capi.
+      try {
+        await sendPushToAll(titoloRiepilogo(specieId, specieData), corpoRiepilogo(capi), 'normal');
+      } catch (e) {
+        console.error(`riepilogoSerale: push fallita per ${specieId}, riprovo domani`, e);
+        const prec = snapshotPrec[specieId];
+        if (prec) snapshotNuovo[specieId] = prec;
+        else delete snapshotNuovo[specieId];
+      }
+    }
+
+    // La fotografia si aggiorna per tutte le specie, anche quelle rimaste zitte.
+    //
+    // mergeFields, NON merge: con `merge: true` Firestore fonde ricorsivamente
+    // anche dentro `snapshot`, e una categoria cancellata da config/main
+    // resterebbe in fotografia per sempre col suo ultimo conteggio. Ricreandola
+    // poi con lo stesso id (azzeramento di stagione fatto cancellando le classi)
+    // i suoi primi capi darebbero delta negativi e non verrebbero mai annunciati.
+    // Con mergeFields i due campi elencati vengono rimpiazzati per intero.
+    await db.doc('config/riepilogo').set(
+      { ultimoInvio: Date.now(), snapshot: snapshotNuovo },
+      { mergeFields: ['ultimoInvio', 'snapshot'] }
+    );
+  }
+);
 
 // ─── Scheduled: elimina posizioni più vecchie di 35 minuti (GDPR) ─────────
 
