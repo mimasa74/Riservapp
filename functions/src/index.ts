@@ -4,7 +4,14 @@ import { getMessaging } from 'firebase-admin/messaging';
 import { onDocumentCreated, onDocumentUpdated } from 'firebase-functions/v2/firestore';
 import { onSchedule } from 'firebase-functions/v2/scheduler';
 import { categoriaLabel, corpoNotifica, specieLabel, titoloNotifica } from './labels';
-import { capiSegnati, corpoRiepilogo, snapshotSpecie, titoloRiepilogo, SnapshotSpecie } from './riepilogo';
+import {
+  capiComparsi,
+  corpoAvviso,
+  deveInviare,
+  sommaDelta,
+  DeltaSpecie,
+  TITOLO_AVVISO,
+} from './avvisoPiano';
 
 initializeApp();
 
@@ -144,11 +151,18 @@ export const onConfigUpdate = onDocumentUpdated({ document: 'config/main', regio
   const after = event.data?.after.data() as Record<string, Record<string, unknown>> | undefined;
   if (!before || !after) return;
 
+  const comparsi: DeltaSpecie = {};
+
   for (const specieId of SPECIE) {
     const specieData = after[specieId] ?? {};
     const specie = specieLabel(specieId, specieData);
     const beforeCats = extractCategorie(before[specieId] ?? {});
     const afterCats = extractCategorie(specieData);
+
+    // I capi segnati non fanno partire niente adesso: il conto si chiude in
+    // avvisoPianoTick, quando il Rettore ha smesso di crociare.
+    const capi = capiComparsi(beforeCats, afterCats);
+    if (capi > 0) comparsi[specieId] = capi;
 
     for (const a of afterCats) {
       // Accoppia per id, NON per indice: se l'admin aggiunge/rimuove una categoria
@@ -177,94 +191,91 @@ export const onConfigUpdate = onDocumentUpdated({ document: 'config/main', regio
       }
     }
   }
+
+  if (Object.keys(comparsi).length > 0) await accumulaAvvisoPiano(comparsi);
 });
 
-// ─── Scheduled: riepilogo serale dei capi segnati ────────────────────────────
+// ─── Avviso di aggiornamento del piano ───────────────────────────────────────
 //
-// Segnare i capi uno per uno manderebbe una push per quadratino: per questo dal
-// 20 ago 2026 gli abbattimenti non ne mandavano nessuna. Qui il conto si fa una
-// volta sola, alle 21, e parte una notifica per specie — quasi sempre una sola.
+// Una notifica sola per sessione di lavoro, col conto per specie:
+// `AGGIORNAMENTO PIANO` / `Capriolo +3, Camoscio +1, Cervo +1`.
 //
-// Nessun post di sistema in bacheca: il riquadro "Aggiornamento piano" che il
-// socio ci trova già fa quel mestiere, e un post ogni sera seppellirebbe i
-// messaggi del Rettore.
+// Perché non parte subito: ogni crocetta è una scrittura a sé su config/main.
+// Mandandola alla prima direbbe "Capriolo +1" e i capi successivi resterebbero
+// fuori; mandandola a ogni scrittura tornerebbe la raffica di notifiche che nel
+// ago 2026 aveva lasciato gli abbattimenti senza push del tutto. Quindi
+// onConfigUpdate accumula in silenzio e un tick al minuto decide quando è ora.
 //
-// Il riepilogo parte anche sulle specie in cui una classe si è chiusa in
-// giornata, quindi lì il socio riceve due push: la chiusura e il conto della
-// sera. Prima quelle specie tacevano, ma la push di chiusura nomina una sola
-// categoria e i capi caduti nelle altre classi non venivano annunciati mai —
-// nemmeno la sera dopo, perché la fotografia avanzava lo stesso. Scelta di
-// Michele del 23 ago 2026: meglio due notifiche che un capo taciuto.
+// Sostituisce il riepilogo serale delle 21 (rimosso il 2 set 2026): quello
+// arrivava fino a 23 ore dopo, e i capi segnati dopo le 21 — cioè una battuta
+// finita a sera, la norma — cadevano sempre nel buco.
 //
-// Niente region esplicita, come cleanupOldLocations: gli scheduler di questo
-// progetto girano nella region di default e funzionano.
+// Niente post di sistema in bacheca: il riquadro "Aggiornamento piano" che il
+// socio ci trova già fa quel mestiere, e un post per ogni sessione seppellirebbe
+// i messaggi del Rettore.
 
-interface StatoRiepilogo {
-  /** istante dell'ultimo riepilogo inviato */
+interface StatoAvvisoPiano {
+  /** specieId → capi in attesa di essere annunciati */
+  pending?: DeltaSpecie;
+  /** istante dell'ultima crocetta: da qui si contano i minuti di quiete */
+  ultimaModifica?: number;
+  /** istante dell'ultima notifica inviata: da qui i minuti di silenzio */
   ultimoInvio?: number;
-  /** specieId → fotografia { catId: abbattuti } di quel momento */
-  snapshot?: Record<string, SnapshotSpecie>;
 }
 
-export const riepilogoSerale = onSchedule(
-  { schedule: '0 21 * * *', timeZone: 'Europe/Rome' },
-  async () => {
-    const db = getFirestore();
-    const [configSnap, statoSnap] = await Promise.all([
-      db.doc('config/main').get(),
-      db.doc('config/riepilogo').get(),
-    ]);
+const AVVISO_PIANO_DOC = 'config/avviso_piano';
 
-    const config = configSnap.data() as Record<string, Record<string, unknown>> | undefined;
-    if (!config) {
-      console.log('riepilogoSerale: config/main assente, niente da fare');
-      return;
-    }
-
-    const stato = (statoSnap.data() ?? {}) as StatoRiepilogo;
-    const snapshotPrec = stato.snapshot ?? {};
-
-    const snapshotNuovo: Record<string, SnapshotSpecie> = {};
-
-    for (const specieId of SPECIE) {
-      const specieData = config[specieId] ?? {};
-      const curr = snapshotSpecie(extractCategorie(specieData));
-      snapshotNuovo[specieId] = curr;
-
-      const capi = capiSegnati(snapshotPrec[specieId] ?? null, curr);
-      if (capi <= 0) {
-        console.log(`riepilogoSerale: ${specieId} tace, nessun capo nuovo`);
-        continue;
-      }
-
-      // Se la push fallisce, questa specie tiene la fotografia di ieri: i capi
-      // ricompaiono nel riepilogo di domani invece di sparire. Senza il catch un
-      // errore a metà loop lascerebbe la scrittura finale inevasa e domani sera
-      // le specie già avvisate riceverebbero una seconda push per gli stessi capi.
-      try {
-        await sendPushToAll(titoloRiepilogo(specieId, specieData), corpoRiepilogo(capi), 'normal');
-      } catch (e) {
-        console.error(`riepilogoSerale: push fallita per ${specieId}, riprovo domani`, e);
-        const prec = snapshotPrec[specieId];
-        if (prec) snapshotNuovo[specieId] = prec;
-        else delete snapshotNuovo[specieId];
-      }
-    }
-
-    // La fotografia si aggiorna per tutte le specie, anche quelle rimaste zitte.
-    //
-    // mergeFields, NON merge: con `merge: true` Firestore fonde ricorsivamente
-    // anche dentro `snapshot`, e una categoria cancellata da config/main
-    // resterebbe in fotografia per sempre col suo ultimo conteggio. Ricreandola
-    // poi con lo stesso id (azzeramento di stagione fatto cancellando le classi)
-    // i suoi primi capi darebbero delta negativi e non verrebbero mai annunciati.
-    // Con mergeFields i due campi elencati vengono rimpiazzati per intero.
-    await db.doc('config/riepilogo').set(
-      { ultimoInvio: Date.now(), snapshot: snapshotNuovo },
-      { mergeFields: ['ultimoInvio', 'snapshot'] }
+// merge: true e non mergeFields, al contrario di quasi tutto il resto: qui la
+// fusione ricorsiva dentro `pending` è proprio quello che serve, perché somma
+// le specie già in attesa con quelle di questa scrittura. Lo svuotamento, che
+// invece deve azzerare per intero, usa mergeFields.
+async function accumulaAvvisoPiano(nuovi: DeltaSpecie): Promise<void> {
+  const db = getFirestore();
+  const ref = db.doc(AVVISO_PIANO_DOC);
+  await db.runTransaction(async tx => {
+    const snap = await tx.get(ref);
+    const stato = (snap.data() ?? {}) as StatoAvvisoPiano;
+    tx.set(
+      ref,
+      { pending: sommaDelta(stato.pending, nuovi), ultimaModifica: Date.now() },
+      { mergeFields: ['pending', 'ultimaModifica'] }
     );
+  });
+}
+
+// Un giro al minuto: è il passo più fitto che lo scheduler permetta, e regge
+// sia i 5 minuti di quiete sia i 15 di silenzio senza altri ingranaggi.
+export const avvisoPianoTick = onSchedule('every 1 minutes', async () => {
+  const db = getFirestore();
+  const ref = db.doc(AVVISO_PIANO_DOC);
+  const stato = ((await ref.get()).data() ?? {}) as StatoAvvisoPiano;
+  const delta = stato.pending ?? {};
+
+  if (!deveInviare(delta, stato.ultimaModifica, stato.ultimoInvio, Date.now())) return;
+
+  const config = (await db.doc('config/main').get()).data() as
+    | Record<string, Record<string, unknown>>
+    | undefined;
+
+  const corpo = corpoAvviso(delta, config ?? {});
+  if (!corpo) return;
+
+  // Se la push fallisce il conto NON si svuota: i capi rientrano nel prossimo
+  // giro invece di sparire. Senza il catch il documento resterebbe pieno ma
+  // ultimoInvio avanzerebbe lo stesso, zittendo l'avviso per un quarto d'ora.
+  try {
+    await sendPushToAll(TITOLO_AVVISO, corpo, 'normal');
+  } catch (e) {
+    console.error('avvisoPianoTick: push fallita, riprovo al prossimo giro', e);
+    return;
   }
-);
+
+  await ref.set(
+    { pending: {}, ultimoInvio: Date.now() },
+    { mergeFields: ['pending', 'ultimoInvio'] }
+  );
+  console.log(`avvisoPianoTick: inviato "${corpo}"`);
+});
 
 // ─── Scheduled: elimina posizioni più vecchie di 35 minuti (GDPR) ─────────
 

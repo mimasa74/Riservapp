@@ -112,9 +112,9 @@ fallback sul nome (inizia per FEMMINE) copre solo una categoria priva del campo.
 
 Quando il Rettore segna degli abbattimenti il socio se ne accorge **aprendo
 l'app**: niente scritture Firestore, niente regole nuove (deciso con Michele il
-20 ago 2026 — le notifiche erano già troppe, vedi TASKS.md). Dal 23 ago 2026 una
-push c'è, ma è **una sola a sera** e la manda il server, non questo meccanismo:
-vedi "Riepilogo serale". Qui sotto non c'è nulla che tocchi la rete.
+20 ago 2026 — le notifiche erano già troppe, vedi TASKS.md). Una push c'è, ma è
+**una sola per sessione di lavoro** e la manda il server, non questo meccanismo:
+vedi "Avviso di aggiornamento del piano". Qui sotto non c'è nulla che tocchi la rete.
 
 Tre viste dello stesso conto, `src/utils/novita.ts` + `src/hooks/useNovita.ts`:
 - pastiglia rossa **senza numero** sull'icona della specie in `BottomNav`
@@ -160,47 +160,63 @@ sull'ultimo quadratino. Nelle sospese non dice "quota completata": nessuna quota
 è stata completata. La conferma resta perché i quadratini sono 26px e un tocco
 storto completerebbe il piano senza che nessuno se ne accorga.
 
-## Riepilogo serale — l'unica push sugli abbattimenti
+## Avviso di aggiornamento del piano — l'unica push sugli abbattimenti
 
-`riepilogoSerale` (`functions/src/index.ts` + `riepilogo.ts`) gira **ogni sera
-alle 21 italiane** (`schedule: '0 21 * * *'`, `timeZone: 'Europe/Rome'` — il
-timeZone regge da solo il cambio d'ora; la region non c'entra con l'orario) e
-manda **una push per specie**: titolo `CERVO`, corpo `Segnati 2 capi`.
+`avvisoPianoTick` (`functions/src/index.ts` + `avvisoPiano.ts`) manda **una sola
+notifica per sessione di lavoro del Rettore**, col conto per specie: titolo
+`AGGIORNAMENTO PIANO`, corpo `Capriolo +3, Camoscio +1, Cervo +1`.
 
-Perché esiste: `onConfigUpdate` manda una push per ogni scrittura, quindi segnare
-i capi uno per uno produceva una raffica di notifiche — è il motivo per cui il 20
-ago gli abbattimenti erano rimasti senza push del tutto. Il raggruppamento serale
-è il pezzo che mancava.
+Perché è fatto a due tempi: ogni crocetta è una scrittura a sé su `config/main`.
+Mandando la push alla prima direbbe `Capriolo +1` e i capi successivi resterebbero
+fuori; mandandone una per scrittura tornerebbe la raffica che il 20 ago 2026 aveva
+lasciato gli abbattimenti senza push del tutto. Quindi `onConfigUpdate` **accumula
+in silenzio** in `config/avviso_piano` e un tick **al minuto** decide quando è ora.
+
+Le due attese, entrambe in `avvisoPiano.ts` (`QUIETE_MS`, `SILENZIO_MS`):
+- **5 minuti di quiete** dall'ultima crocetta: finché il Rettore segna, il conto
+  cresce e la notifica aspetta. È quello che permette di scrivere `+3` invece di
+  mandare tre notifiche da `+1`.
+- **15 minuti di silenzio** dalla notifica precedente: se riprende subito a
+  segnare i capi si accumulano lo stesso, ma i soci non ricevono due notifiche
+  appiccicate. Misure decise da Michele il 2 set 2026.
+
+Ha sostituito il **riepilogo serale delle 21** (`riepilogoSerale`, rimosso il
+2 set 2026): arrivava fino a 23 ore dopo il fatto, e i capi segnati dopo le 21 —
+cioè una battuta finita a sera, la norma — cadevano sempre nel buco fino al
+giorno dopo. Con `config/riepilogo` sono spariti anche `riepilogo.ts` e le sue
+rules.
 
 - **Nessun post di sistema in bacheca.** Il riquadro "Aggiornamento piano" che il
-  socio ci trova già fa quel mestiere; un post ogni sera seppellirebbe i messaggi
-  del Rettore.
-- **Il titolo non nomina la zona**, nemmeno sul camoscio: il riepilogo abbraccia
-  tutte le categorie della specie, quindi entrambe le subzone. Le notifiche di
-  chiusura la nominano perché parlano di una categoria sola.
-- **Parte anche sulle specie in cui una classe si è appena chiusa.** Prima
-  tacevano, ma la push di chiusura nomina una sola categoria: i capi caduti nelle
-  altre classi non venivano annunciati mai, nemmeno la sera dopo, perché la
-  fotografia avanzava lo stesso. Scelta di Michele del 23 ago 2026 — meglio due
-  notifiche che un capo taciuto. Se rimetti il silenzio, non far avanzare la
-  fotografia di quella specie.
+  socio ci trova già fa quel mestiere; un post per ogni sessione seppellirebbe i
+  messaggi del Rettore.
+- **Il corpo non nomina la zona**, nemmeno sul camoscio: il conto abbraccia tutte
+  le categorie della specie, quindi entrambe le subzone. Le notifiche di chiusura
+  la nominano perché parlano di una categoria sola.
+- **L'ordine delle specie è quello della `BottomNav`** (`ORDINE_SPECIE`:
+  capriolo, cervo, camoscio), non quello in cui il Rettore le ha toccate: il
+  socio ritrova le stesse parole nello stesso posto ogni volta. `SPECIE` in
+  `index.ts` ha un altro ordine perché lì non si legge nulla.
 - **Contano solo gli incrementi**, e una categoria mai vista prima entra in
-  silenzio: stesse due regole di `src/utils/novita.ts`, stessi motivi.
-- **La prima sera dopo il deploy non parte niente**: senza fotografia precedente
-  `capiSegnati` restituisce 0, altrimenti partirebbe un riepilogo di tutta la
-  stagione.
-- La fotografia sta in `config/riepilogo`, **chiuso a ogni client** nelle rules
-  (`if false`): la tocca solo l'Admin SDK. Manometterla vorrebbe dire zittire o
-  far ripartire le notifiche di tutti i soci.
-- La scrittura usa **`mergeFields`, non `merge: true`**: con `merge` Firestore
-  fonde ricorsivamente anche dentro `snapshot`, e una categoria cancellata da
-  `config/main` resterebbe in fotografia per sempre. Ricreandola con lo stesso id
-  (azzeramento di stagione fatto cancellando le classi) i suoi primi capi
-  darebbero delta negativi e non verrebbero annunciati mai.
-- Se la push di una specie fallisce, quella specie **tiene la fotografia di
-  ieri**: i capi rientrano nel riepilogo di domani invece di sparire.
+  silenzio: stesse due regole di `src/utils/novita.ts`, stessi motivi. La seconda
+  è anche quello che tiene muta la **pubblicazione di un piano nuovo**, dove
+  tutte le classi sono nuove di zecca.
+- **Il calo di una classe non mangia i capi di un'altra**: il delta si somma solo
+  quando è positivo, categoria per categoria. Sommando i totali di specie, una
+  correzione in meno su una classe cancellerebbe un capo caduto in un'altra.
+- **Chiudendo una classe partono due notifiche**: quella di chiusura, che nomina
+  la categoria, e questa. Sono due fatti diversi — stessa scelta del 23 ago 2026,
+  meglio due notifiche che un capo taciuto.
+- Il conto sta in `config/avviso_piano`, **chiuso a ogni client** nelle rules
+  (`if false`): lo tocca solo l'Admin SDK. Manometterlo vorrebbe dire far partire
+  una notifica a tutti i soci, o zittirla per sempre.
+- L'accumulo gira **in transazione** e usa `merge: true`, al contrario di quasi
+  tutto il resto: qui la fusione dentro `pending` è proprio quello che serve.
+  Lo svuotamento dopo l'invio usa invece `mergeFields`, perché deve azzerare per
+  intero — con `merge` le specie già annunciate resterebbero in attesa in eterno.
+- Se la push fallisce, **il conto non si svuota e `ultimoInvio` non avanza**: i
+  capi rientrano nel giro dopo invece di sparire.
 
-`riepilogo.test.ts` è escluso dal build Functions via `tsconfig.json`, come
+`avvisoPiano.test.ts` è escluso dal build Functions via `tsconfig.json`, come
 `labels.test.ts`: altrimenti finirebbe in `lib/` e verrebbe deployato.
 
 ## Diario del Rettore — privato davvero, non solo nascosto
@@ -274,8 +290,9 @@ Il cacciatore NON deve mai sapere che esiste una modalità admin.
 - `config/members` — `{ nomi: string[], direttivo: string[] }` (direttivo non più usato)
 - `config/note_rettore` — `{ [specieId]: NotaRettore[] }` — diario privato,
   leggibile SOLO dall'admin (vedi "Diario del Rettore")
-- `config/riepilogo` — `{ ultimoInvio, snapshot }` — memoria del riepilogo
-  serale, chiusa a ogni client (vedi "Riepilogo serale")
+- `config/avviso_piano` — `{ pending, ultimaModifica, ultimoInvio }` — memoria
+  dell'avviso di aggiornamento del piano, chiusa a ogni client (vedi "Avviso di
+  aggiornamento del piano")
 - `config/slots` — `{ [normalizedName]: deviceId }` — slot libero = chiave ASSENTE
   (l'admin libera con `deleteField`; le rules permettono al socio solo di aggiungere
   la propria chiave, mai modificare o rimuovere)

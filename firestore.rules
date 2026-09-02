@@ -97,13 +97,14 @@ service cloud.firestore {
       allow read, write: if isAdmin();
     }
 
-    // config/riepilogo: memoria del riepilogo serale — fotografia dei capi
-    // all'ultimo invio e ora dell'invio. Nessun client la tocca, nemmeno
-    // l'admin: la scrive e la legge solo la Cloud Function, che passa
-    // dall'Admin SDK e bypassa le rules. Vietarla esplicitamente evita che un
-    // domani qualcuno la apra "tanto è innocua": manometterla vorrebbe dire
-    // far ripartire o zittire le notifiche serali di tutti i soci.
-    match /config/riepilogo {
+    // config/avviso_piano: memoria dell'avviso di aggiornamento del piano —
+    // capi in attesa di essere annunciati, ora dell'ultima crocetta, ora
+    // dell'ultimo invio. Nessun client la tocca, nemmeno l'admin: la scrive e
+    // la legge solo la Cloud Function, che passa dall'Admin SDK e bypassa le
+    // rules. Vietarla esplicitamente evita che un domani qualcuno la apra
+    // "tanto è innocua": manometterla vorrebbe dire far partire una notifica a
+    // tutti i soci, o zittirla per sempre.
+    match /config/avviso_piano {
       allow read, write: if false;
     }
 
