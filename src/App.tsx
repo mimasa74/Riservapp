@@ -13,7 +13,7 @@ import {
   NoteRettorePerSpecie, creaNota, aggiungiNota, rimuoviNota, noteDiSpecie,
 } from './utils/noteRettore';
 import { requireOnline } from './utils/requireOnline';
-import { confermaUltimoCapo } from './utils/conferme';
+import { confermaEliminaPost, confermaUltimoCapo } from './utils/conferme';
 import { PHOTO_CACHE } from './constants/cacheNames';
 
 import { AssegnazioniScreen } from './components/AssegnazioniScreen';
@@ -401,6 +401,10 @@ function MainApp() {
   const handleDeletePost = useCallback(async (id: string) => {
     if (!requireOnline()) return;
     const target = posts.find(p => p.id === id);
+    // Il cestino è a 10px dalla data e la cancellazione è definitiva: senza
+    // questa domanda un tocco storto mentre si scorre la bacheca fa sparire un
+    // annuncio a 45 soci. Vedi confermaEliminaPost.
+    if (!window.confirm(confermaEliminaPost(target ?? {}))) return;
     try {
       await deleteDoc(doc(db, 'posts', id));
       if (target && (target.foto_url || target.pdf_url)) {

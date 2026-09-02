@@ -160,6 +160,24 @@ sull'ultimo quadratino. Nelle sospese non dice "quota completata": nessuna quota
 è stata completata. La conferma resta perché i quadratini sono 26px e un tocco
 storto completerebbe il piano senza che nessuno se ne accorga.
 
+## Cancellare un messaggio di bacheca — la conferma non è opzionale
+
+`confermaEliminaPost` (`src/utils/conferme.ts`, chiamata in `handleDeletePost`)
+ferma il cestino delle card in bacheca. Fino al **2 set 2026 non c'era**: il
+cestino sta in cima a ogni card, a 10px dalla data, con 24px di area toccabile,
+e cancellava all'istante. È così che è sparito un annuncio urgente di Michele.
+
+- **Non si recupera niente**: Firestore non tiene copia dei documenti cancellati
+  e in app non c'è cestino. Un "annulla" vero andrebbe dentro il lavoro su
+  "tutto deve essere reversibile", non aggiunto qui di corsa.
+- **Le prime parole del messaggio stanno dentro la domanda**, tagliate a 50
+  caratteri sull'ultima parola intera. Senza, la conferma direbbe solo "questo
+  messaggio" e chi ha toccato per sbaglio non saprebbe quale sta perdendo.
+- La conferma vive in `App.tsx`, non in `PostCard.tsx`: così copre qualunque
+  strada porti alla cancellazione, non solo il bottone di oggi.
+- Resta aperto lo **spostamento del cestino**, oggi appiccicato alla data: la
+  conferma toglie il danno, non l'errore.
+
 ## Avviso di aggiornamento del piano — l'unica push sugli abbattimenti
 
 `avvisoPianoTick` (`functions/src/index.ts` + `avvisoPiano.ts`) manda **una sola
