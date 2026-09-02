@@ -21,3 +21,7 @@ functions/lib/
 
 # Git worktrees
 .worktrees/
+
+# skill di terze parti installate con "npx skills add" — non fanno parte dell app
+.agents/
+skills-lock.json

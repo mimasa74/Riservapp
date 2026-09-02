@@ -13,7 +13,13 @@
       "Bash(npx vite *)",
       "Bash(npx firebase *)",
       "Bash(ls *)",
-      "Bash(grep STORAGE .env*)"
+      "Bash(grep STORAGE .env*)",
+      "mcp__plugin_claude-mem_mcp-search__search",
+      "Bash(cd /tmp/apkx && ls assets/ && echo \"---\" && du -sh assets/* 2>/dev/null | head -20)",
+      "Bash(cd /tmp/apkx && strings AndroidManifest.xml 2>/dev/null | grep -iE \"http|palchet|\\\\.app|\\\\.com|\\\\.it\" | head -20; echo \"---RES---\"; ls res/ | head; echo \"---FONT---\"; find res -iname \"*font*\" | head -20)",
+      "Bash(cd /tmp/apkx && strings resources.arsc | grep -iE \"palchet|https?://\" | sort -u | head -20)",
+      "Bash(\"/c/Program Files/Google/Chrome/Application/chrome.exe\" --headless=new --disable-gpu --hide-scrollbars --window-size=460,1100 --screenshot=shot-specie.png --virtual-time-budget=4000 \"file:///C:/Users/mathi/Desktop/michele/riservapp_v2_restore/scratchpad/redesign/specie.html\")"
     ]
-  }
+  },
+  "outputStyle": "default"
 }
