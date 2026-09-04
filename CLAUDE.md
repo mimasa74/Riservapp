@@ -332,3 +332,26 @@ s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
 ```
 
 ## Stato avanzamento → vedi TASKS.md
+
+## Agent skills
+
+Configurazione delle skill di Matt Pocock, scritta il 4 set 2026. I tre file sotto
+`docs/agents/` dicono alle skill dove sta il lavoro e come si chiamano le cose.
+Le skill di pianificazione (`/wayfinder`, `/to-tickets`, `/implement`, `/triage`)
+**le lancia Michele scrivendo il comando**: sono marcate
+`disable-model-invocation`, non posso invocarle da solo.
+
+### Issue tracker
+
+I lavori grossi si spezzano in file markdown sotto `.scratch/<lavoro>/`, che va
+committato. Niente GitHub Issues, niente `gh`. Vedi `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Le cinque etichette standard, scritte come riga `Status:` dentro i file.
+Vedi `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Contesto singolo, e la fonte è questo file: niente `CONTEXT.md`, niente `docs/adr/`
+finché non servono davvero. Vedi `docs/agents/domain.md`.
