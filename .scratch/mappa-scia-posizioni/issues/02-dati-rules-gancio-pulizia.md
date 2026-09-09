@@ -1,6 +1,6 @@
 # Un documento per punto, rules nuove, gancio senza cancellazione, pulizia alle 00:35
 
-Status: ready-for-agent
+Status: needs-info
 Type: task
 Blocked by: 01
 

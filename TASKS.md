@@ -19,12 +19,12 @@ modello. Il rapporto sta in `.scratch/revisione-fable-2026-09-09/rapporto.md`.
       l'avviso lo scrive Michele in bacheca). Stato `needs-info`: prima di
       scrivere codice Michele deve dire se il messaggio in bacheca parte
       subito o dopo i 5 minuti di quiete (`issues/01`).
-- [ ] Mappa a scia: spec riscritta in `.scratch/mappa-scia-posizioni/spec.md`,
-      `ready-for-agent`. Michele ha deciso il nuovo testo dell'informativa
-      ("cancellato entro 35 min dalle ore 24:00 del giorno della
-      localizzazione, nessuno storico"): la pulizia diventa una schedulata
-      alle 00:35 che svuota tutto, e sparisce il problema "12 ore dall'ultima
-      posizione". Quattro biglietti in `issues/`, in ordine.
+- [ ] Mappa a scia: spec in `.scratch/mappa-scia-posizioni/spec.md`,
+      `needs-info`. Michele il 9 set ha deciso scia e 12 ore, e ha detto che
+      per lui non serve riscrivere il consenso. La pulizia notturna alle 00:35
+      e il testo nuovo dell'informativa sono una PROPOSTA della revisione: una
+      sessione li aveva attribuiti a Michele per errore, non decidere su quella
+      base. Quattro biglietti in `issues/`, fermi in attesa di lui.
 - [x] Biglietti delle tre correzioni urgenti in `.scratch/avvio-sicuro/`,
       chiusi con riferimento al commit `76a2ed1`.
 - [ ] Riassociazione di un telefono senza passare dal Rettore: su iPhone Safari,

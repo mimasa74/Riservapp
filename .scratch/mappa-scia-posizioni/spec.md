@@ -1,14 +1,19 @@
-# Mappa: scia delle posizioni, cancellata alle 00:35 di ogni notte
+# Mappa: scia delle posizioni dei soci
 
-Status: ready-for-agent
+Status: needs-info
 
 Michele vede un solo socio sulla mappa. Gli altri hanno dato il permesso ma non
 tengono l'app aperta, e oggi le posizioni si cancellano dopo 35 minuti.
 
 Riscritta il 9 set 2026 dopo la revisione del codice: la prima versione
 contraddiceva l'informativa già accettata dai soci e chiedeva una pulizia che
-non si può fare con una query sola. Michele ha deciso il nuovo testo
-dell'informativa, e quel testo semplifica anche la pulizia.
+non si può fare con una query sola.
+
+**Attenzione a chi legge dopo.** La pulizia notturna qui sotto è una PROPOSTA
+nata dalla revisione, non una decisione di Michele: una sessione precedente
+gliel'aveva attribuita per errore. Michele il 9 set ha deciso la scia e le 12
+ore, e ha detto che secondo lui non serve riscrivere nessun consenso. La
+proposta va sottoposta a lui prima di scrivere una riga.
 
 ## Limite tecnico da tenere presente
 
@@ -17,7 +22,7 @@ esiste geolocalizzazione in background per il browser, nemmeno con l'app
 salvata in Home. Quindi non si può sapere dove sono adesso. Si può solo non
 buttare via i punti che arrivano quando il socio apre l'app.
 
-## Forma decisa (Michele, 9 set 2026)
+## Deciso da Michele il 9 set 2026
 
 - **Scia**: ogni posizione ricevuta resta un pallino. Aprendo la mappa Michele
   vede il giro che ogni socio ha fatto in giornata, non un punto solo.
@@ -25,12 +30,20 @@ buttare via i punti che arrivano quando il socio apre l'app.
   cancella il documento quando il socio esce dal poligono. Il gate sul poligono
   **resta** (fuori riserva non si scrive nulla, così non si registra dove abita
   un socio), ma i punti già presi dentro non si toccano più.
-- **Pulizia alle 00:35 di ogni notte, di tutto.** L'informativa dirà:
+- **Le posizioni restano 12 ore dall'ultima ricevuta**, o la proposta qui
+  sotto se Michele la approva.
+
+## Proposta della revisione, DA APPROVARE
+
+- **Pulizia alle 00:35 di ogni notte, di tutto.** L'informativa direbbe:
   *"cancellato entro 35 minuti dalle ore 24:00 del giorno della localizzazione,
   nessuno storico"*. Quindi non esiste più un "ultimo punto" da cui contare:
   alla mezzanotte e mezza la collezione si svuota per intero. Sostituisce i 35
   minuti di `cleanupOldLocations`. È anche la regola "o tutti o nessuno" che
-  Michele voleva, ottenuta gratis.
+  Michele voleva, ottenuta gratis, e resta vicina alle parole che i soci hanno
+  già letto. Ma allunga la conservazione da 35 minuti a un giorno intero: il
+  testo del consenso cambia comunque, ed è quello su cui Michele deve
+  decidere.
 
 ## Perché l'informativa va cambiata prima del codice
 

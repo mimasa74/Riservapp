@@ -1,6 +1,6 @@
 # Come si disegna la scia: da guardare con Michele
 
-Status: ready-for-human
+Status: needs-info
 Type: prototype
 Blocked by: 02
 

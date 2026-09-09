@@ -1,10 +1,12 @@
 # Informativa: da "35 minuti dalla raccolta" a "entro le 00:35 del giorno dopo"
 
-Status: ready-for-agent
+Status: needs-info
 Type: task
 
 In `src/components/OnboardingScreen.tsx`, dentro `PRIVACY_TEXT`, sostituire le
-due promesse sui 35 minuti con il testo deciso da Michele il 9 set 2026:
+due promesse sui 35 minuti. Il testo qui sotto è una PROPOSTA della revisione,
+non un testo deciso da Michele: una sessione precedente gliel'ha attribuito per
+errore. Va sottoposto a lui prima di toccare il file.
 
 > cancellato entro 35 minuti dalle ore 24:00 del giorno della localizzazione,
 > nessuno storico
