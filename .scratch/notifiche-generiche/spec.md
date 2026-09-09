@@ -1,38 +1,99 @@
 # Notifica generica "AGGIORNAMENTO BACHECA"
 
-Status: ready-for-agent
+Status: needs-info
 
 Deciso da Michele il 9 set 2026, dopo aver constatato che le notifiche di
 categoria arrivano ma non lo spronano a nulla: le vuole **poche, sempre
 visibili, e volutamente povere di contenuto**, così il socio incuriosito apre
 l'app invece di leggere il titolo e rimettere il telefono in tasca.
 
+Rivista il 9 set 2026 sera dopo la revisione del codice: c'è **una domanda da
+chiudere con Michele** prima di scrivere codice (biglietto 01), e quattro cose
+che la prima versione non aveva visto.
+
 ## Forma decisa
 
 - Titolo `AGGIORNAMENTO BACHECA`, corpo unico e generico, per **ogni** evento:
   nuovo post del Rettore, categoria sospesa, aggiornamento del piano.
-- **Unica eccezione: la chiusura di una classe.** Resta come oggi, con specie
-  (più zona sul camoscio) nel titolo e categoria + stato nel corpo. È la sola
-  notifica che dice al socio di non sparare: deve leggersi sulla schermata
-  bloccata senza aprire niente. Scelta di Michele, 9 set 2026.
-- Restano i 5 minuti di quiete di `avvisoPiano.ts`. Non si manda subito.
+- **Nessuna eccezione, nemmeno la chiusura di una classe** (decisione più
+  recente di Michele, 9 set 2026 sera, registrata in TASKS.md): la chiusura
+  non manda più la notifica con specie e categoria. L'avviso "non sparare" lo
+  scrive Michele stesso come messaggio in bacheca, e quel messaggio fa partire
+  la generica come ogni altro post. Una versione precedente di questa spec
+  teneva la chiusura come unica notifica parlante: superata.
+- Restano i 5 minuti di quiete di `avvisoPiano.ts` per i capi e le sospensioni.
 
-## Conseguenze sul codice
+Conseguenza da tenere a mente: il socio che ignora la generica non sa più
+nemmeno che una classe è chiusa. Il post in bacheca e la riga CHIUSI nel piano
+sono le sole fonti. Se il messaggio del Rettore aspetta la quiete (strada B
+sotto), il "non sparare" arriva con 5 minuti di ritardo: è il motivo per cui
+la domanda del biglietto 01 va chiusa prima di scrivere codice.
+
+## La domanda aperta: il messaggio in bacheca parte subito o dopo la quiete?
+
+La prima versione diceva due cose che non stanno insieme: "non si manda subito"
+per ogni evento, e "la priorità alta resta sui post URGENTE". Un URGENTE
+ritardato di 5 minuti non è urgente. E se il post parte subito mentre la
+sospensione aspetta la quiete, un Rettore che scrive un messaggio e sospende
+una classe nello stesso quarto d'ora fa arrivare **due** notifiche identiche,
+il contrario dello scopo.
+
+Le due strade, da far scegliere a Michele:
+- **A. Il post parte subito**, sospensioni e capi aspettano la quiete. Più
+  notifiche nei giorni in cui succede tutto insieme, ma l'URGENTE resta urgente.
+- **B. Tutto aspetta la quiete**, URGENTE compreso. Una notifica sola per
+  sessione di lavoro, ma "urgente" vuol dire "entro cinque minuti".
+
+## Conseguenze sul codice (valide in entrambi i casi)
 
 - `onPostCreate`: un solo testo, via il preview di 80 caratteri e i tre rami
   per tipo. La priorità `high` resta sui post `alert`.
 - `onConfigUpdate`, ramo **sospeso**: non manda più una push per ogni
-  transizione. Segna che c'è qualcosa da annunciare in `config/avviso_piano` e
-  lascia partire la notifica generica col resto. Il post di sistema in bacheca
-  resta: è il fallback per chi non riceve le push.
-- `onConfigUpdate`, ramo **chiuso**: invariato.
-- `avvisoPianoTick`: manda il testo generico. Il conto per specie
-  (`pending`) **non si butta**: continua a decidere *se* notificare, con le sue
-  due regole (contano solo gli incrementi, categoria mai vista prima entra in
-  silenzio). Serve anche a rimettere `Capriolo +2` nel corpo con una riga sola,
-  se Michele cambia idea.
-- Serve un secondo motivo di invio oltre a `pending`: le sospensioni non sono
-  capi. Campo `altro: boolean` nello stesso documento.
+  transizione. Segna che c'è qualcosa da annunciare in `config/avviso_piano`
+  con un campo `altro: true` e aggiorna `ultimaModifica`, così la quiete
+  riparte. Il post di sistema in bacheca resta: è il fallback per chi non
+  riceve le push.
+- `onConfigUpdate`, ramo **chiuso**: come il ramo sospeso — niente push
+  propria, segna `altro: true` e lascia il post di sistema in bacheca come
+  fallback. `titoloNotifica`/`corpoNotifica` in `labels.ts` restano solo se
+  servono al post di sistema; altrimenti sono codice morto da togliere con i
+  loro test.
+- `avvisoPianoTick`: manda il testo generico quando c'è `pending` **oppure**
+  `altro`. Il conto per specie (`pending`) **non si butta**: continua a
+  decidere *se* notificare, con le sue due regole (contano solo gli incrementi,
+  categoria mai vista prima entra in silenzio). Serve anche a rimettere
+  `Capriolo +2` nel corpo con una riga sola, se Michele cambia idea.
+
+## Quattro cose che la prima versione non aveva visto
+
+1. **Lo svuotamento perde le crocette arrivate durante l'invio.** Oggi il tick
+   legge `pending`, manda la push (uno o due secondi), poi azzera con un `set`
+   fuori transazione: una crocetta accumulata in quella finestra sparisce.
+   CLAUDE.md promette il contrario. Lo svuotamento va in transazione, e deve
+   azzerare anche `altro` (aggiungerlo ai `mergeFields`), altrimenti resta
+   `true` per sempre e ogni quarto d'ora parte una notifica vuota.
+2. **L'ora della notifica è quella dell'invio, non dell'evento.**
+   `sendPushToAll` mette `ts: Date.now()`. Con la quiete ogni notifica generica
+   mostra un'ora falsa di almeno 5 minuti: va contro "ts è l'istante
+   dell'evento" di CLAUDE.md. Passare `ultimaModifica` come `ts`.
+3. **Notifiche uguali si impilano.** Il service worker non passa `tag` a
+   `showNotification`: tre "AGGIORNAMENTO BACHECA" identiche diventano tre righe
+   uguali sulla schermata bloccata, che sembrano un errore. Con `tag` e
+   `renotify` il telefono ne tiene una e la fa vibrare di nuovo. Da mostrare a
+   Michele sul telefono, perché "sempre visibili" potrebbe volere anche il
+   contrario.
+4. **La quiete si allunga con le crocette.** Una sospensione fatta all'inizio
+   di venti minuti di crocette arriva dopo venticinque, mentre oggi è
+   immediata. Michele ha accettato di perdere il contenuto; va detto che si
+   perde anche la prontezza.
+
+## Da rifare insieme al codice
+
+- `TITOLO_AVVISO` in `avvisoPiano.ts` e i test in `avvisoPiano.test.ts` e
+  `labels.test.ts` che asseriscono i testi.
+- `CLAUDE.md`, sezione "Avviso di aggiornamento del piano": "una sola per
+  sessione, col conto per specie" non sarà più vero; e la sezione "Testo delle
+  notifiche di categoria" vale solo per la chiusura.
 
 ## Cosa si perde, e va detto
 

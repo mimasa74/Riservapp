@@ -14,12 +14,19 @@ modello. Il rapporto sta in `.scratch/revisione-fable-2026-09-09/rapporto.md`.
 - [x] Il socio rientra col suo stesso telefono: lo slot già suo non si riscrive,
       e "Errore di connessione" non copre più un permission-denied
 - [x] deviceId letto una volta sola al montaggio, non a ogni render
-- [ ] Notifiche: da riordinare secondo la decisione di Michele del 9 set — la
-      chiusura di una classe non manda più niente, l'avviso lo scrive lui in
-      bacheca. Spec in `.scratch/notifiche-generiche/spec.md`, da riscrivere.
-- [ ] Mappa a scia, 12 ore. Spec in `.scratch/mappa-scia-posizioni/spec.md`:
-      NON pronta, vedi i punti 15-19 del rapporto (informativa, rules,
-      pulizia "o tutti o nessuno").
+- [ ] Notifiche: spec riscritta in `.scratch/notifiche-generiche/spec.md`,
+      allineata alla decisione del 9 set (nemmeno la chiusura manda più niente,
+      l'avviso lo scrive Michele in bacheca). Stato `needs-info`: prima di
+      scrivere codice Michele deve dire se il messaggio in bacheca parte
+      subito o dopo i 5 minuti di quiete (`issues/01`).
+- [ ] Mappa a scia: spec riscritta in `.scratch/mappa-scia-posizioni/spec.md`,
+      `ready-for-agent`. Michele ha deciso il nuovo testo dell'informativa
+      ("cancellato entro 35 min dalle ore 24:00 del giorno della
+      localizzazione, nessuno storico"): la pulizia diventa una schedulata
+      alle 00:35 che svuota tutto, e sparisce il problema "12 ore dall'ultima
+      posizione". Quattro biglietti in `issues/`, in ordine.
+- [x] Biglietti delle tre correzioni urgenti in `.scratch/avvio-sicuro/`,
+      chiusi con riferimento al commit `76a2ed1`.
 - [ ] Riassociazione di un telefono senza passare dal Rettore: su iPhone Safari,
       icona in Home e browser di WhatsApp sono tre memorie separate, quindi
       succederà di nuovo.
