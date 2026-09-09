@@ -41,13 +41,29 @@ export const HunterNameModal = ({ members, slots, deviceId, onConfirm }: HunterN
       return;
     }
 
+    // Lo slot è già di questo telefono: si rientra senza scrivere niente.
+    // Riscrivere lo stesso valore sembrerebbe innocuo, ma le rules accettano
+    // solo l'AGGIUNTA di una chiave nuova (niente furto di slot occupati):
+    // una riscrittura identica non aggiunge nulla e viene rifiutata. Senza
+    // questo ramo il socio leggeva "Errore di connessione" per sempre e non
+    // rientrava più col suo stesso telefono.
+    if (slotOwner === deviceId) {
+      onConfirm(match);
+      return;
+    }
+
     // Occupa lo slot
     setLoading(true);
     try {
       await updateDoc(doc(db, 'config', 'slots'), { [norm]: deviceId });
       onConfirm(match);
-    } catch {
-      setError('Errore di connessione. Riprova.');
+    } catch (e) {
+      // permission-denied qui vuol dire che un altro telefono ha rivendicato
+      // lo stesso nome nel frattempo: non è la rete, e "Riprova" non serve.
+      const code = (e as { code?: string }).code;
+      setError(code === 'permission-denied'
+        ? 'Nome già in uso da un altro dispositivo. Contatta il Rettore.'
+        : 'Errore di connessione. Riprova.');
     } finally {
       setLoading(false);
     }

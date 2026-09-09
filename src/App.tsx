@@ -57,7 +57,11 @@ function getOrCreateDeviceId(): string {
 }
 
 function MainApp() {
-  const deviceId = getOrCreateDeviceId()
+  // Letto una volta sola al montaggio, come il nome qui sotto. Prima girava a
+  // ogni render: una singola lettura vuota di localStorage — succede su Safari
+  // quando la pagina torna dal background — scriveva un id nuovo e il socio
+  // diventava per sempre "un altro dispositivo", col nome ancora in memoria.
+  const [deviceId] = useState(getOrCreateDeviceId)
   const { isAdmin } = useAuth();
   const [data, setData] = useState<AppData>((fallbackData as unknown) as AppData);
   const [regolamentoUrl, setRegolamentoUrl] = useState<string | null>(null);
@@ -114,6 +118,9 @@ function MainApp() {
   useEffect(() => {
     const docRef = doc(db, 'config', 'main');
     const unsubscribe = onSnapshot(docRef, { includeMetadataChanges: true }, snapshot => {
+      // Letta qui e non nel ramo else: exists() restringe il tipo dello
+      // snapshot e nel ramo else `metadata` non sarebbe più raggiungibile.
+      const fromCache = snapshot.metadata.fromCache;
       if (snapshot.exists()) {
         const raw = snapshot.data();
         setRegolamentoUrl(raw.regolamento_url ?? null);
@@ -121,6 +128,12 @@ function MainApp() {
         setData(specieData as AppData);
         if (!snapshot.metadata.fromCache && !snapshot.metadata.hasPendingWrites) { markSynced(); setConfigSynced(true); }
       } else {
+        // Un documento "assente" può essere solo un buco di cache: fromCache
+        // vuol dire che il server non ha ancora risposto. Riscriverlo qui
+        // sostituirebbe il piano vero con quello finto di data.json, e
+        // onConfigUpdate leggerebbe transizioni di stato inesistenti → raffica
+        // di push di chiusura a tutti i soci. Si aspetta il server.
+        if (fromCache) return;
         // Documento non esiste — inizializza con i dati di default
         if (isAdminRef.current) setDoc(docRef, fallbackData as unknown as Record<string, unknown>).catch(console.error);
       }
@@ -140,11 +153,17 @@ function MainApp() {
   useEffect(() => {
     const docRef = doc(db, 'config', 'members');
     return onSnapshot(docRef, { includeMetadataChanges: true }, snapshot => {
+      const fromCache = snapshot.metadata.fromCache;
       if (snapshot.exists()) {
         const d = snapshot.data();
         setMembers({ nomi: d.nomi ?? [], direttivo: d.direttivo ?? [] });
         if (!snapshot.metadata.fromCache) { setMembersFromServer(true); markSynced(); }
       } else {
+        // Buco di cache, non un documento vuoto: senza questa guardia l'admin
+        // riscriverebbe la lista soci a zero e nessuno passerebbe più la
+        // validazione del nome. E `membersFromServer` non deve mai diventare
+        // true su un dato che il server non ha confermato.
+        if (fromCache) return;
         if (isAdminRef.current) setDoc(docRef, { nomi: [], direttivo: [] }).catch(console.error);
         setMembers({ nomi: [], direttivo: [] });
         setMembersFromServer(true);
@@ -155,10 +174,15 @@ function MainApp() {
   useEffect(() => {
     const docRef = doc(db, 'config', 'slots');
     return onSnapshot(docRef, { includeMetadataChanges: true }, snapshot => {
+      const fromCache = snapshot.metadata.fromCache;
       if (snapshot.exists()) {
         setSlots(snapshot.data() as Slots);
         if (!snapshot.metadata.fromCache) { setSlotsFromServer(true); markSynced(); }
       } else {
+        // Buco di cache, non un documento vuoto: riscrivendolo l'admin
+        // libererebbe il posto di tutti i 45 soci in un colpo, e ognuno si
+        // ritroverebbe la schermata BENVENUTO alla prossima apertura.
+        if (fromCache) return;
         if (isAdminRef.current) setDoc(docRef, {}).catch(console.error);
         setSlots({});
         setSlotsFromServer(true);

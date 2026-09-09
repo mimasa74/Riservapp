@@ -6,6 +6,24 @@
 Scrivi a Claude Code:
 "Leggi CLAUDE.md e TASKS.md e riprendi dal primo task non completato."
 
+### ► IN CORSO (9 set 2026)
+Revisione dell'app chiesta da Michele, revisionata a sua volta da un secondo
+modello. Il rapporto sta in `.scratch/revisione-fable-2026-09-09/rapporto.md`.
+- [x] Guardia `fromCache` sui tre listener di config: l'admin non riscrive più
+      soci, slot e piano su un buco di cache (era il bug più grave trovato)
+- [x] Il socio rientra col suo stesso telefono: lo slot già suo non si riscrive,
+      e "Errore di connessione" non copre più un permission-denied
+- [x] deviceId letto una volta sola al montaggio, non a ogni render
+- [ ] Notifiche: da riordinare secondo la decisione di Michele del 9 set — la
+      chiusura di una classe non manda più niente, l'avviso lo scrive lui in
+      bacheca. Spec in `.scratch/notifiche-generiche/spec.md`, da riscrivere.
+- [ ] Mappa a scia, 12 ore. Spec in `.scratch/mappa-scia-posizioni/spec.md`:
+      NON pronta, vedi i punti 15-19 del rapporto (informativa, rules,
+      pulizia "o tutti o nessuno").
+- [ ] Riassociazione di un telefono senza passare dal Rettore: su iPhone Safari,
+      icona in Home e browser di WhatsApp sono tre memorie separate, quindi
+      succederà di nuovo.
+
 ### ► PROSSIMA SESSIONE: DESIGN E USABILITÀ
 L'app **funziona**, la parte tecnica è a posto. Il prossimo lavoro è di
 design, non di funzionalità. Michele sta raccogliendo note usandola: partire
@@ -259,3 +277,11 @@ riprogettare, sono la fonte migliore che abbiamo.
 <!--   rules al solo admin, non un campo nascosto in config/main. 99 test.       -->
 <!--   Chiarito da Michele: i riquadri servono a CORREGGERE un abbattimento,     -->
 <!--   l'ingranaggio a MODIFICARE il piano. Sono due gesti distinti.             -->
+<!-- 2026-09-09: Revisione su richiesta di Michele, con un secondo modello a     -->
+<!--   rivedere progetto e codice. Verificato che le notifiche di aggiornamento   -->
+<!--   piano funzionano (log: 28 token, 0 falliti) e che i 5 minuti di quiete     -->
+<!--   spiegano il "non arriva niente". Il deviceId NON era in sessionStorage:    -->
+<!--   la causa e' Safari che svuota, e su iPhone tre memorie separate per lo     -->
+<!--   stesso indirizzo. Fatte le tre correzioni urgenti (guardia fromCache,      -->
+<!--   rientro col proprio slot, deviceId letto una volta). 142 test verdi.       -->
+<!--   Da deployare: no, deciso con Michele quando il resto e' pronto.            -->
