@@ -36,3 +36,13 @@ Aggiornata il 10 set 2026.
 
 - Deploy: si fa solo con l'ok di Michele, e non e' ancora stato dato. In
   produzione manca tutto il lavoro dal commit `76a2ed1` in poi.
+
+## Da fare: ripartire costa troppo
+
+Segnalato da Michele il 10 set 2026: riprendere il lavoro in una sessione nuova
+consuma circa 84.000 token prima ancora di scrivere una riga. Le voci grosse:
+`CLAUDE.md` (2.900 parole, letto a ogni avvio), `TASKS.md` (2.900 parole), la
+lista delle osservazioni stampata all'avvio, le skill e i server dichiarati, e
+la skill di checkpoint che inietta migliaia di token solo per rileggere un file.
+Da rivedere: cosa resta in `CLAUDE.md` e cosa si sposta sotto `docs/`, e un file
+di ripresa corto da leggere per primo. Chiesto un parere a Fable.
