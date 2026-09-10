@@ -44,11 +44,14 @@ interface BachecaScreenProps {
   onMarkRead: (postIds: string[]) => void;
   onOpenSettings: () => void;
   onOpenMappa: () => void;
+  /** Alzata dall'ultimo capo di una classe: apre il foglio già su URGENTE. */
+  apriAvvisoUrgente?: boolean;
+  onAvvisoUrgenteAperto?: () => void;
   regolamentoUrl?: string | null;
   onUpdateRegolamento?: (url: string) => void;
 }
 
-export const BachecaScreen = ({ posts, avvisiNovita = [], onApriSpecie, hunterName, onEnableNotifications, onAddPost, onDeletePost, onMarkRead, onOpenSettings, onOpenMappa, regolamentoUrl, onUpdateRegolamento }: BachecaScreenProps) => {
+export const BachecaScreen = ({ posts, avvisiNovita = [], onApriSpecie, hunterName, onEnableNotifications, onAddPost, onDeletePost, onMarkRead, onOpenSettings, onOpenMappa, apriAvvisoUrgente = false, onAvvisoUrgenteAperto, regolamentoUrl, onUpdateRegolamento }: BachecaScreenProps) => {
   const { isAdmin, login, logout } = useAuth();
   const [showForm, setShowForm] = useState(false);
   // Stato permesso notifiche — 'unsupported' = niente API Notification
@@ -100,6 +103,19 @@ export const BachecaScreen = ({ posts, avvisiNovita = [], onApriSpecie, hunterNa
   const [formTipo, setFormTipo] = useState<Post['tipo']>('normale');
   const [formTesto, setFormTesto] = useState('');
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Ultimo capo di una classe: il foglio si apre già su URGENTE e resta vuoto —
+  // l'annuncio lo scrive il Rettore. Il testo eventualmente già digitato non si
+  // butta via. La bandierina si abbassa subito, altrimenti il foglio si
+  // riaprirebbe da solo dopo un "Annulla".
+  React.useEffect(() => {
+    if (!apriAvvisoUrgente) return;
+    if (isAdmin) {
+      setFormTipo('alert');
+      setShowForm(true);
+    }
+    onAvvisoUrgenteAperto?.();
+  }, [apriAvvisoUrgente, isAdmin]);
 
   const handlePointerDown = (e: React.PointerEvent) => {
     e.stopPropagation();

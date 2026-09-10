@@ -105,6 +105,9 @@ function MainApp() {
   const [showSettings, setShowSettings] = useState(false);
   const [showMappa, setShowMappa] = useState(false);
   const [selectedSubZone, setSelectedSubZone] = useState('campa');
+  // Alzata quando cade l'ultimo capo di una classe: porta il Rettore in bacheca
+  // col foglio del messaggio urgente già aperto. Il testo lo scrive lui.
+  const [apriAvvisoUrgente, setApriAvvisoUrgente] = useState(false);
 
   const currentSpecieId: string =
     ALL_SCREENS[screenIndex] === 'bacheca' ? 'capriolo' : ALL_SCREENS[screenIndex];
@@ -316,7 +319,8 @@ function MainApp() {
     // NON manda piu' alcuna notifica — quella parte solo alla chiusura della
     // categoria — quindi il messaggio non deve piu' prometterla.
     // Il testo cambia nelle classi sospese: vedi confermaUltimoCapo.
-    if (newCount === cat.totale && cat.abbattuti !== cat.totale) {
+    const ultimoCapo = newCount === cat.totale && cat.abbattuti !== cat.totale;
+    if (ultimoCapo) {
       const ok = window.confirm(confermaUltimoCapo(cat));
       if (!ok) return;
     }
@@ -338,6 +342,14 @@ function MainApp() {
         ),
         [`${currentSpecieId}.lastUpdated`]: formatTimestamp(),
       });
+      // Con l'ultimo capo la classe è da chiudere, e fra il capo caduto e il
+      // "non sparare più" ci sta tutto il tempo per sbagliare: apri subito il
+      // foglio dell'avviso. Solo se il capo è finito davvero su Firestore, e non
+      // in una classe sospesa, dove non si chiude niente.
+      if (ultimoCapo && cat.stato !== 'sospeso') {
+        setApriAvvisoUrgente(true);
+        setScreenIndex(0);
+      }
     } catch (e) {
       console.error(e);
     }
@@ -598,6 +610,8 @@ function MainApp() {
             onMarkRead={handleMarkRead}
             onOpenSettings={() => setShowSettings(true)}
             onOpenMappa={() => setShowMappa(true)}
+            apriAvvisoUrgente={apriAvvisoUrgente}
+            onAvvisoUrgenteAperto={() => setApriAvvisoUrgente(false)}
             regolamentoUrl={regolamentoUrl}
             onUpdateRegolamento={handleUpdateRegolamento}
           />
