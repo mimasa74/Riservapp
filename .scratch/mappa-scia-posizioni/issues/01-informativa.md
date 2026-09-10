@@ -1,6 +1,6 @@
 # Informativa: da "35 minuti dalla raccolta" a "entro le 00:35 del giorno dopo"
 
-Status: needs-info
+Status: resolved
 Type: task
 
 In `src/components/OnboardingScreen.tsx`, dentro `PRIVACY_TEXT`, sostituire le
@@ -31,3 +31,32 @@ conservazione è più lunga. Far rivedere l'informativa una volta a tutti (il
 Rettore ha già il tasto "↺ Onb." per singolo socio in Impostazioni, ma non uno
 per tutti) è una scelta di Michele: da segnare in un biglietto `needs-info`
 separato se la vuole.
+
+## Answer
+
+Tre passaggi riscritti, nient'altro toccato.
+
+Sezione 4, primo paragrafo:
+> I dati di geolocalizzazione sono utilizzati solo per il tempo strettamente
+> necessario a fornire le funzionalità di sicurezza e coordinamento delle
+> battute e vengono cancellati automaticamente entro 35 minuti dalle ore 24:00
+> del giorno della localizzazione. Nel corso della giornata il Rettore può
+> vedere sulla mappa i punti rilevati all'interno della riserva; dopo la
+> cancellazione non resta alcuno storico dei tuoi spostamenti.
+
+La frase sul Rettore non era nella proposta ed è stata aggiunta apposta: la
+scia della giornata **è** uno storico della giornata, e un'informativa che
+dicesse solo "nessuno storico" ripeterebbe l'errore corretto il 17 ago 2026.
+
+Sezione 4, secondo paragrafo: "archivio storico dettagliato" → "archivio storico
+delle tue posizioni **oltre la giornata in cui sono state rilevate**", e via
+"in tempo reale", che con la scia non descrive più quello che succede.
+
+Sezione 8, frase di consenso: "entro circa 35 minuti dalla raccolta" → "entro
+35 minuti dalle ore 24:00 del giorno della localizzazione e senza conservazione
+di alcuno storico oltre tale giornata".
+
+Michele ha detto che non serve far rivedere l'informativa ai soci già dentro.
+Resta scritto qui perché la conservazione si allunga da 35 minuti a un giorno:
+se un domani qualcuno chiede quando è cambiato il testo, la risposta è questa
+riga.

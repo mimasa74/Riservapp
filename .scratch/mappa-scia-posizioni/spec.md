@@ -1,6 +1,6 @@
 # Mappa: scia delle posizioni dei soci
 
-Status: needs-info
+Status: ready-for-agent
 
 Michele vede un solo socio sulla mappa. Gli altri hanno dato il permesso ma non
 tengono l'app aperta, e oggi le posizioni si cancellano dopo 35 minuti.
@@ -9,11 +9,11 @@ Riscritta il 9 set 2026 dopo la revisione del codice: la prima versione
 contraddiceva l'informativa già accettata dai soci e chiedeva una pulizia che
 non si può fare con una query sola.
 
-**Attenzione a chi legge dopo.** La pulizia notturna qui sotto è una PROPOSTA
-nata dalla revisione, non una decisione di Michele: una sessione precedente
-gliel'aveva attribuita per errore. Michele il 9 set ha deciso la scia e le 12
-ore, e ha detto che secondo lui non serve riscrivere nessun consenso. La
-proposta va sottoposta a lui prima di scrivere una riga.
+**Approvata da Michele il 10 set 2026**, pulizia notturna e testo
+dell'informativa compresi. Le 12 ore decise il 9 set sono superate: le posizioni
+vivono fino alle 00:35 della notte successiva, non 12 ore dall'ultimo punto.
+Michele aveva detto che secondo lui non serve far rivedere il consenso ai soci
+già dentro: quella resta la sua posizione, il biglietto 01 la registra.
 
 ## Limite tecnico da tenere presente
 
@@ -30,10 +30,10 @@ buttare via i punti che arrivano quando il socio apre l'app.
   cancella il documento quando il socio esce dal poligono. Il gate sul poligono
   **resta** (fuori riserva non si scrive nulla, così non si registra dove abita
   un socio), ma i punti già presi dentro non si toccano più.
-- **Le posizioni restano 12 ore dall'ultima ricevuta**, o la proposta qui
-  sotto se Michele la approva.
+- **Le posizioni restano 12 ore dall'ultima ricevuta** — superato il 10 set
+  dalla pulizia notturna qui sotto, che Michele ha approvato.
 
-## Proposta della revisione, DA APPROVARE
+## Pulizia notturna, APPROVATA il 10 set 2026
 
 - **Pulizia alle 00:35 di ogni notte, di tutto.** L'informativa direbbe:
   *"cancellato entro 35 minuti dalle ore 24:00 del giorno della localizzazione,
@@ -41,9 +41,9 @@ buttare via i punti che arrivano quando il socio apre l'app.
   alla mezzanotte e mezza la collezione si svuota per intero. Sostituisce i 35
   minuti di `cleanupOldLocations`. È anche la regola "o tutti o nessuno" che
   Michele voleva, ottenuta gratis, e resta vicina alle parole che i soci hanno
-  già letto. Ma allunga la conservazione da 35 minuti a un giorno intero: il
-  testo del consenso cambia comunque, ed è quello su cui Michele deve
-  decidere.
+  già letto. Allunga però la conservazione da 35 minuti a un giorno intero: per
+  questo cambia anche il testo del consenso, riscritto il 10 set nel
+  biglietto 01.
 
 ## Perché l'informativa va cambiata prima del codice
 
@@ -53,8 +53,8 @@ storico" e che la riserva "non conserva un archivio storico dettagliato". La
 scia per una giornata è uno storico della giornata. Il 17 ago 2026 quel testo
 era stato corretto apposta per dire la verità: non si torna indietro.
 
-Va sostituito il testo nella sezione 4 dell'informativa e nella frase di
-consenso finale (sezione 8), con le parole decise da Michele. Vedi biglietto 01.
+Fatto il 10 set 2026: sezione 4 e frase di consenso della sezione 8 riscritte.
+Le parole esatte stanno nel biglietto 01.
 
 ## Struttura dei dati
 

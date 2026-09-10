@@ -1,15 +1,16 @@
 # Notifica generica "AGGIORNAMENTO BACHECA"
 
-Status: needs-info
+Status: ready-for-agent
 
 Deciso da Michele il 9 set 2026, dopo aver constatato che le notifiche di
 categoria arrivano ma non lo spronano a nulla: le vuole **poche, sempre
 visibili, e volutamente povere di contenuto**, così il socio incuriosito apre
 l'app invece di leggere il titolo e rimettere il telefono in tasca.
 
-Rivista il 9 set 2026 sera dopo la revisione del codice: c'è **una domanda da
-chiudere con Michele** prima di scrivere codice (biglietto 01), e quattro cose
-che la prima versione non aveva visto.
+Rivista il 9 set 2026 sera dopo la revisione del codice. La domanda del
+biglietto 01 è chiusa: **il messaggio del Rettore parte subito** (strada A,
+decisa da Michele il 10 set 2026). Restano quattro cose che la prima versione
+non aveva visto, e un'idea nuova di Michele nel biglietto 02.
 
 ## Forma decisa
 
@@ -25,11 +26,29 @@ che la prima versione non aveva visto.
 
 Conseguenza da tenere a mente: il socio che ignora la generica non sa più
 nemmeno che una classe è chiusa. Il post in bacheca e la riga CHIUSI nel piano
-sono le sole fonti. Se il messaggio del Rettore aspetta la quiete (strada B
-sotto), il "non sparare" arriva con 5 minuti di ritardo: è il motivo per cui
-la domanda del biglietto 01 va chiusa prima di scrivere codice.
+sono le sole fonti. Il messaggio del Rettore però parte subito, quindi il
+"non sparare" non arriva in ritardo: vedi qui sotto.
 
-## La domanda aperta: il messaggio in bacheca parte subito o dopo la quiete?
+## Chiusa il 10 set 2026: il messaggio in bacheca parte subito
+
+**Strada A.** Il messaggio del Rettore fa partire la notifica nell'istante in
+cui lo pubblica. Capi e sospensioni continuano ad aspettare i 5 minuti di
+quiete. Un "non sparare" che arriva cinque minuti dopo non è un "non sparare".
+
+E la doppia notifica sparisce da sola, perché Michele ha aggiunto una regola:
+**una notifica generica appena partita azzera il conto in attesa.** Il post ha
+già avvisato tutti; i capi che il Rettore stava segnando erano il motivo per
+cui stava scrivendo. In pratica `onPostCreate`, dopo aver mandato la push,
+svuota `pending` e `altro` in `config/avviso_piano` e porta `ultimoInvio` a
+adesso. Parole di Michele: *"l'aggiornamento degli ultimi abbattimenti
+disponibili sarebbe superfluo perché anticipato dal mio messaggio."*
+
+Resta il caso opposto, e va accettato: se il Rettore scrive il messaggio
+**prima** di crociare l'ultimo capo, il conto riparte da zero dopo il post e
+cinque minuti dopo arriva una seconda generica. Il biglietto 02 è l'idea di
+Michele per non trovarsi mai in quell'ordine.
+
+## Com'era scritta la domanda, prima che la chiudesse
 
 La prima versione diceva due cose che non stanno insieme: "non si manda subito"
 per ogni evento, e "la priorità alta resta sui post URGENTE". Un URGENTE
@@ -44,10 +63,11 @@ Le due strade, da far scegliere a Michele:
 - **B. Tutto aspetta la quiete**, URGENTE compreso. Una notifica sola per
   sessione di lavoro, ma "urgente" vuol dire "entro cinque minuti".
 
-## Conseguenze sul codice (valide in entrambi i casi)
+## Conseguenze sul codice
 
 - `onPostCreate`: un solo testo, via il preview di 80 caratteri e i tre rami
-  per tipo. La priorità `high` resta sui post `alert`.
+  per tipo. La priorità `high` resta sui post `alert`. Manda **subito**, e
+  subito dopo azzera `pending` e `altro` e porta `ultimoInvio` a adesso.
 - `onConfigUpdate`, ramo **sospeso**: non manda più una push per ogni
   transizione. Segna che c'è qualcosa da annunciare in `config/avviso_piano`
   con un campo `altro: true` e aggiorna `ultimaModifica`, così la quiete
