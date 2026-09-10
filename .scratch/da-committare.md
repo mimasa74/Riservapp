@@ -12,16 +12,17 @@ Aggiornata il 10 set 2026.
   con le mani da Michele. Biglietto:
   `.scratch/notifiche-generiche/issues/02-tasto-avviso-ultimo-capo.md`.
 
+- Dati della mappa (biglietto `mappa-scia-posizioni/02`): rules, gancio,
+  pulizia, raggruppamento per telefono. Fatto e committato il 10 set sera, da
+  provare.
+
 ## Da fare, poi da committare
 
-1. **Mappa a scia, i dati** (biglietto `mappa-scia-posizioni/02`):
-   `firestore.rules` (il socio puo' solo aggiungere una posizione),
-   `src/hooks/useGeolocation.ts` (un documento per punto, niente cancellazione,
-   corsa col poligono), `functions/src/index.ts` (pulizia alle 00:35, regione
-   `europe-west12`), `src/components/MappaScreen.tsx` (raggruppa per telefono).
-2. **Disegno della scia** (biglietto `03`): anteprima con dati finti, Michele
-   guarda e decide pallini, linea ed etichette. Poi il codice vero.
-3. **Documenti** (biglietto `04`): `CLAUDE.md` e `TASKS.md` allineati alla scia.
+1. **Avviso al Rettore** (biglietto `mappa-scia-posizioni/05`): quando un socio
+   compare in riserva parte una notifica al solo telefono di Michele.
+2. **Disegno della scia** (biglietto `03`): Michele guarda e decide pallini,
+   linea ed etichette.
+3. **Documenti** (biglietto `04`): `CLAUDE.md` e `TASKS.md` allineati.
 4. **Notifiche generiche** (spec `notifiche-generiche/spec.md`): il post in
    bacheca fa partire la push subito e azzera il conto dell'avviso piano.
 
@@ -36,6 +37,10 @@ Aggiornata il 10 set 2026.
 
 - Deploy: si fa solo con l'ok di Michele, e non e' ancora stato dato. In
   produzione manca tutto il lavoro dal commit `76a2ed1` in poi.
+- App vera da scaricare dal negozio Android per avere la posizione a telefono
+  chiuso: **no per adesso**, deciso da Michele il 10 set 2026.
+- Al primo deploy delle Functions: cancellare a mano la vecchia
+  `cleanupOldLocations` rimasta in us-central1, altrimenti girano due pulizie.
 
 ## Da fare: ripartire costa troppo
 

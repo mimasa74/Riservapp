@@ -1,14 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { GoogleMap, Polygon, Marker, useLoadScript } from '@react-google-maps/api';
+import { GoogleMap, Polygon, Polyline, Marker, useLoadScript } from '@react-google-maps/api';
 import { collection, onSnapshot, doc, getDoc } from 'firebase/firestore';
 import { db } from '../firebase';
-
-interface HunterPosition {
-  deviceId: string;
-  nome: string;
-  lat: number;
-  lng: number;
-}
+import { PuntoPosizione, raggruppaPerSocio } from '../utils/scie';
 
 interface MappaScreenProps {
   onBack: () => void;
@@ -22,7 +16,7 @@ export const MappaScreen = ({ onBack }: MappaScreenProps) => {
     googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY,
   });
 
-  const [hunters, setHunters] = useState<HunterPosition[]>([]);
+  const [punti, setPunti] = useState<PuntoPosizione[]>([]);
   const [polygonPath, setPolygonPath] = useState<{ lat: number; lng: number }[]>([]);
 
   useEffect(() => {
@@ -33,12 +27,25 @@ export const MappaScreen = ({ onBack }: MappaScreenProps) => {
       }
     });
 
-    // Ascolta posizioni in real-time
+    // Ascolta posizioni in real-time. Ogni documento e' UN punto, non un socio:
+    // il raggruppamento per telefono lo fa raggruppaPerSocio.
     const unsub = onSnapshot(collection(db, 'user_locations'), snap => {
-      setHunters(snap.docs.map(d => d.data() as HunterPosition));
+      setPunti(snap.docs.map(d => {
+        const v = d.data() as Record<string, unknown>;
+        const ts = v.timestamp as { toMillis?: () => number } | undefined;
+        return {
+          deviceId: String(v.deviceId ?? ''),
+          nome: String(v.nome ?? ''),
+          lat: Number(v.lat),
+          lng: Number(v.lng),
+          ms: ts && typeof ts.toMillis === 'function' ? ts.toMillis() : null,
+        };
+      }));
     });
     return unsub;
   }, []);
+
+  const scie = raggruppaPerSocio(punti);
 
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 100, display: 'flex', flexDirection: 'column', background: '#EDEEE6' }}>
@@ -74,7 +81,7 @@ export const MappaScreen = ({ onBack }: MappaScreenProps) => {
           fontSize: 12, color: '#6B6B5A',
           fontFamily: '-apple-system, sans-serif',
         }}>
-          {hunters.length} {hunters.length === 1 ? 'cacciatore' : 'cacciatori'} in riserva
+          {scie.length} {scie.length === 1 ? 'cacciatore' : 'cacciatori'} in riserva
         </span>
       </div>
 
@@ -115,18 +122,42 @@ export const MappaScreen = ({ onBack }: MappaScreenProps) => {
                 }}
               />
             )}
-            {hunters.map(h => (
-              <Marker
-                key={h.deviceId}
-                position={{ lat: h.lat, lng: h.lng }}
-                label={{
-                  text: h.nome,
-                  fontSize: '12px',
-                  fontWeight: 'bold',
-                  color: '#1A1A14',
-                }}
-                title={h.nome}
-              />
+            {scie.map(s => (
+              <React.Fragment key={s.deviceId}>
+                {/* La scia: linea sottile fra i punti, in ordine di tempo */}
+                {s.punti.length > 1 && (
+                  <Polyline
+                    path={s.punti}
+                    options={{ strokeColor: '#5C6B3A', strokeOpacity: 0.9, strokeWeight: 2 }}
+                  />
+                )}
+                {/* I punti precedenti: pallini piccoli, senza nome */}
+                {s.punti.slice(0, -1).map((p, i) => (
+                  <Marker
+                    key={i}
+                    position={p}
+                    icon={{
+                      path: window.google.maps.SymbolPath.CIRCLE,
+                      scale: 4,
+                      fillColor: '#5C6B3A',
+                      fillOpacity: 1,
+                      strokeColor: '#EDEEE6',
+                      strokeWeight: 1,
+                    }}
+                  />
+                ))}
+                {/* Solo l'ultimo punto porta nome e ora */}
+                <Marker
+                  position={s.ultimo}
+                  label={{
+                    text: s.ora ? `${s.nome}  ${s.ora}` : s.nome,
+                    fontSize: '12px',
+                    fontWeight: 'bold',
+                    color: '#1A1A14',
+                  }}
+                  title={s.ora ? `${s.nome} — ${s.ora}` : s.nome}
+                />
+              </React.Fragment>
             ))}
           </GoogleMap>
         )}

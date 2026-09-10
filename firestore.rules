@@ -46,15 +46,27 @@ service cloud.firestore {
       allow read: if isAdmin();
     }
 
-    // user_locations: il dispositivo può scrivere/aggiornare solo il proprio documento
-    // DELETE: dispositivo può eliminare solo il proprio (deviceId match)
-    // lettura solo admin (anon auth NON deve vedere posizioni altrui)
-    match /user_locations/{deviceId} {
-      allow create, update: if isAuthenticated() &&
-        request.resource.data.deviceId == deviceId &&
+    // user_locations: un documento per punto, id automatico (la scia).
+    // Il client può SOLO creare: i punti li cancella la pulizia sul server dopo
+    // 35 minuti, nessuno li modifica. Niente confronto fra deviceId e id del
+    // documento — con l'id automatico non avrebbe più senso — al suo posto i
+    // tipi dei campi e la lunghezza delle stringhe.
+    // Lettura solo admin (anon auth NON deve vedere posizioni altrui).
+    match /user_locations/{pointId} {
+      allow create: if isAuthenticated() &&
+        request.resource.data.keys().hasOnly(['deviceId', 'nome', 'lat', 'lng', 'timestamp']) &&
+        request.resource.data.deviceId is string &&
+        request.resource.data.deviceId.size() > 0 &&
+        request.resource.data.deviceId.size() <= 100 &&
+        request.resource.data.nome is string &&
+        request.resource.data.nome.size() > 0 &&
+        request.resource.data.nome.size() <= 80 &&
         request.resource.data.lat is number &&
-        request.resource.data.lng is number;
-      allow delete: if isAuthenticated() && resource != null && resource.data.deviceId == deviceId;
+        request.resource.data.lat >= -90 && request.resource.data.lat <= 90 &&
+        request.resource.data.lng is number &&
+        request.resource.data.lng >= -180 && request.resource.data.lng <= 180 &&
+        request.resource.data.timestamp is timestamp;
+      allow update, delete: if false;
       allow read: if isAdmin();
     }
 

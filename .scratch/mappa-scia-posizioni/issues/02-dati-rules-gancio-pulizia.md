@@ -1,6 +1,6 @@
 # Un documento per punto, rules nuove, gancio senza cancellazione, pulizia alle 00:35
 
-Status: ready-for-agent
+Status: ready-for-human
 Type: task
 
 
@@ -39,3 +39,29 @@ i `deviceId` distinti, non i documenti.
 
 Il resto (rules, gancio, un documento per punto, corsa col poligono) vale tale e
 quale.
+
+## Fatto il 10 set 2026 sera
+
+- `firestore.rules`: `user_locations/{pointId}`, il client puo' solo `create`,
+  update e delete chiusi a tutti, tipi e lunghezze controllati, lettura admin.
+- `src/hooks/useGeolocation.ts`: `addDoc` su un documento per punto, ora del
+  server (`serverTimestamp`) perche' un telefono con l'orologio sballato
+  metterebbe i punti in disordine e scamperebbe alla pulizia; via il `deleteDoc`
+  all'uscita; nuova funzione pura `valutaFix` con l'esito `aspetta-poligono` che
+  tiene da parte il fix arrivato prima del confine e lo rivaluta; il confine si
+  rilegge fino a tre volte se Firestore non risponde.
+- `functions/src/index.ts`: `cleanupOldLocations` con regione `europe-west12`,
+  fuso `Europe/Rome`, cancellazione a blocchi da 500, sempre a 35 minuti.
+- `src/utils/scie.ts` (nuovo) + `MappaScreen.tsx`: i punti si raggruppano per
+  telefono, linea sottile fra i punti, pallini piccoli sui precedenti, nome e
+  ora solo sull'ultimo. L'intestazione conta i telefoni distinti.
+- Test: 155 verdi, 13 nuovi fra `valutaFix` e `raggruppaPerSocio`.
+
+**Attenzione al deploy**: cambiare regione a una funzione gia' pubblicata non la
+sposta, ne crea una nuova in Europa e lascia la vecchia in us-central1. La
+vecchia `cleanupOldLocations` va cancellata a mano, altrimenti restano due
+pulizie che girano insieme. `avvisoPianoTick` e' ancora senza regione: se un
+giorno si sposta, stessa attenzione, e li' due copie vorrebbero dire notifiche
+doppie.
+
+La resa grafica resta da guardare con Michele: biglietto 03.

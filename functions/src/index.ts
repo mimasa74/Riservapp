@@ -279,18 +279,36 @@ export const avvisoPianoTick = onSchedule('every 1 minutes', async () => {
 
 // ─── Scheduled: elimina posizioni più vecchie di 35 minuti (GDPR) ─────────
 
-export const cleanupOldLocations = onSchedule('every 10 minutes', async () => {
-  const cutoff = new Date(Date.now() - 35 * 60 * 1000);
-  const snap = await getFirestore()
-    .collection('user_locations')
-    .where('timestamp', '<', Timestamp.fromDate(cutoff))
-    .get();
+// Regione esplicita: una schedulata senza regione finisce in us-central1, cioè
+// le posizioni dei soci verrebbero lette da una funzione negli Stati Uniti.
+// A blocchi di 500: dalla scia i punti sono tanti, e un batch Firestore oltre
+// le 500 operazioni fallisce senza cancellare niente.
+const BLOCCO_CANCELLAZIONE = 500;
 
-  if (snap.empty) return;
+export const cleanupOldLocations = onSchedule(
+  { schedule: 'every 10 minutes', region: 'europe-west12', timeZone: 'Europe/Rome' },
+  async () => {
+    const cutoff = Timestamp.fromDate(new Date(Date.now() - 35 * 60 * 1000));
+    const db = getFirestore();
+    let totale = 0;
 
-  const batch = getFirestore().batch();
-  snap.docs.forEach(d => batch.delete(d.ref));
-  await batch.commit();
+    for (;;) {
+      const snap = await db
+        .collection('user_locations')
+        .where('timestamp', '<', cutoff)
+        .limit(BLOCCO_CANCELLAZIONE)
+        .get();
 
-  console.log(`Deleted ${snap.size} stale location(s)`);
-});
+      if (snap.empty) break;
+
+      const batch = db.batch();
+      snap.docs.forEach(d => batch.delete(d.ref));
+      await batch.commit();
+      totale += snap.size;
+
+      if (snap.size < BLOCCO_CANCELLAZIONE) break;
+    }
+
+    if (totale > 0) console.log(`Deleted ${totale} stale location(s)`);
+  }
+);
