@@ -22,6 +22,7 @@ const messaging = firebase.messaging();
 
 self.addEventListener('message', (event) => {
   if (event.data === 'SKIP_WAITING') self.skipWaiting();
+  if (event.data === 'RETTORE_PUSH_VERSION') event.ports[0]?.postMessage(1);
 });
 
 workbox.core.clientsClaim();
@@ -40,15 +41,22 @@ workbox.routing.registerRoute(
 // I messaggi arrivano DATA-ONLY (title/body/priority in payload.data): la notifica
 // la costruiamo solo qui, così non ci sono doppioni con l'auto-display dell'SDK.
 // Il fallback su payload.notification copre la transizione da vecchie Functions.
-messaging.onBackgroundMessage((payload) => {
+messaging.onBackgroundMessage(async (payload) => {
+  if (payload.data?.kind === 'in-riserva') {
+    try {
+      const saved = await (await caches.open('rettore-push-session')).match('/__rettore_push_session__');
+      if (!payload.data.rettoreSession || !saved || await saved.text() !== payload.data.rettoreSession) return;
+    } catch { return; }
+  }
   const title = payload.data?.title || payload.notification?.title || 'Riserva Tuenno';
   const body = payload.data?.body || payload.notification?.body || '';
   const isAlert = payload.data?.priority === 'high';
   // L'ora mostrata è quella dell'evento (data.ts), non quella di consegna:
   // una push arrivata in ritardo non deve sembrare appena successa.
   const ts = Number(payload.data?.ts);
-  self.registration.showNotification(title, {
+  return self.registration.showNotification(title, {
     body,
+    tag: payload.data?.kind === 'in-riserva' ? 'rettore-' + payload.data.eventId : undefined,
     timestamp: Number.isFinite(ts) && ts > 0 ? ts : Date.now(),
     icon: '/logo_tuenno_ui.png',
     vibrate: isAlert ? [200, 100, 200, 100, 200] : [100],

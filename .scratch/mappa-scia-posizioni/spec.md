@@ -43,8 +43,7 @@ niente. Vedi biglietto 01.
 
 ## Struttura dei dati
 
-Oggi `user_locations/{deviceId}` è **un** documento sovrascritto. Serve **un
-documento per punto**: `user_locations/{autoId}` con `deviceId`, `nome`, `lat`,
+Dal commit 0e905be viene salvato **un documento per punto**: `user_locations/{autoId}` con `deviceId`, `nome`, `lat`,
 `lng`, `timestamp`. Niente documento padre per socio: i punti vivono 35 minuti
 e la collezione resta corta.
 
@@ -117,3 +116,11 @@ una collezione piatta, stesso TTL. `TASKS.md`: la voce `cleanupOldLocations`.
 
 Ordine: 02 (dati, rules, gancio, pulizia) → 05 (notifica al Rettore) → 03
 (disegno della mappa, con Michele) → 04 (documenti). Il 01 è chiuso: annullato.
+
+## Stato verificato 10 set 2026 — Codex
+
+Dati e avviso privato implementati, documenti allineati. Ticket 03 (grafica con
+Michele) ancora aperto. Leggere HANDOFF.md: la pulizia fisica ogni dieci minuti
+non garantisce la rimozione esatta a 35 minuti; la mappa invece filtra a 35.
+Il token del Rettore è direttamente in config/rettore_push, non nella collezione
+fcm_tokens scrivibile dai soci. Nessun deploy eseguito.

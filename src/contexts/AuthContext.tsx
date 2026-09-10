@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { auth } from '../firebase';
+import { abilitaRegistrazioneRettore, cancellaSessionePushLocale, revocaPushRettore } from '../utils/rettorePush';
 import {
   onAuthStateChanged,
   signInWithPopup,
@@ -38,6 +39,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         await signOut(auth);
         return;
       }
+      if (!currentUser || !ADMIN_EMAILS.includes(currentUser.email ?? '')) {
+        await cancellaSessionePushLocale().catch(console.error);
+      }
       setUser(currentUser);
       setIsAdmin(!!currentUser && ADMIN_EMAILS.includes(currentUser.email ?? ''));
     });
@@ -47,6 +51,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const login = async () => {
     const provider = new GoogleAuthProvider();
     try {
+      abilitaRegistrazioneRettore();
       await signInWithPopup(auth, provider);
     } catch (error) {
       console.error("Errore login:", error);
@@ -55,6 +60,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const logout = async () => {
     try {
+      await revocaPushRettore(localStorage.getItem('riservapp_device_id') ?? '');
       await signOut(auth);
     } catch (error) {
       console.error("Errore logout:", error);

@@ -1,12 +1,9 @@
-# Aggiornare CLAUDE.md e TASKS.md alla scia
+# Documenti allineati alla scia breve
 
-Status: ready-for-agent
+Status: resolved
 Type: task
-Blocked by: 02
 
-- `CLAUDE.md`, "Firestore collections": `user_locations/{deviceId} — posizioni
-  (TTL 35min)` diventa un documento per punto, cancellati tutti alle 00:35.
-- `CLAUDE.md`: una sezione corta "Mappa e scia" con i tre perché (niente
-  posizione in background su iOS, gate sul poligono per non registrare dove
-  abita un socio, pulizia notturna come dice l'informativa).
-- `TASKS.md`: la voce `cleanupOldLocations` in FASE 5 e il log di sessione.
+Aggiornati CLAUDE.md, TASKS.md e lista da-committare il 10 set 2026 da Codex.
+Decisione finale: 35 minuti dalla raccolta, niente pulizia notturna e niente
+storico giornaliero. Token destinatario protetto dall'identità Google di Michele.
+Ripresa e discrepanza della pulizia periodica documentate in ../HANDOFF.md.

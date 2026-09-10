@@ -62,7 +62,7 @@ function MainApp() {
   // quando la pagina torna dal background — scriveva un id nuovo e il socio
   // diventava per sempre "un altro dispositivo", col nome ancora in memoria.
   const [deviceId] = useState(getOrCreateDeviceId)
-  const { isAdmin } = useAuth();
+  const { isAdmin, user } = useAuth();
   const [data, setData] = useState<AppData>((fallbackData as unknown) as AppData);
   const [regolamentoUrl, setRegolamentoUrl] = useState<string | null>(null);
   const [hunterName, setHunterName] = useState<string>(
@@ -491,7 +491,7 @@ function MainApp() {
     // il prompt parte solo da gesti utente (handleSetName / banner in bacheca).
     if (typeof Notification === 'undefined' || Notification.permission !== 'granted') return;
     initFCM(deviceId, hunterName).catch(console.warn);
-  }, [hunterName]);
+  }, [hunterName, user?.uid]);
 
   const handleAddMember = async (nome: string) => {
     if (!requireOnline()) return;

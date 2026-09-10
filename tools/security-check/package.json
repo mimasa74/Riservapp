@@ -1,0 +1,11 @@
+{
+  "dependencies": {
+    "@firebase/rules-unit-testing": "^5.0.2",
+    "firebase": "^12.19.0",
+    "firebase-tools": "^15.30.0"
+  },
+  "private": true,
+  "scripts": {
+    "test": "firebase emulators:exec --project demo-riservapp-private --only firestore \"node check.mjs\""
+  }
+}

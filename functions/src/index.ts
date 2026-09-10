@@ -3,6 +3,7 @@ import { getFirestore, Timestamp } from 'firebase-admin/firestore';
 import { getMessaging } from 'firebase-admin/messaging';
 import { onDocumentCreated, onDocumentUpdated } from 'firebase-functions/v2/firestore';
 import { onSchedule } from 'firebase-functions/v2/scheduler';
+import { avvisaIngresso } from './avvisoIngresso';
 import { categoriaLabel, corpoNotifica, specieLabel, titoloNotifica } from './labels';
 import {
   capiComparsi,
@@ -310,5 +311,13 @@ export const cleanupOldLocations = onSchedule(
     }
 
     if (totale > 0) console.log(`Deleted ${totale} stale location(s)`);
+  }
+);
+
+// Privato, separato dalle notifiche pubbliche di bacheca e piano.
+export const onLocationCreate = onDocumentCreated(
+  { document: 'user_locations/{pointId}', region: 'europe-west12', retry: false },
+  async event => {
+    if (event.data) await avvisaIngresso(event.data);
   }
 );

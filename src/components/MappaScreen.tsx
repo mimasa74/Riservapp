@@ -16,6 +16,12 @@ export const MappaScreen = ({ onBack }: MappaScreenProps) => {
     googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY,
   });
 
+  const [now, setNow] = useState(Date.now);
+  useEffect(() => {
+    const timer = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+
   const [punti, setPunti] = useState<PuntoPosizione[]>([]);
   const [polygonPath, setPolygonPath] = useState<{ lat: number; lng: number }[]>([]);
 
@@ -45,7 +51,7 @@ export const MappaScreen = ({ onBack }: MappaScreenProps) => {
     return unsub;
   }, []);
 
-  const scie = raggruppaPerSocio(punti);
+  const scie = raggruppaPerSocio(punti.filter(p => p.ms !== null && p.ms > now - 35 * 60_000));
 
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 100, display: 'flex', flexDirection: 'column', background: '#EDEEE6' }}>

@@ -6,30 +6,22 @@
 Scrivi a Claude Code:
 "Leggi CLAUDE.md e TASKS.md e riprendi dal primo task non completato."
 
-### ► IN CORSO (9 set 2026)
-Revisione dell'app chiesta da Michele, revisionata a sua volta da un secondo
-modello. Il rapporto sta in `.scratch/revisione-fable-2026-09-09/rapporto.md`.
-- [x] Guardia `fromCache` sui tre listener di config: l'admin non riscrive più
-      soci, slot e piano su un buco di cache (era il bug più grave trovato)
-- [x] Il socio rientra col suo stesso telefono: lo slot già suo non si riscrive,
-      e "Errore di connessione" non copre più un permission-denied
-- [x] deviceId letto una volta sola al montaggio, non a ogni render
-- [ ] Notifiche: spec riscritta in `.scratch/notifiche-generiche/spec.md`,
-      allineata alla decisione del 9 set (nemmeno la chiusura manda più niente,
-      l'avviso lo scrive Michele in bacheca). Stato `needs-info`: prima di
-      scrivere codice Michele deve dire se il messaggio in bacheca parte
-      subito o dopo i 5 minuti di quiete (`issues/01`).
-- [ ] Mappa a scia: spec in `.scratch/mappa-scia-posizioni/spec.md`,
-      `needs-info`. Michele il 9 set ha deciso scia e 12 ore, e ha detto che
-      per lui non serve riscrivere il consenso. La pulizia notturna alle 00:35
-      e il testo nuovo dell'informativa sono una PROPOSTA della revisione: una
-      sessione li aveva attribuiti a Michele per errore, non decidere su quella
-      base. Quattro biglietti in `issues/`, fermi in attesa di lui.
-- [x] Biglietti delle tre correzioni urgenti in `.scratch/avvio-sicuro/`,
-      chiusi con riferimento al commit `76a2ed1`.
-- [ ] Riassociazione di un telefono senza passare dal Rettore: su iPhone Safari,
-      icona in Home e browser di WhatsApp sono tre memorie separate, quindi
-      succederà di nuovo.
+### ► IN CORSO (10 set 2026 — aggiornato da Codex)
+Per riprendere velocemente leggere **.scratch/mappa-scia-posizioni/HANDOFF.md**:
+contiene verifiche, limiti e ordine di ripresa per Claude Code.
+
+- [x] Correzioni avvio/rientro: fromCache, slot proprio, deviceId stabile (76a2ed1).
+- [x] Mappa: un documento per punto, attesa del confine, cleanup europeo a blocchi (0e905be).
+- [x] Avviso IN RISERVA solo a Michele Bruni autenticato Google: token privato,
+      revoca logout, filtro SW, dedup transazionale. 181 test + 19 prove emulatore.
+- [x] Documenti aggiornati alle decisioni finali: 35 minuti, niente storico
+      giornaliero, niente app nativa per ora. Informativa già ripristinata.
+- [ ] Provare avviso/logout su telefono reale e grafica della mappa con Michele.
+- [ ] Prima del rilascio: risolvere discrepanza pulizia 35–45 minuti; vedere handoff.
+- [ ] Notifiche generiche: decisione chiusa, post subito e azzeramento del conto
+      in attesa. Implementazione ancora da fare: .scratch/notifiche-generiche/spec.md.
+- [ ] Riassociazione iPhone fra Safari/Home/browser WhatsApp: ancora aperta.
+- [ ] Deploy coordinato, solo su richiesta. Nessun deploy in questa sessione.
 
 ### ► PROSSIMA SESSIONE: DESIGN E USABILITÀ
 L'app **funziona**, la parte tecnica è a posto. Il prossimo lavoro è di

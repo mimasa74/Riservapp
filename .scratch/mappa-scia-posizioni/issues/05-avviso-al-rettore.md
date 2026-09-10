@@ -1,6 +1,6 @@
 # Quando un socio compare in riserva, il Rettore lo sa
 
-Status: ready-for-agent
+Status: resolved
 Type: task
 Blocked by: 02
 
@@ -24,7 +24,8 @@ metterci "Bruni Michele": mandare la posizione dei soci a chi indovina il nome
 sarebbe una falla. Serve invece che l'app, **quando Michele entra come Rettore**,
 scriva il proprio `deviceId` in un documento che le rules aprono al solo
 `isAdmin()` (per esempio `config/rettore`). Il trigger legge quel documento,
-prende il token di quel dispositivo e manda li'.
+conserva direttamente il token in quel documento protetto e manda lì.
+Non leggere fcm_tokens: anche il token pubblico può essere sovrascritto da un socio.
 
 ## Punti di contatto
 
@@ -35,3 +36,11 @@ prende il token di quel dispositivo e manda li'.
   Nessuna memoria a parte da tenere allineata.
 - Push **data-only**, come tutte le altre: la notifica la costruisce il service
   worker. Vedi CLAUDE.md.
+
+## Implementato — Codex, 10 set 2026
+
+Vedere ../HANDOFF.md per prove e limiti. Il punto stesso porta il claim server
+avvisoRettoreGestito: serializza le riconsegne senza una memoria di presenze
+separata. La precedenza createTime/id impedisce che due primi punti si zittiscano
+a vicenda. Solo Google verificato di Michele può scrivere il destinatario.
+Da provare sul telefono, non ancora deployato.

@@ -18,15 +18,15 @@ Aggiornata il 10 set 2026.
 
 ## Da fare, poi da committare
 
-1. **Avviso al Rettore** (biglietto `mappa-scia-posizioni/05`): quando un socio
-   compare in riserva parte una notifica al solo telefono di Michele.
+1. **Avviso al Rettore completato** (biglietto `mappa-scia-posizioni/05`):
+   verificato da Codex, pronto per prova reale. Vedi HANDOFF.md.
 2. **Disegno della scia** (biglietto `03`): Michele guarda e decide pallini,
    linea ed etichette.
-3. **Documenti** (biglietto `04`): `CLAUDE.md` e `TASKS.md` allineati.
+3. **Documenti completati** (biglietto `04`): `CLAUDE.md` e `TASKS.md` allineati.
 4. **Notifiche generiche** (spec `notifiche-generiche/spec.md`): il post in
    bacheca fa partire la push subito e azzera il conto dell'avviso piano.
 
-## Correzioni di documento in coda, piccole
+## Correzioni di documento completate da Codex
 
 - `CLAUDE.md` dice `merge: true` per l'accumulo dell'avviso piano: il codice usa
   `mergeFields` ed e' giusto il codice.

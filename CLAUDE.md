@@ -227,10 +227,9 @@ rules.
 - Il conto sta in `config/avviso_piano`, **chiuso a ogni client** nelle rules
   (`if false`): lo tocca solo l'Admin SDK. Manometterlo vorrebbe dire far partire
   una notifica a tutti i soci, o zittirla per sempre.
-- L'accumulo gira **in transazione** e usa `merge: true`, al contrario di quasi
-  tutto il resto: qui la fusione dentro `pending` è proprio quello che serve.
-  Lo svuotamento dopo l'invio usa invece `mergeFields`, perché deve azzerare per
-  intero — con `merge` le specie già annunciate resterebbero in attesa in eterno.
+- L’accumulo gira **in transazione** e usa `mergeFields` su pending e
+  ultimaModifica: il delta è già calcolato, la mappa pending va sostituita.
+  Anche lo svuotamento usa mergeFields per azzerarla interamente.
 - Se la push fallisce, **il conto non si svuota e `ultimoInvio` non avanza**: i
   capi rientrano nel giro dopo invece di sparire.
 
@@ -316,12 +315,15 @@ Il cacciatore NON deve mai sapere che esiste una modalità admin.
   la propria chiave, mai modificare o rimuovere)
 - `posts` — messaggi bacheca
 - `fcm_tokens/{deviceId}` — token push
-- `user_locations/{deviceId}` — posizioni (TTL 35min)
+- `user_locations/{autoId}` — un punto per documento, serverTimestamp; mappa 35min,
+  pulizia ogni 10min (conservazione effettiva circa 35–45min: da allineare).
+- `config/rettore_push` — token, deviceId, uid e sessionId del solo Rettore Google
+  verificato. Non derivare il destinatario dal nome o da fcm_tokens.
 - `geofences/riserva-tuenno` — poligono 96 vertici
 
 ## localStorage keys
 - `riservapp_nome`, `riservapp_device_id`, `riservapp_onboarding`
-- `riservapp_geo`, `riservapp_fcm`, `riservapp_letti_${nome}`
+- `riservapp_geo`, `riservapp_fcm`
 - `riservapp_novita_${specieId}` — fotografia abbattimenti (vedi "Avviso capi nuovi")
 
 ## Normalizzazione nomi
@@ -330,6 +332,18 @@ s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
   .split(/\s+/).filter(Boolean).sort().join('')
 // "Bruni Michele" === "Michele Bruni" === "brunimichele"
 ```
+
+## Mappa e avviso privato al Rettore
+
+Scia breve: fuori dal confine non si registrano punti. La PWA non garantisce
+posizione in background. Nome e ora sull'ultimo punto; scomparsa dalla mappa
+dopo 35 minuti. La pulizia fisica è periodica, non un TTL esatto.
+
+onLocationCreate notifica solo config/rettore_push, registrato da Google
+michele.bruni@gmail.com verificato. Logout revoca prima di signOut e spegne
+la sessione locale usata dal SW; vecchi SW senza handshake non si registrano.
+Non usare sendPushToAll per questo evento. Dettagli e limiti di consegna:
+.scratch/mappa-scia-posizioni/HANDOFF.md.
 
 ## Stato avanzamento → vedi TASKS.md
 

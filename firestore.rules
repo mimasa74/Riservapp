@@ -46,6 +46,24 @@ service cloud.firestore {
       allow read: if isAdmin();
     }
 
+    // Destinatario privato: il token stesso è protetto, non un riferimento ai
+    // fcm_tokens pubblicamente scrivibili. Solo Google verificato di Michele.
+    match /config/rettore_push {
+      function isRettoreGoogle() {
+        return isAdmin() && request.auth.token.email_verified == true &&
+          request.auth.token.firebase.sign_in_provider == 'google.com';
+      }
+      allow read, delete: if isRettoreGoogle();
+      allow create, update: if isRettoreGoogle() &&
+        request.resource.data.keys().hasOnly(['uid', 'deviceId', 'token', 'sessionId']) &&
+        request.resource.data.uid == request.auth.uid &&
+        request.resource.data.deviceId is string &&
+        request.resource.data.deviceId.size() > 0 && request.resource.data.deviceId.size() <= 100 &&
+        request.resource.data.token is string &&
+        request.resource.data.token.size() > 0 && request.resource.data.token.size() <= 4096 &&
+        request.resource.data.sessionId is string && request.resource.data.sessionId.size() == 36;
+    }
+
     // user_locations: un documento per punto, id automatico (la scia).
     // Il client può SOLO creare: i punti li cancella la pulizia sul server dopo
     // 35 minuti, nessuno li modifica. Niente confronto fra deviceId e id del
@@ -65,7 +83,8 @@ service cloud.firestore {
         request.resource.data.lat >= -90 && request.resource.data.lat <= 90 &&
         request.resource.data.lng is number &&
         request.resource.data.lng >= -180 && request.resource.data.lng <= 180 &&
-        request.resource.data.timestamp is timestamp;
+        request.resource.data.timestamp is timestamp &&
+        request.resource.data.timestamp == request.time;
       allow update, delete: if false;
       allow read: if isAdmin();
     }

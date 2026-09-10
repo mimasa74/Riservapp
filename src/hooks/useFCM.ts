@@ -1,11 +1,13 @@
 import { getToken, isSupported, onMessage, Messaging } from 'firebase/messaging';
 import { doc, setDoc } from 'firebase/firestore';
 import { getMessagingInstance, db } from '../firebase';
+import { puoMostrarePush, registraPushRettore } from '../utils/rettorePush';
 
 // Mostra notifica in foreground (quando l'app è aperta)
 // Usa SW showNotification perché new Notification() non è supportato su Android Chrome
 function setupForegroundHandler(messaging: Messaging): void {
-  onMessage(messaging, (payload) => {
+  onMessage(messaging, async (payload) => {
+    if (!await puoMostrarePush(payload.data)) return;
     // Messaggi data-only (title/body in payload.data); fallback su payload.notification
     // per la transizione da vecchie Functions.
     const title = payload.data?.title || payload.notification?.title || 'Riserva Tuenno';
@@ -14,6 +16,7 @@ function setupForegroundHandler(messaging: Messaging): void {
       navigator.serviceWorker.ready.then(reg => {
         reg.showNotification(title, {
           body,
+          tag: payload.data?.kind === 'in-riserva' ? 'rettore-' + payload.data.eventId : undefined,
           icon: '/logo_tuenno_ui.png',
           data: { url: 'https://riservatuenno.web.app' },
         });
@@ -76,6 +79,7 @@ export async function initFCM(deviceId: string, nome: string): Promise<void> {
       setupForegroundHandler(messaging);
       foregroundHandlerSetup = true;
     }
+    await registraPushRettore(deviceId, token, reg);
   } catch (err) {
     console.error('FCM init failed:', err);
   }
