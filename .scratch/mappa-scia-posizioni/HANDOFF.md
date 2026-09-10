@@ -49,7 +49,7 @@ Base verificata: 0e905be; 155 test già verdi prima delle modifiche.
 - Problema precedente rilevato: cleanupOldLocations ogni 10 minuti cancella
   timestamp < adesso-35m, quindi conservazione effettiva circa 35–45 minuti,
   oltre eventuali ritardi scheduler. Il filtro mappa NON è cancellazione dati.
-  Allineare pulizia/promesse prima del rilascio, senza inventare nuovi consensi.
+  Michele il 10 set 2026 ha dichiarato questa discrepanza assolutamente tollerabile: nessuna modifica alla pulizia richiesta; non considerarla un blocco al rilascio.
 - Identità dei punti (nome/deviceId) non legata a UID anonimo: problema già
   documentato nella spec, non risolto qui. Il destinatario privato è protetto.
 - useGeolocation ha ancora scritture async senza gestione esplicita degli errori

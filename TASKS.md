@@ -17,7 +17,7 @@ contiene verifiche, limiti e ordine di ripresa per Claude Code.
 - [x] Documenti aggiornati alle decisioni finali: 35 minuti, niente storico
       giornaliero, niente app nativa per ora. Informativa già ripristinata.
 - [ ] Provare avviso/logout su telefono reale e grafica della mappa con Michele.
-- [ ] Prima del rilascio: risolvere discrepanza pulizia 35–45 minuti; vedere handoff.
+- [x] Pulizia effettiva circa 35–45 minuti: tolleranza accettata esplicitamente da Michele il 10 set 2026. Nessuna modifica richiesta; non blocca il rilascio.
 - [ ] Notifiche generiche: decisione chiusa, post subito e azzeramento del conto
       in attesa. Implementazione ancora da fare: .scratch/notifiche-generiche/spec.md.
 - [ ] Riassociazione iPhone fra Safari/Home/browser WhatsApp: ancora aperta.

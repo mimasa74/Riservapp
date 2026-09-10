@@ -316,7 +316,7 @@ Il cacciatore NON deve mai sapere che esiste una modalità admin.
 - `posts` — messaggi bacheca
 - `fcm_tokens/{deviceId}` — token push
 - `user_locations/{autoId}` — un punto per documento, serverTimestamp; mappa 35min,
-  pulizia ogni 10min (conservazione effettiva circa 35–45min: da allineare).
+  pulizia ogni 10min (circa 35–45min effettivi: tolleranza accettata da Michele il 10 set 2026; nessuna modifica richiesta).
 - `config/rettore_push` — token, deviceId, uid e sessionId del solo Rettore Google
   verificato. Non derivare il destinatario dal nome o da fcm_tokens.
 - `geofences/riserva-tuenno` — poligono 96 vertici
