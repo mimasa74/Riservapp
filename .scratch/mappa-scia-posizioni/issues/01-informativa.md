@@ -60,3 +60,12 @@ Michele ha detto che non serve far rivedere l'informativa ai soci già dentro.
 Resta scritto qui perché la conservazione si allunga da 35 minuti a un giorno:
 se un domani qualcuno chiede quando è cambiato il testo, la risposta è questa
 riga.
+
+## Annullato la sera del 10 set 2026
+
+Michele ha scelto di tenere la cancellazione a **35 minuti dalla raccolta**, non
+la pulizia notturna. Il testo dei 35 minuti che i soci hanno gia' accettato
+ridiventa vero, quindi le tre riscritture di `PRIVACY_TEXT` fatte al mattino sono
+state riportate indietro (`git checkout be8a80c^ -- src/components/OnboardingScreen.tsx`).
+In produzione il testo nuovo non era mai arrivato: nessun socio deve riaccettare
+nulla. Questo biglietto resta come memoria, non c'e' piu' niente da fare.

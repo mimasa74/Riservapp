@@ -1,8 +1,8 @@
 # Un documento per punto, rules nuove, gancio senza cancellazione, pulizia alle 00:35
 
-Status: needs-info
+Status: ready-for-agent
 Type: task
-Blocked by: 01
+
 
 Segue la spec. Quattro pezzi, da fare insieme perché il primo rompe gli altri:
 
@@ -26,3 +26,16 @@ Segue la spec. Quattro pezzi, da fare insieme perché il primo rompe gli altri:
    funzioni.
 
 Non deployare: il deploy lo decide Michele.
+
+## Corretto la sera del 10 set 2026
+
+Il punto 3 cambia: **niente schedulata alle 00:35**. `cleanupOldLocations`
+continua a cancellare i punti piu' vecchi di **35 minuti**, come oggi, e le due
+correzioni restano: regione `europe-west12` e cancellazione a blocchi da 500.
+
+Il punto 4 cambia: l'intestazione resta **"N cacciatori in riserva"**, perche'
+con 35 minuti chi e' sulla mappa e' stato visto nell'ultima mezz'ora. Si contano
+i `deviceId` distinti, non i documenti.
+
+Il resto (rules, gancio, un documento per punto, corsa col poligono) vale tale e
+quale.

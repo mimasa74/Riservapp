@@ -1,6 +1,6 @@
 # Aggiornare CLAUDE.md e TASKS.md alla scia
 
-Status: needs-info
+Status: ready-for-agent
 Type: task
 Blocked by: 02
 
