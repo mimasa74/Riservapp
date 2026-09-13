@@ -8,6 +8,10 @@
 - [x] Conservati gli aggiornamenti di contesto già presenti in CLAUDE.md.
 - [x] Stack Android distinto dalla PWA attuale; nessuna migrazione avviata.
 - [x] Modifica solo documentale: verificare diff e import; nessun deploy.
+- [x] Regola su commit/push/deploy scritta in un posto solo ("Coordinamento e
+      Git"); "Repo e ambienti" la richiama invece di ripeterla.
+- [x] Stack Android spostato in fondo, sotto "Progetto Android — se e quando":
+      fuori dalle regole che valgono per il lavoro di oggi.
 
 ## Come riprendere
 Scrivi a Claude Code:

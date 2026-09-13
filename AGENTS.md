@@ -11,9 +11,8 @@ entrambi gli agenti. AGENTS.md è la fonte unica; CLAUDE.md lo importa.
 
 ### Architecture
 - Questo repository è una PWA: React, TypeScript, Vite e Firebase (vedi Stack).
-- Per un futuro progetto Android nativo: Kotlin, Jetpack Compose, Room, MVVM.
-  Queste tecnologie si applicano solo quando Michele richiede il lavoro Android;
-  non sono un ordine di migrare la PWA. Android Studio riguarda quel progetto.
+  Non esiste altro progetto in corso; per il lavoro Android, se mai arriverà,
+  vedi "Progetto Android — se e quando" in fondo a questo file.
 
 ### Rules
 - Non modificare file non necessari al lavoro richiesto.
@@ -38,8 +37,7 @@ build e test applicativi non sono necessari.
 ### Review
 Il revisore cerca regressioni, errori di stato, race condition, memory leak ed
 edge case. Sulla PWA controlla anche cleanup di effetti/listener, offline,
-service worker, permessi e coerenza Firestore. Sul codice Android controlla
-inoltre lifecycle Android, Compose, Room e migration.
+service worker, permessi e coerenza Firestore.
 
 Ogni problema deve avere gravità, file/riga, scenario che lo innesca e impatto.
 Separare problemi verificati, dubbi da provare e limiti dei test. Se non emergono
@@ -63,7 +61,9 @@ problemi, dirlo senza presentare la review come garanzia di assenza di bug.
   TASKS.md, committare e pushare il proprio lavoro; riportare eventuali blocchi.
   Una sessione di sola review non richiede commit vuoti.
 - Niente force push, reset distruttivi o cancellazione del lavoro altrui.
-  Il deploy resta separato e si esegue solo su richiesta di Michele.
+- Il deploy non è un commit. Resta separato e si esegue solo su richiesta di
+  Michele; prima di ogni `firebase deploy` controllare `git status`. Dove si
+  deploya, e le insidie dei due siti: vedi "Repo e ambienti".
 
 ### Prompt per il capo progetto
 Leggi AGENTS.md e TASKS.md nella revisione corrente del repository. Per il lavoro
@@ -95,8 +95,8 @@ Sostituisce il gruppo WhatsApp per gestire assegnazioni caccia, bacheca comunica
 ## Repo e ambienti — leggi prima di deployare
 
 **Repo:** https://github.com/mimasa74/Riservapp — branch `main`.
-`main` è l'unica fonte di verità: committa e pusha alla fine di ogni sessione.
-Il deploy NON è un commit. Controlla `git status` prima di ogni `firebase deploy`.
+Commit, push e deploy seguono le regole di "Coordinamento e Git", sopra: qui
+sotto c'è solo dove vanno a finire le cose.
 
 **Progetto Firebase:** `riservapp-6054c`. Contiene **due** siti hosting:
 
@@ -450,3 +450,12 @@ Vedi `docs/agents/triage-labels.md`.
 
 Contesto singolo, e la fonte è questo file: niente `CONTEXT.md`, niente `docs/adr/`
 finché non servono davvero. Vedi `docs/agents/domain.md`.
+
+## Progetto Android — se e quando
+
+Oggi non esiste. Questo repository è una PWA e non c'è niente da migrare:
+nessuno lo ha chiesto, e le tecnologie qui sotto non valgono per l'app attuale.
+
+Se un giorno Michele chiede il lavoro Android nativo, lo stack concordato è
+Kotlin, Jetpack Compose, Room e MVVM, in Android Studio. Solo allora la review
+guarda anche lifecycle Android, Compose, Room e migration.
