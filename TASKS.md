@@ -2,6 +2,13 @@
 # Aggiorna dopo ogni sessione Claude Code, poi committa e pusha su main.
 # Un lavoro non committato può esistere in un solo posto al mondo: è già successo.
 
+## Regole condivise (13 set 2026)
+- [x] AGENTS.md unifica regole di sviluppo, test, review, Git e prompt dei ruoli.
+- [x] CLAUDE.md importa AGENTS.md per leggere le stesse istruzioni all'avvio.
+- [x] Conservati gli aggiornamenti di contesto già presenti in CLAUDE.md.
+- [x] Stack Android distinto dalla PWA attuale; nessuna migrazione avviata.
+- [x] Modifica solo documentale: verificare diff e import; nessun deploy.
+
 ## Come riprendere
 Scrivi a Claude Code:
 "Leggi CLAUDE.md e TASKS.md e riprendi dal primo task non completato."
