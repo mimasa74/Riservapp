@@ -109,6 +109,18 @@ Attenzione: `riservapp-6054c` è sia il nome del progetto sia quello del sito mo
 I comandi `firebase hosting:*` puntano al sito default (quello morto) se non passi
 `--site riservatuenno`. `firebase deploy` usa i target in `firebase.json`.
 
+**Le schedulate non stanno a Torino.** Cloud Scheduler non esiste in
+`europe-west12`: una `onSchedule` con quella regione si crea come funzione ma
+resta senza orologio e non parte mai. `cleanupOldLocations` sta in
+`europe-west8` (Milano) per questo — il deploy del 14 set 2026 è morto lì, e per
+un quarto d'ora nessuno ha cancellato le posizioni dei soci. I trigger Firestore
+(`onConfigUpdate`, `onPostCreate`, `onLocationCreate`) in `europe-west12` ci
+stanno. Regioni valide: `gcloud scheduler locations list`.
+
+Un errore sulle functions **ferma anche la release dell'hosting**: nello stesso
+deploy le rules nuove erano già attive sopra il sito vecchio. Dopo un deploy
+finito male, controllare `firebase hosting:channel:list --site riservatuenno`.
+
 **`.env.local` non è su GitHub** (`.gitignore` esclude `.env*`). 8 chiavi `VITE_*`
 — Firebase, FCM VAPID, Google Maps. Senza quel file il build non parte e il clone
 da solo non basta. Copie note: questo albero e `Desktop\backup\riservapp_v2g`.

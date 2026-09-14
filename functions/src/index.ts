@@ -282,12 +282,17 @@ export const avvisoPianoTick = onSchedule('every 1 minutes', async () => {
 
 // Regione esplicita: una schedulata senza regione finisce in us-central1, cioè
 // le posizioni dei soci verrebbero lette da una funzione negli Stati Uniti.
-// A blocchi di 500: dalla scia i punti sono tanti, e un batch Firestore oltre
-// le 500 operazioni fallisce senza cancellare niente.
+// Milano e non Torino come le altre funzioni: Cloud Scheduler non esiste in
+// europe-west12, e il deploy del 14 set 2026 è morto lì. La funzione era stata
+// creata lo stesso, ma senza l'orologio che la fa partire: le posizioni non
+// venivano più cancellate da nessuno. Prima di cambiare questa regione,
+// controllare `gcloud scheduler locations list`.
+// A blocchi di 500: i punti sono tanti, e un batch Firestore oltre le 500
+// operazioni fallisce senza cancellare niente.
 const BLOCCO_CANCELLAZIONE = 500;
 
 export const cleanupOldLocations = onSchedule(
-  { schedule: 'every 10 minutes', region: 'europe-west12', timeZone: 'Europe/Rome' },
+  { schedule: 'every 10 minutes', region: 'europe-west8', timeZone: 'Europe/Rome' },
   async () => {
     const cutoff = Timestamp.fromDate(new Date(Date.now() - 35 * 60 * 1000));
     const db = getFirestore();
