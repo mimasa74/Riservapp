@@ -416,15 +416,29 @@ s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
 
 ## Mappa e avviso privato al Rettore
 
-Scia breve: fuori dal confine non si registrano punti. La PWA non garantisce
-posizione in background. Nome e ora sull'ultimo punto; scomparsa dalla mappa
-dopo 35 minuti. La pulizia fisica è periodica, non un TTL esatto.
+Fuori dal confine non si registrano punti. La PWA non garantisce posizione in
+background. Scomparsa dalla mappa dopo 35 minuti; la pulizia fisica è periodica,
+non un TTL esatto.
+
+Niente scia (14 set 2026): un puntino solo per socio, il più recente. I soci
+quasi mai sono in riserva insieme e quasi mai camminano con l'app aperta; una
+linea fra due punti presi a mezz'ora di distanza disegnava una strada che
+nessuno aveva fatto. Restano i documenti per punto: la scia la toglie la mappa,
+non il raccoglitore.
+
+Il nome è scritto dall'app, non dall'etichetta di Google: bianco con ombra
+scura, sopra il puntino, e cresce con lo zoom (`dimensioneNome` in
+src/utils/posizioni.ts). L'etichetta standard resta piccola a ogni zoom, e sul
+satellite il bianco senza ombra sparisce sul prato chiaro. L'overlay è largo e
+alto zero: il nome lo ancora il CSS, non `getPixelPositionOffset`, che
+tornerebbe sempre zero.
 
 onLocationCreate notifica solo config/rettore_push, registrato da Google
-michele.bruni@gmail.com verificato. Logout revoca prima di signOut e spegne
-la sessione locale usata dal SW; vecchi SW senza handshake non si registrano.
-Non usare sendPushToAll per questo evento. Dettagli e limiti di consegna:
-.scratch/mappa-scia-posizioni/HANDOFF.md.
+michele.bruni@gmail.com verificato. La push dice **solo MAPPA**: niente nome,
+niente ora addosso al telefono: chi sia lo legge il Rettore aprendo la mappa.
+Logout revoca prima di signOut e spegne la sessione locale usata dal SW; vecchi
+SW senza handshake non si registrano. Non usare sendPushToAll per questo evento.
+Dettagli e limiti di consegna: .scratch/mappa-scia-posizioni/HANDOFF.md.
 
 ## Stato avanzamento → vedi TASKS.md
 

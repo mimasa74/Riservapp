@@ -27,7 +27,16 @@ contiene verifiche, limiti e ordine di ripresa per Claude Code.
       revoca logout, filtro SW, dedup transazionale. 181 test + 19 prove emulatore.
 - [x] Documenti aggiornati alle decisioni finali: 35 minuti, niente storico
       giornaliero, niente app nativa per ora. Informativa già ripristinata.
-- [ ] Provare avviso/logout su telefono reale e grafica della mappa con Michele.
+- [x] Grafica della mappa decisa con Michele il 14 set 2026 guardando l'anteprima:
+      niente scia, un puntino per socio, nome bianco con ombra che cresce con lo
+      zoom. La push di ingresso dice solo MAPPA: nome e ora si leggono in mappa.
+- [ ] Provare avviso/logout su telefono reale: possibile solo dopo il deploy.
+- [ ] **Niente di tutto questo è pubblicato.** Il 14 set 2026 `firebase
+      functions:list` mostra solo onConfigUpdate, onPostCreate, avvisoPianoTick e
+      cleanupOldLocations (ancora in us-central1): `onLocationCreate` non esiste
+      sul server, ed è per questo che l'avviso non arriva sul telefono di
+      Michele. Il sito vivo è fermo al 2 set 2026. Serve il deploy coordinato
+      descritto sotto: funzioni, rules e hosting insieme.
 - [x] Pulizia effettiva circa 35–45 minuti: tolleranza accettata esplicitamente da Michele il 10 set 2026. Nessuna modifica richiesta; non blocca il rilascio.
 - [ ] Notifiche generiche: decisione chiusa, post subito e azzeramento del conto
       in attesa. Implementazione ancora da fare: .scratch/notifiche-generiche/spec.md.

@@ -3,13 +3,6 @@ import { getMessaging } from 'firebase-admin/messaging';
 
 export const PRESENZA_MS = 35 * 60_000;
 
-export function corpoIngresso(nome: string, ms: number): string {
-  const ora = new Intl.DateTimeFormat('it-IT', {
-    timeZone: 'Europe/Rome', hour: 'numeric', minute: '2-digit', hourCycle: 'h23',
-  }).format(ms);
-  return nome.trim() + ', ' + ora;
-}
-
 // Ordine totale anche per punti contemporanei: l'ora di creazione del server,
 // poi l'id. Una query che escludesse solo se stessa zittirebbe entrambi.
 export function precede(a: DocumentSnapshot, b: DocumentSnapshot): boolean {
@@ -49,7 +42,9 @@ export async function avvisaIngresso(point: DocumentSnapshot, now = Date.now()):
   await getMessaging().send({
     token: recipient.token,
     data: {
-      kind: 'in-riserva', title: 'IN RISERVA', body: corpoIngresso(data.nome, ms),
+      // Una parola sola: chi sia e dove, il Rettore lo legge aprendo la mappa.
+      // Nome e ora nella notifica erano una copia peggiore della mappa stessa.
+      kind: 'in-riserva', title: 'MAPPA',
       priority: 'normal', ts: String(ms), eventId: point.id,
       rettoreSession: recipient.sessionId,
     },

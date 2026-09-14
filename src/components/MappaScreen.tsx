@@ -1,8 +1,8 @@
-import React, { useEffect, useState } from 'react';
-import { GoogleMap, Polygon, Polyline, Marker, useLoadScript } from '@react-google-maps/api';
+import { Fragment, useEffect, useRef, useState } from 'react';
+import { GoogleMap, Polygon, Marker, OverlayView, useLoadScript } from '@react-google-maps/api';
 import { collection, onSnapshot, doc, getDoc } from 'firebase/firestore';
 import { db } from '../firebase';
-import { PuntoPosizione, raggruppaPerSocio } from '../utils/scie';
+import { PuntoPosizione, dimensioneNome, raggruppaPerSocio } from '../utils/posizioni';
 
 interface MappaScreenProps {
   onBack: () => void;
@@ -10,6 +10,7 @@ interface MappaScreenProps {
 
 const MAP_CONTAINER_STYLE = { width: '100%', height: '100%' };
 const TUENNO_CENTER = { lat: 46.2954157719716, lng: 10.970932988883895 };
+const ZOOM_INIZIALE = 13;
 
 export const MappaScreen = ({ onBack }: MappaScreenProps) => {
   const { isLoaded, loadError } = useLoadScript({
@@ -21,6 +22,10 @@ export const MappaScreen = ({ onBack }: MappaScreenProps) => {
     const timer = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(timer);
   }, []);
+
+  // Lo zoom serve per scrivere i nomi: l'etichetta di Google non lo segue.
+  const mappaRef = useRef<google.maps.Map | null>(null);
+  const [zoom, setZoom] = useState(ZOOM_INIZIALE);
 
   const [punti, setPunti] = useState<PuntoPosizione[]>([]);
   const [polygonPath, setPolygonPath] = useState<{ lat: number; lng: number }[]>([]);
@@ -51,7 +56,8 @@ export const MappaScreen = ({ onBack }: MappaScreenProps) => {
     return unsub;
   }, []);
 
-  const scie = raggruppaPerSocio(punti.filter(p => p.ms !== null && p.ms > now - 35 * 60_000));
+  const posizioni = raggruppaPerSocio(punti.filter(p => p.ms !== null && p.ms > now - 35 * 60_000));
+  const corpoNome = dimensioneNome(zoom);
 
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 100, display: 'flex', flexDirection: 'column', background: '#EDEEE6' }}>
@@ -87,7 +93,7 @@ export const MappaScreen = ({ onBack }: MappaScreenProps) => {
           fontSize: 12, color: '#6B6B5A',
           fontFamily: '-apple-system, sans-serif',
         }}>
-          {scie.length} {scie.length === 1 ? 'cacciatore' : 'cacciatori'} in riserva
+          {posizioni.length} {posizioni.length === 1 ? 'cacciatore' : 'cacciatori'} in riserva
         </span>
       </div>
 
@@ -107,7 +113,13 @@ export const MappaScreen = ({ onBack }: MappaScreenProps) => {
           <GoogleMap
             mapContainerStyle={MAP_CONTAINER_STYLE}
             center={TUENNO_CENTER}
-            zoom={13}
+            zoom={ZOOM_INIZIALE}
+            onLoad={mappa => { mappaRef.current = mappa; }}
+            onUnmount={() => { mappaRef.current = null; }}
+            onZoomChanged={() => {
+              const z = mappaRef.current?.getZoom();
+              if (typeof z === 'number') setZoom(z);
+            }}
             options={{
               mapTypeId: 'satellite',
               disableDefaultUI: false,
@@ -128,42 +140,56 @@ export const MappaScreen = ({ onBack }: MappaScreenProps) => {
                 }}
               />
             )}
-            {scie.map(s => (
-              <React.Fragment key={s.deviceId}>
-                {/* La scia: linea sottile fra i punti, in ordine di tempo */}
-                {s.punti.length > 1 && (
-                  <Polyline
-                    path={s.punti}
-                    options={{ strokeColor: '#5C6B3A', strokeOpacity: 0.9, strokeWeight: 2 }}
-                  />
-                )}
-                {/* I punti precedenti: pallini piccoli, senza nome */}
-                {s.punti.slice(0, -1).map((p, i) => (
-                  <Marker
-                    key={i}
-                    position={p}
-                    icon={{
-                      path: window.google.maps.SymbolPath.CIRCLE,
-                      scale: 4,
-                      fillColor: '#5C6B3A',
-                      fillOpacity: 1,
-                      strokeColor: '#EDEEE6',
-                      strokeWeight: 1,
-                    }}
-                  />
-                ))}
-                {/* Solo l'ultimo punto porta nome e ora */}
+            {posizioni.map(socio => (
+              <Fragment key={socio.deviceId}>
+                {/* Dove il socio e' stato visto: un puntino solo, niente scia */}
                 <Marker
-                  position={s.ultimo}
-                  label={{
-                    text: s.ora ? `${s.nome}  ${s.ora}` : s.nome,
-                    fontSize: '12px',
-                    fontWeight: 'bold',
-                    color: '#1A1A14',
+                  position={socio.ultimo}
+                  icon={{
+                    path: window.google.maps.SymbolPath.CIRCLE,
+                    scale: 7,
+                    fillColor: '#8B1A1A',
+                    fillOpacity: 1,
+                    strokeColor: '#FFFFFF',
+                    strokeWeight: 2,
                   }}
-                  title={s.ora ? `${s.nome} — ${s.ora}` : s.nome}
+                  title={socio.ora ? `${socio.nome} — ${socio.ora}` : socio.nome}
                 />
-              </React.Fragment>
+                {/* Il nome non e' l'etichetta di Google: quella resta piccola a
+                    ogni zoom. Bianco con ombra scura perche' il satellite sotto
+                    e' a chiazze, e sul chiaro il bianco da solo sparirebbe. */}
+                <OverlayView
+                  position={socio.ultimo}
+                  mapPaneName={OverlayView.OVERLAY_LAYER}
+                >
+                  {/* Il riquadro dell'overlay e' largo e alto zero: chiedergli
+                      quanto misura il testo (getPixelPositionOffset) tornerebbe
+                      sempre zero e il nome finirebbe addosso al puntino. Lo
+                      sposta il CSS, che il testo lo ha davvero sotto mano. */}
+                  <div style={{
+                    position: 'absolute',
+                    width: 'max-content',
+                    transform: 'translate(-50%, calc(-100% - 14px))',
+                    fontFamily: '-apple-system, sans-serif',
+                    fontWeight: 700,
+                    fontSize: corpoNome,
+                    lineHeight: 1.1,
+                    color: '#FFFFFF',
+                    textShadow: '0 1px 3px rgba(0,0,0,0.9), 0 0 6px rgba(0,0,0,0.75)',
+                    textAlign: 'center',
+                    whiteSpace: 'nowrap',
+                    pointerEvents: 'none',
+                    userSelect: 'none',
+                  }}>
+                    {socio.nome}
+                    {socio.ora && (
+                      <div style={{ fontSize: Math.round(corpoNome * 0.7), fontWeight: 600 }}>
+                        {socio.ora}
+                      </div>
+                    )}
+                  </div>
+                </OverlayView>
+              </Fragment>
             ))}
           </GoogleMap>
         )}

@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 const mocks = vi.hoisted(() => ({ db: {} as any, send: vi.fn() }));
 vi.mock('firebase-admin/firestore', () => ({ getFirestore: () => mocks.db }));
 vi.mock('firebase-admin/messaging', () => ({ getMessaging: () => ({ send: mocks.send }) }));
-import { avvisaIngresso, corpoIngresso, PRESENZA_MS } from './avvisoIngresso';
+import { avvisaIngresso, PRESENZA_MS } from './avvisoIngresso';
 
 const now = Date.parse('2026-09-10T07:12:00Z');
 function point(id: string, ms = now, deviceId = 'socio') {
@@ -37,11 +37,11 @@ beforeEach(() => {
 });
 
 describe('avviso al solo Rettore', () => {
-  it('invia titolo, nome e ora italiana solo al token privato', async () => {
+  it('invia la notifica solo al token privato del Rettore', async () => {
     const p = point('first'); points.push(p);
     await avvisaIngresso(p as any, now);
     expect(mocks.send).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({
-      token: 'private-token', data: expect.objectContaining({ title: 'IN RISERVA', body: 'Mario Rossi, 9:12', rettoreSession: 'session' }),
+      token: 'private-token', data: expect.objectContaining({ title: 'MAPPA', rettoreSession: 'session' }),
     }));
     expect(mocks.send.mock.calls[0][0]).not.toHaveProperty('notification');
   });
@@ -82,7 +82,12 @@ describe('avviso al solo Rettore', () => {
     await expect(avvisaIngresso(p as any, now)).rejects.toThrow('FCM unavailable');
     await avvisaIngresso(p as any, now); expect(mocks.send).toHaveBeenCalledOnce();
   });
-  it('formatta in Europe/Rome anche in inverno', () => {
-    expect(corpoIngresso(' Mario Rossi ', Date.parse('2026-01-10T08:12:00Z'))).toBe('Mario Rossi, 9:12');
+  it('la notifica dice solo MAPPA: niente nome ne ora addosso al telefono', async () => {
+    const p = point('first'); points.push(p);
+    await avvisaIngresso(p as any, now);
+    const data = mocks.send.mock.calls[0][0].data;
+    expect(data.title).toBe('MAPPA');
+    expect(data.body).toBeUndefined();
+    expect(JSON.stringify(data)).not.toContain('Mario');
   });
 });
