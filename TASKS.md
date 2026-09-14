@@ -13,6 +13,20 @@
 - [x] Stack Android spostato in fondo, sotto "Progetto Android — se e quando":
       fuori dalle regole che valgono per il lavoro di oggi.
 
+## Rilascio completo — 14 settembre 2026, sera
+- [x] Su richiesta di Michele, push del codice fino a `9dc1ed7` e deploy completo
+      su `riservatuenno`: regole Firestore/Storage, cinque Functions e hosting.
+      Firebase ha confermato tutte le operazioni e la release del sito.
+- [x] Verifiche sul codice rilasciato: lint, build PWA e Functions, 184 test
+      Vitest e 19 controlli sull'emulatore Firestore superati.
+- Warning non bloccanti: bundle grande, import Messaging statico/dinamico,
+  runtime Node 20 deprecato e SDK Functions da aggiornare.
+- La review ha riprodotto due difetti preesistenti dell'avviso piano, non
+  modificati in questo rilascio: lo svuotamento perde incrementi concorrenti;
+  gli errori FCM per destinatario non impediscono di azzerare il conto.
+  Restano da correggere insieme al lavoro sulle notifiche. Prove reali sul
+  telefono e notifiche generiche restano aperte.
+
 ## Come riprendere
 Scrivi a Claude Code:
 "Leggi CLAUDE.md e TASKS.md e riprendi dal primo task non completato."
