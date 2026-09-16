@@ -240,10 +240,113 @@ riprogettare, sono la fonte migliore che abbiamo.
       notifica ("3 categorie chiuse: ...") e un solo post. Da verificare anche
       quante scritture su `config/main` genera SettingsScreen per ogni modifica
       dell'admin: se ne fa una per campo, ogni ritocco è una push a sé.
+- [ ] **L'avviso "Aggiornamento piano" si spegne troppo tardi, e non sembra
+      toccabile** — nota d'uso di Michele, 16 set 2026.
+      Oggi la fotografia degli abbattimenti si aggiorna quando il socio **esce**
+      dalla specie: chi tocca il riquadro in bacheca, guarda il piano e poi
+      cambia schermata trova ancora acceso l'avviso finché non ripassa dalla
+      bacheca. Michele lo vuole spento **appena ci clicca sopra** per andare a
+      vedere il piano.
+      Attenzione: la regola dell'uscita esiste per un motivo (la pastiglia NUOVO
+      sulle righe e le crocette rosse sparirebbero prima che il socio le veda),
+      quindi le due cose vanno separate: spegnere il riquadro della bacheca al
+      tocco, tenere accese le crocette finché resta sulla specie.
+      Secondo pezzo: far **capire che il riquadro si può toccare** — oggi sembra
+      solo un avviso. Serve un segno visibile (freccia, "vedi il piano", tasto).
+      Vedi "Avviso capi nuovi" in CLAUDE.md, `useNovita.ts` e `AvvisiNovita`.
+- [ ] **Le icone delle specie in fondo alla pagina si vedono poco** — nota
+      d'uso di Michele, 16 set 2026. Vuole **icone più grandi** e le scritte un
+      po' più grandi.
+      Misure di oggi in `BottomNav.tsx`: barra alta 68px, icone 24×24px dentro
+      un riquadro da 32px, scritte da **11px** maiuscole. Sono le scritte più
+      piccole di tutta l'app, che altrove usa 20 e 30px apposta per chi ci vede
+      poco: la barra è rimasta indietro.
+      C'è anche un motivo nascosto: le icone delle specie non aperte sono
+      **sbiadite al 45%** (`opacity: 0.45`). Anche a parità di dimensione si
+      vedrebbero meglio alzando quel valore. Da provare prima di ingrandire
+      tutto.
+- [ ] **Idea di Michele: togliere "Bacheca" dalla barra** e lasciare le sole tre
+      specie, tornando in bacheca col tasto indietro di Android — un tocco alla
+      bacheca, un altro tocco fuori dall'app.
+      Due parti, e conviene separarle:
+      - **il tasto indietro che riporta in bacheca si può fare**, e da solo è un
+        miglioramento. Oggi l'app non lo gestisce affatto: nessuna traccia di
+        `popstate` o `pushState` nel codice, quindi premendo indietro l'app si
+        chiude e basta.
+      - **togliere il tasto Bacheca è la metà rischiosa.** Sugli iPhone il tasto
+        indietro non esiste, e l'app è installata a schermo intero
+        (`"display": "standalone"` nel manifest): un socio con l'iPhone
+        resterebbe chiuso dentro la specie senza più una strada per la bacheca.
+        Prima di toglierlo serve sapere **quanti soci hanno l'iPhone**.
+      Proposta: fare prima il tasto indietro tenendo il bottone Bacheca al suo
+      posto. Il guadagno lo si ha subito, e lo spazio per le icone più grandi
+      si trova lo stesso alzando un po' la barra.
 - [ ] **Review usabilità.** Utenti anziani, 45 soci. Guardare: gerarchia della
       bacheca, riconoscibilità dei tasti, `AssignmentBoxes` (aree di tocco
       26×26px, sotto i 44px consigliati), leggibilità dei font già ingranditi.
 - [ ] Decidere se le notifiche vanno rese silenziabili per categoria dal socio
+
+---
+
+## REGISTRO DEGLI ABBATTIMENTI (aperto — deciso con Michele il 16 set 2026)
+
+Oggi l'app **non tiene memoria del singolo capo**: la crocetta del Rettore alza
+di uno un contatore dentro `config/main`. Chi, quando e a che ora non esistono
+da nessuna parte, e a fine stagione non c'è niente da rileggere.
+
+Michele quel lavoro lo rifa a mano su **bd.cacciatoritrentini.it** (il sito
+dell'Associazione Cacciatori Trentini), dove aggiunge età del capo, causa della
+morte, località e una foto.
+
+### Quello che si fa
+- [ ] Alla crocetta l'app chiede **il nome del cacciatore** (scelto dalla lista
+      soci che l'app ha già) e subito dopo un campo **note** libero.
+      Due domande, non una. Deciso da Michele.
+- [ ] Ogni capo diventa una riga a sé: **nome e cognome, data, ora, specie,
+      classe, note**.
+- [ ] **Un report di fine giornata** con le righe del giorno: è quello che
+      Michele si porta dietro la sera quando ricopia i capi sul sito
+      dell'Associazione dal telefono.
+- [ ] L'archivio resta consultabile tutta la stagione: a fine anno il riepilogo
+      di tutte le date e specie deve uscire da qui.
+- [ ] Togliendo la crocetta (correzione del Rettore) la riga va cancellata:
+      numero del piano e registro devono restare sempre d'accordo.
+- [ ] Il piano continua a contare come oggi; il registro è un quaderno a
+      fianco, non una seconda verità sui numeri.
+
+### Deciso da Michele il 16 set 2026
+- Il report è **una schermata che apre lui**, non una notifica: di notifiche ne
+  arrivano già troppe (è il problema aperto in "DESIGN E NOTIFICHE").
+- Il nome del cacciatore lo vede **solo il Rettore**. Il registro sta quindi
+  dove sta il diario: un documento a sé, chiuso ai soci nelle regole Firestore,
+  non dentro `config/main` che ogni telefono scarica per intero.
+  Stesso motivo scritto in "Diario del Rettore" in CLAUDE.md.
+
+### Ancora da guardare quando si implementa
+- [ ] Il socio continua a vedere le crocette come adesso: il registro non
+      cambia niente di quello che vede lui.
+- [ ] Il campo note è libero e può restare vuoto: non deve fermare il Rettore
+      che sta segnando col dito.
+
+### Collegamento automatico a bd.cacciatoritrentini.it — ABBANDONATO
+**Chiuso da Michele il 16 set 2026.** L'idea era che un programma entrasse col
+suo accesso e compilasse nome, cognome, specie e classe, lasciandogli da
+aggiungere la sera solo il resto. Non si può fare: il modulo del sito pretende
+**troppi campi obbligatori** che l'app non conosce — causa della morte del capo,
+località e altri. Una scheda a metà non si salva, quindi il robot non ha niente
+da inserire.
+
+Sono cadute per strada anche le altre due forme: Michele quel sito lo usa
+**solo dal telefono**, e dentro il browser di un telefono, su un sito di altri,
+non si può mettere niente di nostro.
+
+Resta quindi il **report**, che è la cosa utile davvero: lui ricopia a mano come
+adesso, ma legge una riga già pronta invece di ricordarsi a memoria chi ha
+sparato a cosa e quando.
+
+Note tecniche del sito, se un giorno si riapre il discorso: è
+**bd.cacciatoritrentini.it** (senza punto non esiste), TYPO3, login con nome
+utente e password, nessun canale per programmi esterni visibile da fuori.
 
 ---
 
