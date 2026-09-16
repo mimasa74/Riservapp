@@ -284,6 +284,33 @@ riprogettare, sono la fonte migliore che abbiamo.
       Proposta: fare prima il tasto indietro tenendo il bottone Bacheca al suo
       posto. Il guadagno lo si ha subito, e lo spazio per le icone più grandi
       si trova lo stesso alzando un po' la barra.
+- [x] **Barra in fondo: strada decisa con Michele il 16 set 2026.** Una barra
+      sola per tutti, niente versione diversa per iPhone. Il bottone Bacheca
+      resta con la sua scritta ma prende **meno larghezza**: oggi i quattro
+      bottoni si dividono lo schermo in parti uguali e la bacheca si prende un
+      quarto che non le serve. Lo spazio recuperato va alle tre specie.
+      Scartata l'idea di sostituire Bacheca con una freccia sugli iPhone: va
+      contro la regola di Michele ("l'icona non sostituisce mai il nome") e
+      creerebbe due app diverse da spiegare al telefono ai soci.
+      Sull'iPhone la freccia di sistema **non esiste**: c'è solo lo scorrimento
+      dal bordo sinistro, che funziona anche nelle app installate ma è un gesto
+      invisibile che nessun socio anziano scoprirà da solo.
+- [ ] **Anteprima della barra da preparare** (chiesta da Michele, 16 set 2026):
+      una pagina sola con la barra di adesso, quella con le icone più grandi e
+      meno sbiadite, e quella con la bacheca stretta e le specie larghe.
+      Michele sceglie guardando, come per i nomi sulla mappa.
+- [ ] **Squadre del capriolo: serve anche il testo, non solo le foto** — nota
+      d'uso di Michele, 16 set 2026.
+      Da verificare con lui che cosa manca davvero, perché **un campo di testo
+      c'è già**: `RuotaView.tsx` mostra un riquadro sopra le foto e l'admin lo
+      apre toccandolo. Il sospetto è che non si veda: da vuoto dice "Tocca per
+      aggiungere testo..." in **14px grigio corsivo**, la scritta più piccola e
+      più smorta della schermata, mentre il testo scritto è a 25px e i messaggi
+      della bacheca a 30. Stessa malattia delle icone in fondo alla pagina.
+      Se è questo, il lavoro non è aggiungere il testo ma **farlo vedere**.
+      Se invece Michele vuole un testo **per ogni foto** (didascalia sotto la
+      squadra) è un lavoro diverso: oggi il testo è uno solo per tutta la
+      pagina. Chiedere prima di mettere mano.
 - [ ] **Review usabilità.** Utenti anziani, 45 soci. Guardare: gerarchia della
       bacheca, riconoscibilità dei tasti, `AssignmentBoxes` (aree di tocco
       26×26px, sotto i 44px consigliati), leggibilità dei font già ingranditi.
