@@ -269,10 +269,13 @@ riprogettare, sono la fonte migliore che abbiamo.
       specie, tornando in bacheca col tasto indietro di Android — un tocco alla
       bacheca, un altro tocco fuori dall'app.
       Due parti, e conviene separarle:
-      - **il tasto indietro che riporta in bacheca si può fare**, e da solo è un
-        miglioramento. Oggi l'app non lo gestisce affatto: nessuna traccia di
-        `popstate` o `pushState` nel codice, quindi premendo indietro l'app si
-        chiude e basta.
+      - **la freccia è quella di Android**, quella in fondo allo schermo accanto
+        al cerchio e alle tre linee: non c'è nessun bottone da disegnare.
+        Il lavoro è far **rispondere** l'app a quella freccia. Oggi non risponde
+        affatto — nessuna traccia di `popstate` o `pushState` nel codice — e
+        Android si limita a chiudere l'app. Va scritto il comportamento che
+        vuole Michele: freccia dentro una specie → torna in bacheca; freccia in
+        bacheca → esci dall'app. Da solo è già un miglioramento.
       - **togliere il tasto Bacheca è la metà rischiosa.** Sugli iPhone il tasto
         indietro non esiste, e l'app è installata a schermo intero
         (`"display": "standalone"` nel manifest): un socio con l'iPhone
