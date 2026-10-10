@@ -328,7 +328,7 @@ Michele quel lavoro lo rifa a mano su **bd.cacciatoritrentini.it** (il sito
 dell'Associazione Cacciatori Trentini), dove aggiunge età del capo, causa della
 morte, località e una foto.
 
-### Quello che si fa — IMPLEMENTATO 9-10 ott 2026, NON deployato
+### Quello che si fa — IMPLEMENTATO 9-10 ott 2026, DEPLOYATO 10 ott 2026
 - [x] Alla crocetta l'app chiede **il nome del cacciatore** (scelto dalla lista
       soci che l'app ha già) e subito dopo un campo **note** libero.
       Due domande, non una. Deciso da Michele.
@@ -350,9 +350,15 @@ morte, località e una foto.
   preesistenti: bundle grande, import Messaging), 29 controlli emulatore
   Firestore (10 nuovi sul registro). Su questo PC installati Git e Java 21
   portatile (`%LOCALAPPDATA%\Programs\Java`), che serve all'emulatore.
-- [ ] Review Codex sul diff, poi deploy (rules + hosting) su richiesta.
-      Le rules nuove vanno deployate insieme all'hosting: senza, il Rettore
-      non riesce più a segnare capi (la batch col registro viene rifiutata).
+- [x] **Deploy fatto il 10 ott 2026**, chiesto da Michele, del commit
+      `bd81571`: `firebase deploy --only firestore:rules,hosting` (Functions
+      non toccate). Rules compilate e rilasciate, hosting `riservatuenno`
+      release completa. Verificato: bundle live = build locale
+      (`index-C0gwbwNh.js`) e contiene il registro.
+      Firebase CLI usata: `tools\security-check\node_modules\.bin\firebase.cmd`
+      (non c'è una CLI globale), login fatto da Michele.
+- [ ] Review Codex sul diff `f873f05..bd81571`: deploy fatto prima, per
+      scelta di Michele.
 - [ ] Prova sul telefono: segnare un capo, toglierlo, aprire il registro e copiare.
 - Dettagli in "Registro degli abbattimenti" in AGENTS.md.
 
