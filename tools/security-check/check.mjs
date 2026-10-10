@@ -38,6 +38,19 @@ try {
   await check('Non può forgiare il marcatore anti-duplicati', () => assertFails(setDoc(doc(anonymous, 'user_locations', 'forged'), { ...position, avvisoRettoreGestito: true })));
   await check('Non può aggiornare il punto per silenziare il trigger', () => assertFails(updateDoc(doc(anonymous, 'user_locations', 'point'), { avvisoRettoreGestito: true })));
   await check('Non può leggere posizioni altrui', () => assertFails(getDoc(doc(anonymous, 'user_locations', 'point'))));
+  const capo = { specieId: 'capriolo', catId: 'cap_m1', categoria: 'MASCHI DI PRIMA CLASSE', zona: null,
+    cacciatore: 'Rossi Mario', note: '', quando: serverTimestamp(), stagione: '2026' };
+  const voce = (db, id) => doc(db, 'registro_abbattimenti', id);
+  await check('Il Rettore registra un capo con l’ora server', () => assertSucceeds(setDoc(voce(admin, 'c1'), capo)));
+  await check('Il Rettore legge il registro', () => assertSucceeds(getDoc(voce(admin, 'c1'))));
+  await check('Il socio non legge il registro', () => assertFails(getDoc(voce(anonymous, 'c1'))));
+  await check('Il socio non scrive nel registro', () => assertFails(setDoc(voce(anonymous, 'c2'), capo)));
+  await check('Il socio non cancella dal registro', () => assertFails(deleteDoc(voce(anonymous, 'c1'))));
+  await check('Registro: niente ora inventata dal telefono', () => assertFails(setDoc(voce(admin, 'c3'), { ...capo, quando: Timestamp.fromMillis(Date.now() - 86400000) })));
+  await check('Registro: niente campi aggiuntivi', () => assertFails(setDoc(voce(admin, 'c4'), { ...capo, extra: 1 })));
+  await check('Registro: il cacciatore è obbligatorio', () => assertFails(setDoc(voce(admin, 'c5'), { ...capo, cacciatore: '' })));
+  await check('Registro: una riga non si modifica', () => assertFails(updateDoc(voce(admin, 'c1'), { cacciatore: 'Altro' })));
+  await check('Il Rettore cancella una riga togliendo la crocetta', () => assertSucceeds(deleteDoc(voce(admin, 'c1'))));
   // Esegue anche la funzione reale su transazioni Firestore reali. L'unico
   // confine sostituito è FCM: nessuna push viene spedita a telefoni.
   const requireFunctions = createRequire(new URL('../../functions/package.json', import.meta.url));

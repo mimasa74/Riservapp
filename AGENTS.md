@@ -355,6 +355,31 @@ Regole del meccanismo:
   persa, per questo la `✕` chiede conferma. Se serve il ripristino va dentro il
   lavoro su "tutto deve essere reversibile", non aggiunto qui di corsa.
 
+## Registro degli abbattimenti — chi, quando, cosa
+
+Dal 9 ott 2026 ogni crocetta del Rettore lascia una riga in
+`registro_abbattimenti/{autoId}`: cacciatore, ora del server, specie, classe,
+zona (solo camoscio), stagione, note (`src/utils/registroAbbattimenti.ts`,
+`RegistraCapo.tsx`, `RegistroScreen.tsx`). Il piano in `config/main` conta come
+prima: il registro è un quaderno a fianco, non una seconda verità sui numeri.
+
+- **Un tocco = un capo** (`azioneTocco`). Quadratino vuoto, qualunque sia →
+  foglio "Chi l'ha abbattuto?" (lista soci, niente nomi liberi: scelta di
+  Michele) e poi note facoltative. Quadratino pieno → toglie l'ultimo capo.
+  Prima un tocco poteva saltare di più capi: ogni capo ora ha bisogno del suo nome.
+- **Piano e registro nella stessa `writeBatch`** (`scriviConteggio` in
+  `App.tsx`): o passano tutti e due o nessuno.
+- Togliendo la crocetta si cancella **la riga più recente di quella classe
+  nella stagione**, dopo una conferma che dice di chi è (`confermaTogliCapo`).
+  Un capo senza riga è uno segnato prima del registro: si toglie solo il numero.
+- **Solo admin** nelle rules, come il diario: il nome del cacciatore non deve
+  arrivare al socio. `App.tsx` non sottoscrive la collezione se non è admin.
+  `quando == request.time`, schema chiuso, nessun update.
+- **Nuova stagione non cancella il registro**: le righe portano `stagione`
+  (l'anno del piano). Il report mostra quanti capi del piano sono senza riga.
+- Il report si apre dall'icona libro in bacheca (solo admin): oggi in cima col
+  tasto Copia, sotto l'archivio per giorno. Niente notifiche.
+
 ## Regolamento interno — solo Storage, nessun PDF bundled
 
 Non esiste PDF di riserva in `public/`. L'unica fonte è
@@ -400,6 +425,8 @@ Il cacciatore NON deve mai sapere che esiste una modalità admin.
 - `config/members` — `{ nomi: string[], direttivo: string[] }` (direttivo non più usato)
 - `config/note_rettore` — `{ [specieId]: NotaRettore[] }` — diario privato,
   leggibile SOLO dall'admin (vedi "Diario del Rettore")
+- `registro_abbattimenti/{autoId}` — un capo per documento, SOLO admin (vedi
+  "Registro degli abbattimenti")
 - `config/avviso_piano` — `{ pending, ultimaModifica, ultimoInvio }` — memoria
   dell'avviso di aggiornamento del piano, chiusa a ogni client (vedi "Avviso di
   aggiornamento del piano")

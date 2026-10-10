@@ -1,4 +1,5 @@
 import { CategoriaStato } from '../types';
+import { VoceRegistro, formatGiorno } from './registroAbbattimenti';
 
 /**
  * Domanda che ferma la mano quando il tocco croccia l'ultimo quadratino.
@@ -47,4 +48,20 @@ export function confermaEliminaPost(post: { testo?: string; foto_url?: string | 
   // quello che è: "questo messaggio" farebbe pensare a un testo.
   if (post.foto_url) return 'Cancellare questa foto? Non si potrà recuperare.';
   return 'Cancellare questo messaggio? Non si potrà recuperare.';
+}
+
+/**
+ * Domanda che ferma la mano prima di togliere un capo dal piano.
+ *
+ * Togliere la crocetta cancella anche la riga del registro, e una riga
+ * cancellata non si recupera: per questo la domanda nomina il cacciatore e il
+ * giorno, così il Rettore vede quale capo sta togliendo. Un capo segnato prima
+ * che il registro esistesse non ha riga: lo si dice, per non far pensare a un errore.
+ */
+export function confermaTogliCapo(cat: { nome: string }, voce: VoceRegistro | null): string {
+  if (!voce) {
+    return `Togliere un capo da ${cat.nome}? Era stato segnato prima del registro.`;
+  }
+  const quando = voce.quando ? ` del ${formatGiorno(voce.quando)}` : '';
+  return `Togliere il capo di ${voce.cacciatore}${quando} da ${cat.nome}? La riga del registro verrà cancellata.`;
 }

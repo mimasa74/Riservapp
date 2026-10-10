@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { confermaEliminaPost, confermaUltimoCapo } from './conferme';
+import { confermaEliminaPost, confermaUltimoCapo, confermaTogliCapo } from './conferme';
 
 const cat = (over: Partial<Parameters<typeof confermaUltimoCapo>[0]> = {}) => ({
   nome: 'FEMMINE',
@@ -66,5 +66,23 @@ describe('confermaEliminaPost', () => {
 
   it('senza testo né foto resta generica invece di saltare', () => {
     expect(confermaEliminaPost({})).toBe('Cancellare questo messaggio? Non si potrà recuperare.');
+  });
+});
+
+describe('confermaTogliCapo', () => {
+  it('nomina il cacciatore e il giorno del capo che si toglie', () => {
+    const voce = {
+      id: 'v', specieId: 'capriolo', catId: 'cap_f', categoria: 'FEMMINE', zona: null,
+      cacciatore: 'Rossi Mario', note: '', quando: new Date(2026, 9, 9, 7, 0), stagione: '2026',
+    };
+    expect(confermaTogliCapo({ nome: 'FEMMINE' }, voce)).toBe(
+      'Togliere il capo di Rossi Mario del 09/10/2026 da FEMMINE? La riga del registro verrà cancellata.',
+    );
+  });
+
+  it('un capo segnato prima del registro lo dice', () => {
+    expect(confermaTogliCapo({ nome: 'FEMMINE' }, null)).toBe(
+      'Togliere un capo da FEMMINE? Era stato segnato prima del registro.',
+    );
   });
 });

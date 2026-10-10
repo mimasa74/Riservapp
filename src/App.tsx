@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { db } from './firebase';
-import { doc, onSnapshot, updateDoc, setDoc, collection, query, orderBy, addDoc, deleteDoc, deleteField, arrayUnion, arrayRemove } from 'firebase/firestore';
+import { doc, onSnapshot, updateDoc, setDoc, collection, query, orderBy, addDoc, deleteDoc, deleteField, arrayUnion, arrayRemove, writeBatch, serverTimestamp, WriteBatch } from 'firebase/firestore';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { AppData, Post, Members, Slots } from './types';
 import fallbackData from '../data.json';
@@ -13,7 +13,11 @@ import {
   NoteRettorePerSpecie, creaNota, aggiungiNota, rimuoviNota, noteDiSpecie,
 } from './utils/noteRettore';
 import { requireOnline } from './utils/requireOnline';
-import { confermaEliminaPost, confermaUltimoCapo } from './utils/conferme';
+import { confermaEliminaPost, confermaUltimoCapo, confermaTogliCapo } from './utils/conferme';
+import {
+  VoceRegistro, voceDaDocumento, azioneTocco, ultimaVoceDi, stagioneDi, zonaDi, nomeSpecie,
+  capiSenzaRegistro,
+} from './utils/registroAbbattimenti';
 import { PHOTO_CACHE } from './constants/cacheNames';
 
 import { AssegnazioniScreen } from './components/AssegnazioniScreen';
@@ -23,6 +27,8 @@ import { OnboardingScreen } from './components/OnboardingScreen';
 import { RuotaView } from './components/RuotaView';
 import { MappaScreen } from './components/MappaScreen';
 import { SettingsScreen } from './components/SettingsScreen';
+import { RegistraCapo } from './components/RegistraCapo';
+import { RegistroScreen } from './components/RegistroScreen';
 import { BottomNav } from './components/BottomNav';
 import { AvvisiNovita } from './components/AvvisiNovita';
 import { OfflineBanner } from './components/OfflineBanner';
@@ -80,6 +86,13 @@ function MainApp() {
   const [postsSynced, setPostsSynced] = useState(false);
   const [configSynced, setConfigSynced] = useState(false);
   const [noteRettore, setNoteRettore] = useState<NoteRettorePerSpecie>({});
+  const [registro, setRegistro] = useState<VoceRegistro[]>([]);
+  // Quadratino vuoto toccato dal Rettore: il capo si segna solo dopo aver
+  // scelto il cacciatore nel foglio RegistraCapo. Annullando non si scrive nulla.
+  const [capoDaRegistrare, setCapoDaRegistrare] =
+    useState<{ specieId: string; catId: string } | null>(null);
+  const [salvandoCapo, setSalvandoCapo] = useState(false);
+  const [showRegistro, setShowRegistro] = useState(false);
   const [prefetchDone, setPrefetchDone] = useState(false);
   const reconcileDone = React.useRef(false);
   const membersValidated = React.useRef(false);
@@ -203,6 +216,18 @@ function MainApp() {
     }, (err) => console.error('[snapshot:config/note_rettore]', err.code, err.message));
   }, [isAdmin]);
 
+  // Registro degli abbattimenti: come il diario, solo admin. Il nome del
+  // cacciatore non deve arrivare sul telefono del socio.
+  useEffect(() => {
+    if (!isAdmin) { setRegistro([]); return; }
+    return onSnapshot(collection(db, 'registro_abbattimenti'), snapshot => {
+      // 'estimate': una voce appena scritta ha già un'ora, prima della conferma del server
+      setRegistro(snapshot.docs
+        .map(d => voceDaDocumento(d.id, d.data({ serverTimestamps: 'estimate' })))
+        .filter((v): v is VoceRegistro => v !== null));
+    }, (err) => console.error('[snapshot:registro_abbattimenti]', err.code, err.message));
+  }, [isAdmin]);
+
   // Pre-fetch top-30 recent post assets al primo sync server
   useEffect(() => {
     if (!postsSynced || !configSynced) return;
@@ -303,55 +328,102 @@ function MainApp() {
     setScreenIndex(index);
   };
 
-  const handleToggleAbbattimento = async (catId: string, index: number) => {
-    if (!requireOnline()) return;
-    const sData = data[currentSpecieId];
-    const catIndex = sData.categorie.findIndex(c => c.id === catId);
-    if (catIndex === -1) return;
-
-    const cat = sData.categorie[catIndex];
-    let newCount = index + 1;
-    if (index === cat.abbattuti - 1) newCount = index;
-    newCount = Math.min(Math.max(newCount, 0), cat.totale);
-
-    // I quadratini sono piccoli e un tap impreciso completerebbe il piano di
-    // prelievo per sbaglio: chiedi conferma. Dal 18 ago 2026 la quota completata
-    // NON manda piu' alcuna notifica — quella parte solo alla chiusura della
-    // categoria — quindi il messaggio non deve piu' prometterla.
-    // Il testo cambia nelle classi sospese: vedi confermaUltimoCapo.
-    const ultimoCapo = newCount === cat.totale && cat.abbattuti !== cat.totale;
-    if (ultimoCapo) {
-      const ok = window.confirm(confermaUltimoCapo(cat));
-      if (!ok) return;
-    }
-
-    setData(prev => {
-      const p = { ...prev };
-      p[currentSpecieId] = { ...p[currentSpecieId] };
-      p[currentSpecieId].categorie = p[currentSpecieId].categorie.map((c, i) =>
-        i === catIndex ? { ...c, abbattuti: newCount } : c
-      );
-      return p;
-    });
-
+  // Scrive il nuovo conteggio di una classe e, nella STESSA scrittura, la riga
+  // del registro (aggiunta o cancellazione): o passano tutte e due o nessuna,
+  // così piano e registro non possono finire in disaccordo.
+  const scriviConteggio = async (
+    specieId: string, catId: string, newCount: number,
+    registroOp: (batch: WriteBatch) => void,
+  ): Promise<boolean> => {
+    const sData = data[specieId];
+    const categorie = sData.categorie.map(c => c.id === catId ? { ...c, abbattuti: newCount } : c);
+    setData(prev => ({ ...prev, [specieId]: { ...prev[specieId], categorie } }));
     try {
-      const docRef = doc(db, 'config', 'main');
-      await updateDoc(docRef, {
-        [`${currentSpecieId}.categorie`]: sData.categorie.map((c, i) =>
-          i === catIndex ? { ...c, abbattuti: newCount } : c
-        ),
-        [`${currentSpecieId}.lastUpdated`]: formatTimestamp(),
+      const batch = writeBatch(db);
+      batch.update(doc(db, 'config', 'main'), {
+        [`${specieId}.categorie`]: categorie,
+        [`${specieId}.lastUpdated`]: formatTimestamp(),
       });
-      // Con l'ultimo capo la classe è da chiudere, e fra il capo caduto e il
-      // "non sparare più" ci sta tutto il tempo per sbagliare: apri subito il
-      // foglio dell'avviso. Solo se il capo è finito davvero su Firestore, e non
-      // in una classe sospesa, dove non si chiude niente.
-      if (ultimoCapo && cat.stato !== 'sospeso') {
-        setApriAvvisoUrgente(true);
-        setScreenIndex(0);
-      }
+      registroOp(batch);
+      await batch.commit();
+      return true;
     } catch (e) {
       console.error(e);
+      return false;
+    }
+  };
+
+  const handleToggleAbbattimento = async (catId: string, index: number) => {
+    if (!requireOnline()) return;
+    const specieId = currentSpecieId;
+    const sData = data[specieId];
+    const cat = sData.categorie.find(c => c.id === catId);
+    if (!cat) return;
+
+    // Un tocco = un capo solo, in più o in meno: vedi azioneTocco.
+    const azione = azioneTocco(cat, index);
+    if (azione === 'aggiungi') {
+      // I quadratini sono piccoli e un tap impreciso completerebbe il piano di
+      // prelievo per sbaglio: chiedi conferma. Dal 18 ago 2026 la quota completata
+      // NON manda piu' alcuna notifica — quella parte solo alla chiusura della
+      // categoria — quindi il messaggio non deve piu' prometterla.
+      // Il testo cambia nelle classi sospese: vedi confermaUltimoCapo.
+      const ultimoCapo = cat.abbattuti + 1 === cat.totale;
+      if (ultimoCapo && !window.confirm(confermaUltimoCapo(cat))) return;
+      setCapoDaRegistrare({ specieId, catId });
+      return;
+    }
+    if (azione === 'togli') {
+      const voce = ultimaVoceDi(registro, specieId, catId, stagioneDi(sData));
+      if (!window.confirm(confermaTogliCapo(cat, voce))) return;
+      const ok = await scriviConteggio(specieId, catId, cat.abbattuti - 1, batch => {
+        if (voce) batch.delete(doc(db, 'registro_abbattimenti', voce.id));
+      });
+      if (!ok) alert('Capo non tolto. Riprova.');
+    }
+  };
+
+  const handleRegistraCapo = async (cacciatore: string, note: string) => {
+    const daRegistrare = capoDaRegistrare;
+    if (!daRegistrare || salvandoCapo) return;
+    if (!requireOnline()) return;
+    const { specieId, catId } = daRegistrare;
+    const sData = data[specieId];
+    const cat = sData?.categorie.find(c => c.id === catId);
+    // Fra il tocco e il "Segna" il piano può essere cambiato (ritocco da
+    // Impostazioni): rileggi la classe invece di fidarti di quella del tocco.
+    if (!cat || cat.abbattuti >= cat.totale) {
+      alert('Questa classe è già completa: il capo non è stato segnato.');
+      setCapoDaRegistrare(null);
+      return;
+    }
+
+    const ultimoCapo = cat.abbattuti + 1 === cat.totale;
+    setSalvandoCapo(true);
+    const ok = await scriviConteggio(specieId, catId, cat.abbattuti + 1, batch => {
+      batch.set(doc(collection(db, 'registro_abbattimenti')), {
+        specieId,
+        catId,
+        categoria: cat.nome,
+        zona: zonaDi(sData, catId),
+        cacciatore,
+        note,
+        quando: serverTimestamp(),
+        stagione: stagioneDi(sData),
+      });
+    });
+    setSalvandoCapo(false);
+    // Il foglio resta aperto se la scrittura fallisce: il nome scelto non va perso.
+    if (!ok) { alert('Capo non salvato. Riprova.'); return; }
+    setCapoDaRegistrare(null);
+
+    // Con l'ultimo capo la classe è da chiudere, e fra il capo caduto e il
+    // "non sparare più" ci sta tutto il tempo per sbagliare: apri subito il
+    // foglio dell'avviso. Solo se il capo è finito davvero su Firestore, e non
+    // in una classe sospesa, dove non si chiude niente.
+    if (ultimoCapo && cat.stato !== 'sospeso') {
+      setApriAvvisoUrgente(true);
+      setScreenIndex(0);
     }
   };
 
@@ -574,6 +646,18 @@ function MainApp() {
     return <MappaScreen onBack={() => setShowMappa(false)} />;
   }
 
+  if (showRegistro && isAdmin) {
+    return (
+      <div className="max-w-lg mx-auto">
+        <RegistroScreen
+          voci={registro}
+          senzaRegistro={capiSenzaRegistro(data, registro)}
+          onBack={() => setShowRegistro(false)}
+        />
+      </div>
+    );
+  }
+
   if (showRuota) {
     return (
       <div className="min-h-dvh bg-[#EDEEE6] text-[#1A1A14]">
@@ -610,6 +694,7 @@ function MainApp() {
             onMarkRead={handleMarkRead}
             onOpenSettings={() => setShowSettings(true)}
             onOpenMappa={() => setShowMappa(true)}
+            onOpenRegistro={() => setShowRegistro(true)}
             apriAvvisoUrgente={apriAvvisoUrgente}
             onAvvisoUrgenteAperto={() => setApriAvvisoUrgente(false)}
             regolamentoUrl={regolamentoUrl}
@@ -640,6 +725,20 @@ function MainApp() {
         )}
       </div>
       <BottomNav currentScreenIndex={screenIndex} onNavigate={handleScreenChange} novita={capiNuoviPerSpecie} />
+      {isAdmin && capoDaRegistrare && (() => {
+        const sp = data[capoDaRegistrare.specieId];
+        const cat = sp?.categorie.find(c => c.id === capoDaRegistrare.catId);
+        const zona = sp ? zonaDi(sp, capoDaRegistrare.catId) : null;
+        return (
+          <RegistraCapo
+            titolo={`${nomeSpecie(capoDaRegistrare.specieId)} — ${cat?.nome ?? ''}${zona ? ` (${zona})` : ''}`}
+            soci={members?.nomi ?? []}
+            onSalva={handleRegistraCapo}
+            onAnnulla={() => setCapoDaRegistrare(null)}
+            salvando={salvandoCapo}
+          />
+        );
+      })()}
     </div>
   );
 }

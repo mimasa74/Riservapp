@@ -44,6 +44,8 @@ interface BachecaScreenProps {
   onMarkRead: (postIds: string[]) => void;
   onOpenSettings: () => void;
   onOpenMappa: () => void;
+  /** Registro degli abbattimenti, solo admin */
+  onOpenRegistro?: () => void;
   /** Alzata dall'ultimo capo di una classe: apre il foglio già su URGENTE. */
   apriAvvisoUrgente?: boolean;
   onAvvisoUrgenteAperto?: () => void;
@@ -51,7 +53,7 @@ interface BachecaScreenProps {
   onUpdateRegolamento?: (url: string) => void;
 }
 
-export const BachecaScreen = ({ posts, avvisiNovita = [], onApriSpecie, hunterName, onEnableNotifications, onAddPost, onDeletePost, onMarkRead, onOpenSettings, onOpenMappa, apriAvvisoUrgente = false, onAvvisoUrgenteAperto, regolamentoUrl, onUpdateRegolamento }: BachecaScreenProps) => {
+export const BachecaScreen = ({ posts, avvisiNovita = [], onApriSpecie, hunterName, onEnableNotifications, onAddPost, onDeletePost, onMarkRead, onOpenSettings, onOpenMappa, onOpenRegistro, apriAvvisoUrgente = false, onAvvisoUrgenteAperto, regolamentoUrl, onUpdateRegolamento }: BachecaScreenProps) => {
   const { isAdmin, login, logout } = useAuth();
   const [showForm, setShowForm] = useState(false);
   // Stato permesso notifiche — 'unsupported' = niente API Notification
@@ -337,6 +339,14 @@ export const BachecaScreen = ({ posts, avvisiNovita = [], onApriSpecie, hunterNa
                 <line x1="16" y1="6" x2="16" y2="22"/>
               </svg>
             </button>
+            {onOpenRegistro && (
+              <button onClick={onOpenRegistro} aria-label="Registro abbattimenti" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 8, color: '#5C6B3A' }}>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+                  <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+                </svg>
+              </button>
+            )}
           </div>
         ) : (
           <div style={{ width: 40, flexShrink: 0 }} />

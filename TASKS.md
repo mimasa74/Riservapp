@@ -328,21 +328,33 @@ Michele quel lavoro lo rifa a mano su **bd.cacciatoritrentini.it** (il sito
 dell'Associazione Cacciatori Trentini), dove aggiunge età del capo, causa della
 morte, località e una foto.
 
-### Quello che si fa
-- [ ] Alla crocetta l'app chiede **il nome del cacciatore** (scelto dalla lista
+### Quello che si fa — IMPLEMENTATO 9-10 ott 2026, NON deployato
+- [x] Alla crocetta l'app chiede **il nome del cacciatore** (scelto dalla lista
       soci che l'app ha già) e subito dopo un campo **note** libero.
       Due domande, non una. Deciso da Michele.
-- [ ] Ogni capo diventa una riga a sé: **nome e cognome, data, ora, specie,
+- [x] Ogni capo diventa una riga a sé: **nome e cognome, data, ora, specie,
       classe, note**.
-- [ ] **Un report di fine giornata** con le righe del giorno: è quello che
+- [x] **Un report di fine giornata** con le righe del giorno: è quello che
       Michele si porta dietro la sera quando ricopia i capi sul sito
-      dell'Associazione dal telefono.
-- [ ] L'archivio resta consultabile tutta la stagione: a fine anno il riepilogo
+      dell'Associazione dal telefono. Icona libro in bacheca, tasto Copia.
+- [x] L'archivio resta consultabile tutta la stagione: a fine anno il riepilogo
       di tutte le date e specie deve uscire da qui.
-- [ ] Togliendo la crocetta (correzione del Rettore) la riga va cancellata:
+- [x] Togliendo la crocetta (correzione del Rettore) la riga va cancellata:
       numero del piano e registro devono restare sempre d'accordo.
-- [ ] Il piano continua a contare come oggi; il registro è un quaderno a
+- [x] Il piano continua a contare come oggi; il registro è un quaderno a
       fianco, non una seconda verità sui numeri.
+- Decisioni di Michele del 9 ott 2026: **un tocco = un capo** (niente salti di
+  più quadratini), **nessun campo libero** per ospiti: solo lista soci.
+  Si parte da adesso, nessun recupero dei capi già segnati.
+- Verifiche 10 ott 2026: tsc pulito, 213 test Vitest, build ok (warning
+  preesistenti: bundle grande, import Messaging), 29 controlli emulatore
+  Firestore (10 nuovi sul registro). Su questo PC installati Git e Java 21
+  portatile (`%LOCALAPPDATA%\Programs\Java`), che serve all'emulatore.
+- [ ] Review Codex sul diff, poi deploy (rules + hosting) su richiesta.
+      Le rules nuove vanno deployate insieme all'hosting: senza, il Rettore
+      non riesce più a segnare capi (la batch col registro viene rifiutata).
+- [ ] Prova sul telefono: segnare un capo, toglierlo, aprire il registro e copiare.
+- Dettagli in "Registro degli abbattimenti" in AGENTS.md.
 
 ### Deciso da Michele il 16 set 2026
 - Il report è **una schermata che apre lui**, non una notifica: di notifiche ne
@@ -353,9 +365,9 @@ morte, località e una foto.
   Stesso motivo scritto in "Diario del Rettore" in CLAUDE.md.
 
 ### Ancora da guardare quando si implementa
-- [ ] Il socio continua a vedere le crocette come adesso: il registro non
+- [x] Il socio continua a vedere le crocette come adesso: il registro non
       cambia niente di quello che vede lui.
-- [ ] Il campo note è libero e può restare vuoto: non deve fermare il Rettore
+- [x] Il campo note è libero e può restare vuoto: non deve fermare il Rettore
       che sta segnando col dito.
 
 ### Collegamento automatico a bd.cacciatoritrentini.it — ABBANDONATO
