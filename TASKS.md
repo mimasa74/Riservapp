@@ -359,7 +359,8 @@ morte, località e una foto.
       (non c'è una CLI globale), login fatto da Michele.
 - [ ] Review Codex sul diff `f873f05..bd81571`: deploy fatto prima, per
       scelta di Michele.
-- [ ] Prova sul telefono: segnare un capo, toglierlo, aprire il registro e copiare.
+- [x] Prova sul telefono fatta da Michele dopo il deploy, 10 ott 2026:
+      "sembra funzionare". Da tenere d'occhio nei primi giorni d'uso reale.
 - Dettagli in "Registro degli abbattimenti" in AGENTS.md.
 
 ### Deciso da Michele il 16 set 2026
