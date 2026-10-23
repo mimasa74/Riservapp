@@ -362,6 +362,16 @@ morte, località e una foto.
 - [x] Prova sul telefono fatta da Michele dopo il deploy, 10 ott 2026:
       "sembra funzionare". Da tenere d'occhio nei primi giorni d'uso reale.
 - Dettagli in "Registro degli abbattimenti" in AGENTS.md.
+- [ ] **La conferma "togli capo" inganna** (uso reale, 24 ott 2026). Toccando
+      una croce piena qualunque, l'app toglie l'ultimo capo della classe e la
+      domanda nomina lui: Michele ha letto due volte lo stesso nome su due croci
+      diverse, ha pensato a un capo doppio e ha cancellato due capi veri (cervo
+      PICCOLI con le righe di Bergamo Nicola e Samuele Sandri). La frase deve dire
+      chiaro che si toglie l'ULTIMO capo, chiunque sia la croce toccata — oppure
+      si toglie proprio il capo di quella croce. Da decidere con Michele.
+      Rimediato a mano lo stesso giorno: piccoli riportati a 11/14 e due righe
+      ricreate (11 e 17 ott, ora messa alle 12:00 perché sconosciuta), con
+      l'avviso "AGGIORNAMENTO PIANO" svuotato prima dell'invio.
 
 ### Deciso da Michele il 16 set 2026
 - Il report è **una schermata che apre lui**, non una notifica: di notifiche ne
